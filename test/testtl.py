@@ -1,0 +1,346 @@
+#!/usr/local/bin/python3
+
+"""
+Improved testing methodology:
+As I add features, I need to add them to common document that are 
+used for all tests so that I dont have toi remember to update methods
+like deep copy when I add attribute support.  Updating the test 
+input should break tests for things that do not support the new 
+input.
+"""
+
+import unittest
+from tlmodel import Item
+from tlmodel import Section
+from tlmodel import TLAttribute
+
+ad1 = "aDocAttribute"
+vd1 = " TheDocValue"
+doc_attrib_line = ad1 + ':' + vd1
+
+
+header_line = "# The Header"
+as1 = "aSectionAttribute"
+vs1 = " TheSectionValue"
+as2 = "aNewSectionAttribute"
+vs2 = " TheNewSectionValue"
+
+section_attrib_line = as1 + ':' + vs1
+xtask_line = "x - completed task"
+xtask_sub_line = " - sub of completed task"
+second_header_line = "## a second section"
+inprog_task_line = " - sub of in progress task"
+
+ai1 = "anItemAttribute"
+vi1 = " TheItemValue"
+item_attrib_line1 = ai1 + ':' + vi1
+
+ai2 = "anotherItemAttribute"
+vi2 = " AnotherItemValue"
+item_attrib_line2 = ai2 + ':' + vi2
+
+item_2attr_str = "\n".join([item_attrib_line1, item_attrib_line2])
+
+dtask_line = "d - do task"
+dtask_sub1_line = " - sub item list item 1"
+dtask_sub2_line = " - sub item list item 2"
+dtask_text_line = "free text"
+
+dtask_item_text = "\n".join([dtask_line, item_attrib_line1, 
+	dtask_sub1_line, dtask_sub2_line, dtask_text_line])
+
+doc1_text = "\n".join( [doc_attrib_line, header_line, section_attrib_line, 
+	xtask_line, xtask_sub_line, 
+	second_header_line, inprog_task_line,
+	dtask_line,dtask_sub1_line, dtask_sub2_line, dtask_text_line]
+	)
+
+dtask2_line = "d - do another task"
+dtask2_sub1_line = " - sub of do another"
+
+sec_two_items = "\n".join([dtask_line, dtask2_sub1_line, dtask2_line, dtask2_sub1_line ])
+sec_attrib_wrong = "\n".join([header_line, xtask_line, section_attrib_line])
+sec_w_attrib = "\n".join([section_attrib_line, header_line])
+
+class TestItem(unittest.TestCase):
+
+	def testNoneNull(self):
+		self.assertEqual(str(Item(None)), "")
+
+	def testEmptyItemTrue(self):
+		self.assertTrue(Item().is_empty())
+
+	def testEmptyTopItemFalse(self):
+		self.assertFalse(Item("d - somthing").is_empty())
+
+	def testEmptySubItemFalse(self):
+		self.assertFalse(Item(" - sub line").is_empty())
+
+	def testEmptyAttribItemFalse(self):
+		self.assertFalse(Item("a: v").is_empty())
+
+	def testSubItem(self):
+		"Item with just sub text look ok?"
+		txt = "free text"
+		itest = Item(txt)
+		self.assertEqual(str(itest), txt)
+
+	def testItemWithList(self):
+		out = """\
+d - do somthing
+ - sub item list item 1
+ - sub item list item 2
+free text\
+"""
+		itest = Item("d - do somthing")
+		itest.add_line(" - sub item list item 1")
+		itest.add_line(" - sub item list item 2")
+		itest.add_line("free text")
+		self.assertEqual(str(itest), out)
+
+	def testFullBlownItem(self):
+		"A full blown item can be created from text and converrted back to the same string."
+		itest = Item.fromtext(dtask_item_text)
+		self.assertEqual(str(itest), dtask_item_text)
+
+
+	def testItemDeepCopyDifferentObject(self):
+		"Does item.deep_copy() return an item with a different id?"
+		itest = Item("d - do somthing")
+		itest1 = itest.deep_copy()
+		self.assertNotEqual(id(itest), id(itest1))
+
+	def testItemDeepCopyEqual(self):
+		"Does item.deep_copy() return a same string item?"
+		itest = Item.fromtext(dtask_item_text)
+		itest1 = itest.deep_copy()
+		self.assertEqual(str(itest), str(itest1))
+
+
+	def testItemNoSub(self):
+		out = "d - item with no sub lines!"
+		itest = Item(out)
+		self.assertEqual(str(itest), out)
+
+	def testItemNoHeader(self):
+		out = " - subitem with no item header"
+		itest = Item(None)
+		itest.subs.append(out)
+		self.assertEqual(str(itest), out)
+
+	def testinProgressPatternSlash(self):
+		data = "/ - doing somthing"
+		self.assertTrue(Item.in_progress_pat.match(data))
+
+	def testinProgressPatternBackSlash(self):
+		data = "\ - doing somthing else"
+		self.assertTrue(Item.in_progress_pat.match(data))
+
+	def testChange_in_prog_2_unfin(self):
+		data = "\ - doing somthing else"
+		itest = Item(data)
+		itest.in_prog_2_unfin()
+		self.assertTrue(Item.unfinished_pat.match(itest.top))
+
+	def testItemAttrib(self):
+		itest = Item(item_attrib_line1)
+		self.assertEqual(str(itest.attribs[ai1].value), vi1)
+
+	def testItem2Attribs(self):
+		itest = Item(item_attrib_line1)
+		itest.add_line(item_attrib_line2)
+		self.assertEqual(str(itest.attribs[ai1].value), vi1)
+		self.assertEqual(str(itest.attribs[ai2].value), vi2)
+
+	def testItem2AttribsStr(self):
+		"Does attribs_str work for a 2 attribute Item?"
+		itest = Item(item_attrib_line1)
+		itest.add_line(item_attrib_line2)
+		#print(itest.attribs_str())
+		self.assertEqual(item_2attr_str, itest.attribs_str())
+
+
+class testSection(unittest.TestCase):
+
+	def testEmptySectionTrue(self):
+		"Does the is_empty() return true for empty section?"
+		self.assertTrue(Section().is_empty())
+
+	def testEmptySectionHeaderFalse(self):
+		"Does the is_empty() return false for section with a heading?"
+		self.assertFalse(Section("# header").is_empty())
+
+	def testEmptySectionItemFalse(self):	
+		"Does the is_empty() return false for section with an item with a top?"
+		self.assertFalse(Section("d - task").is_empty())
+
+	def testEmptySectionItemSubFalse(self):	
+		"Does the is_empty() return false for section with an item with a sub text?"
+		self.assertFalse(Section(" - task detail").is_empty())
+
+	def testSectionWithItem(self):
+		out = """\
+#Section
+d - do somthing
+ - sub item list item 1
+ - sub item list item 2
+free text\
+"""
+		stest = Section("#Section")
+		stest.add_line("d - do somthing")
+		stest.add_line(" - sub item list item 1")
+		stest.add_line(" - sub item list item 2")
+		stest.add_line("free text")
+		self.assertEqual(out, str(stest))
+
+	def testStrItemsList(self):
+		out = """\
+d - do 1
+d - do 2
+d - do 3\
+"""
+		stest = Section("d - do 1")
+		stest.add_line("d - do 2")
+		stest.add_line("d - do 3")
+		self.assertEqual(out, stest.str_body())
+
+	def testStrItemsHead(self):
+		out = """\
+#  a Header\
+"""
+		stest = Section("#  a Header")
+		self.assertEqual(stest.str_body(), "")
+
+
+	def testStrItemsAttribute(self):
+		out = """\
+#  a Header
+AnAttributeName: the Attribute Value\
+"""
+		stest = Section("#  a Header")
+		stest.add_line("AnAttributeName: the Attribute Value")
+		self.assertEqual(str(stest), out)
+
+	#@unittest.skip("Reworking  testing with a better way to initialize multi line things.")
+	def testSectionGetAttributeNone(self):
+		"Does Section get_attribute return None if the first Item has a top?"
+		stest = Section.fromtext(sec_attrib_wrong)
+		self.assertEqual(stest.get_attrib(as1), None)
+
+	def testSectionGetAttribute(self):
+		"Does Section get_attribute return the attribute?"
+		stest = Section.fromtext(sec_w_attrib)
+		self.assertEqual(stest.get_attrib(as1).value, vs1)
+
+	def testSectionSetAttributeNew(self):
+		"Does set_attribute add a new attribute"
+		stest = Section()
+		stest.set_attrib(as1, vs1)
+		self.assertEqual(stest.get_attrib(as1).value, vs1)
+ 
+	def testSectionSetAttributeReplace(self):
+		"Does set_attribute update an existing attribute?"
+		stest = Section.fromtext(sec_w_attrib)
+		stest.set_attrib(as1, vs2	)
+		self.assertEqual(stest.get_attrib(as1).value, vs2)
+
+	def testSectionSetAttributeAdd(self):
+		"""
+		Does set_attribute add an attribute if a different one 
+		already exists?
+		"""
+		stest = Section.fromtext(sec_w_attrib)
+		stest.set_attrib(as2, vs2)
+		self.assertEqual(stest.get_attrib(as2).value, vs2)
+
+	def testSectionSetAttributeWithItem(self):
+		"""
+		Does set_attribute add an attribute if there are Items in the Section? 
+		"""
+		stest = Section.fromtext(sec_two_items)
+		stest.set_attrib(as2, vs2)
+		self.assertEqual(stest.get_attrib(as2).value, vs2)
+
+
+	def testSectionGetAttributeNotFound(self):
+		"Does Section get_attribute for a key that is not present return None?"
+		stest = Section.fromtext(sec_w_attrib)
+		self.assertIs(stest.get_attrib("wrongKey"), None)
+
+	def testSectionWith2Items(self):
+		stest = Section.fromtext(sec_two_items)
+		self.assertEqual(sec_two_items, str(stest))
+
+	def testSectionWithNoBody(self):
+		out = """\
+#Section with no body\
+"""
+		stest = Section("#Section with no body")
+		self.assertEqual(str(stest), out)
+
+	def testSectionInProgItem(self):
+		out = """\
+\ - doing somthing else\
+"""
+		stest = Section("\ - doing somthing else")
+		self.assertEqual(str(stest), out)
+
+	def testUpdateProgress1(self):
+		"test marking in progress as unfinished for \ - "
+		data = "\ - one thing going on"
+		out = "u - one thing going on"
+		itest = Item(data)
+		itest.in_prog_2_unfin()
+		self.assertEqual(str(itest), out) 
+
+	def testUpdateProgress2(self):
+		"test marking in progress as unfinished for / - "
+		data = "/ - another thing going on"
+		out = "u - another thing going on"
+		itest = Item(data)
+		itest.in_prog_2_unfin()
+		self.assertEqual(str(itest), out) 
+
+class testTLAttribute(unittest.TestCase):
+	positive_key = "SomeAttribute" 
+	positive_value = " the value of it"
+	valid_line = positive_key + ":" + positive_value
+
+	def positive_pattern():
+		return TLAttribute.attr_pat.match(testTLAttribute.valid_line)
+
+
+	def negitive_pattern():
+		data = "SomeAttribute the value of it"
+		return TLAttribute.attr_pat.match(data)
+
+
+	def testTLAttributePatternMatch(self):
+		"Does the recognition pattern return a match object?"
+		self.assertTrue(testTLAttribute.positive_pattern())
+
+
+	def testTLAttributePatternNoMatch(self):
+		"Does a pattern mismatch return None?"
+		self.assertFalse(testTLAttribute.negitive_pattern())
+		
+	def testTLAttributePatternKey(self):
+		"Does a pattern match set the key?"
+
+		mo = testTLAttribute.positive_pattern() # mo is match Object
+		testAttr = TLAttribute(mo.group(1), mo.group(2))
+
+		self.assertEqual(testAttr.name, testTLAttribute.positive_key)
+		self.assertEqual(testAttr.value, testTLAttribute.positive_value)
+
+	def testTLAttributeStr(self):
+		"str() of a TLAttribute should give the text it was made from"
+		self.assertEqual(
+			str(TLAttribute.fromline(testTLAttribute.valid_line)), 
+			testTLAttribute.valid_line)
+
+
+if __name__ == '__main__':
+	#print(doc1_text)
+	unittest.main()
+
