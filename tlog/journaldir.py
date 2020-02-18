@@ -16,8 +16,8 @@ default_path = os.path.expanduser('~') + '/journal'
 
 journal_path = os.getenv('JOURNAL_PATH', default_path)
 journal_pat = re.compile(
-	'[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].txt')
-story_pat = re.compile('.*story.txt')
+	'[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
+story_pat = re.compile('.*story.md')
 
 
 def get_repos():
@@ -81,7 +81,7 @@ dayth_dict = {'1': "st", '2': "nd", '3': "rd", '4': "th",
 domth = dow + ' ' + dom + dayth_dict[dom]
 journal_dir = os.path.join(journal_path, yyyy, mm)
 
-cday_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.txt'
+cday_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
 
 
 def path_file_join(p, f):
