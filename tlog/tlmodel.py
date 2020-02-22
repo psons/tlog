@@ -342,7 +342,7 @@ class Document:
 			backlog - Section containing 'do' Items.  
 
 		"""
-		# todo this is sucpect
+		# todo this is suspect
 		# d - this is suspect when name is provided
 		self._doc_name = name or ""
 

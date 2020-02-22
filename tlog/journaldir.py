@@ -35,7 +35,7 @@ def get_file_names_by_pattern(dir_name, a_pattern):
 	"""
 	matching_file_list = []
 	if not os.path.isdir(dir_name):
-		return matching_file_list;
+		return matching_file_list
 
 	for f in listdir(dir_name):
 		fqp = join(dir_name, f)
