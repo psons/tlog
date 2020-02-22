@@ -101,7 +101,7 @@ journal_document.make_in_progress("## " + journaldir.domth)
 # print("journal_document.doc_name", str(journal_document.doc_name) )
 
 journaldir.write_dir_file(str(journal_document) + '\n',
-						  journaldir.journal_dir, journal_document.doc_name)
+						  journaldir.journal_dir, journaldir.cday_fname)
 
 ## support a method in Document to:
 # create day_document as inprogress + pop 3 off backlog from journal.
