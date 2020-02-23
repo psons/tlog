@@ -3,10 +3,10 @@ README.md
 On a dev branch, paste the current story text 
 from the backlog into here.
 
-Fixing a problem where the DocName: attribute 
-from an old file is used instead a new day journal name
-Finding an old doc with  DocName:journal-2019-11-16.txt
-when a new journal dir is initialized exposes this problem. 
+Assigning to the attribute property of a docresults in this:
+DocName:journal-2020-02-22.md
+DocName:journal-2019-11-16.md
+## Mon 16th
 
 Add more explanatory notes about the project.
 

@@ -69,7 +69,7 @@ class Section:
 
 	def set_attrib(self, akey, aval):
 		"Set Section attributes by putting then in an otherwise empty first Item in the body"
-		if self.body[0].is_empty():
+		if self.body[0].is_attrib_only():
 			self.body[0].set_attrib(akey, aval)
 		else:
 			i = Item()
@@ -140,9 +140,24 @@ class Section:
 		header_newline = "\n" if self.header and body_str else ""
 		return header_str + header_newline + body_str
 
+
+	def is_attrib_section(self):
+		"""
+		:return: true if self is_empty or has only an attribute item
+		"""
+		if self.header != "":
+			return False
+		for item in self.body[0:1]: # just first Item
+			if not item.is_attrib_only():
+				return False
+		for item in self.body[1:]: # after first  Item
+			if not item.is_empty():
+				return False
+		return True
+
+
 	def is_empty(self):
 		"return true if no header or the body list contains only empty Items"
-		return_value = True
 		if self.header != "":
 			return False
 
@@ -285,8 +300,13 @@ class Item:
 
 	def is_empty(self):
 		"return true if no header or body, else return false."
-		boolean_return_of_Item_is_empty = (not self.top) and  (not len(self.subs)) and (not len(self.attribs))
+		boolean_return_of_Item_is_empty = (not self.top) and (not len(self.subs)) and (not len(self.attribs))
 		return boolean_return_of_Item_is_empty
+
+	def is_attrib_only(self):
+		"return true if no header or body, else return false."
+		boolean_return_of_is_attrib_only = (not self.top) and  (not len(self.subs))
+		return boolean_return_of_is_attrib_only
 
 	def attribs_str (self):
 		if len(self.attribs): 
@@ -364,6 +384,7 @@ class Document:
 
 	def _set_doc_name(self, name):
 		"setter for doc_name"
+		print("called Document _set_doc_name: ", name)
 		self.set_attrib(Document.dname_attr_str, name)
 
 	doc_name = property(_get_doc_name, _set_doc_name)
@@ -441,8 +462,9 @@ class Document:
 
 	def set_attrib(self, akey, aval):
 		"Set Document attributes by putting them in an otherwise empty first Section in the journal"
-		if self.journal[0].is_empty():
-			# Document set_attrib calling Section Set Attrib
+		# if self.journal[0].is_empty():
+		if self.journal[0].is_attrib_section():
+		# Document set_attrib calling Section Set Attrib
 			self.journal[0].set_attrib(akey, aval )  
 		else:
 			s = Section()

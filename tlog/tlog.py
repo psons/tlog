@@ -56,9 +56,6 @@ def sj_file_list_by_dir(latest_dir, history_months):
 	jfl = jfl[-1:]
 	return sfl, jfl
 
-
-# new_work_section = tlmodel.Section("#" + journaldir.domth )
-
 supported_commands = ["jdir"]
 """
 jdir - treat the next argment to tlog as the journal_dir.

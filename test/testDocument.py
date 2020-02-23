@@ -7,6 +7,7 @@ from testtl import doc1_text
 from testtl import doc_attrib_line
 from testtl import ad1
 from testtl import vd1
+from testtl import vd2
 
 class testDocument(unittest.TestCase):
 	"Tests for the Documet class."
@@ -185,6 +186,16 @@ d - put way misc paper tax files\
 		d1.set_attrib(ad1, vd1)
 		attr = d1.get_attrib(ad1)
 		self.assertEqual(attr.value, vd1)
+
+	# todo modify this test to check for duplicat attribute in the un named section.
+	def testDocumentSecondSetAttrib(self):
+		"Does set_attrib match get_attrib for a name and value for a Document attribute?"
+		d1 = Document.fromtext(testDocument.docIn)
+		d1.set_attrib(ad1, vd1)
+		d1.set_attrib(ad1, vd2) # set it again
+		attr = d1.get_attrib(ad1)
+		print("d1 is: ", d1)
+		self.assertEqual(attr.value, vd2)
 
 	def testDocumentNameProperty(self):
 		"Does assignment to adocument.doc_name work?"

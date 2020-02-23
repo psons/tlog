@@ -3,7 +3,7 @@
 """
 Improved testing methodology:
 As I add features, I need to add them to common document that are 
-used for all tests so that I dont have toi remember to update methods
+used for all tests so that I dont have to remember to update methods
 like deep copy when I add attribute support.  Updating the test 
 input should break tests for things that do not support the new 
 input.
@@ -16,6 +16,7 @@ from tlmodel import TLAttribute
 
 ad1 = "aDocAttribute"
 vd1 = " TheDocValue"
+vd2 = " TheChangedDocValue"
 doc_attrib_line = ad1 + ':' + vd1
 
 
@@ -61,6 +62,43 @@ dtask2_sub1_line = " - sub of do another"
 sec_two_items = "\n".join([dtask_line, dtask2_sub1_line, dtask2_line, dtask2_sub1_line ])
 sec_attrib_wrong = "\n".join([header_line, xtask_line, section_attrib_line])
 sec_w_attrib = "\n".join([section_attrib_line, header_line])
+
+sec_head = """\
+#Section\
+"""
+sec_item = """\
+d - do something\
+"""
+sec_head_item = """\
+#Section
+d - do something\
+"""
+sec_attr_item = """\
+DocName:journal-2020-02-22.md
+d - do something\
+"""
+sec_attr1 = """\
+DocName:journal-2020-02-22.md\
+"""
+sec_attr2 = """\
+DocName:journal-2020-02-22.md
+
+\
+"""
+sec_empty = """\
+
+
+\
+"""
+is_attrib_section_casaes = [
+	(sec_head, False),
+	(sec_item, False),
+	(sec_head_item, False),
+	(sec_attr_item, False),
+	(sec_attr1, True),
+	(sec_attr2, False),
+	(sec_empty, False)
+]
 
 class TestItem(unittest.TestCase):
 
@@ -300,6 +338,15 @@ AnAttributeName: the Attribute Value\
 		itest = Item(data)
 		itest.in_prog_2_unfin()
 		self.assertEqual(str(itest), out) 
+
+	def test_is_attrib_section(self):
+		"Does the is_empty() return false for section with an item with a sub text?"
+		for case in is_attrib_section_casaes:
+			input_val = case[0]
+			expected = case[1]
+			actual = Section.fromtext(input_val).is_attrib_section()
+			#print("input: {} expected: {}, actual: {}".format(input_val, expected, actual))
+			self.assertEqual(expected, actual)
 
 class testTLAttribute(unittest.TestCase):
 	positive_key = "SomeAttribute" 
