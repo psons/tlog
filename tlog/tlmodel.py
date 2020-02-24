@@ -40,20 +40,15 @@ class Section:
 		if data:
 			self.add_line(data)
 
-	#todo add test for this.
 	def deep_copy(self):
+		"""
+		Makes a copy where
+		 - the header element refers to the same header string, which is ok
+		   because strings are immutable
+		 - the each element in the body is deep copied to a new list.
+		 - the attribute dictionary is copied to a new dict
+		"""
 		return Section.fromtext(str(self))
-		# """
-		# Makes a copy where 
-		#  - the header element refers to the same header string, which is ok
-		#    because strigs are immutable
-		#  - the each element in the body is deep copied to a new list.
-		#  - the attribute dictionary is copied to a new dict 
-		# """
-		# the_copy = Section(data = self.header
-		# for item in self.body:
-		# 	#todo finish this for, maybe as a list coprehension
-		# return the_copy
 
 
 	def get_attrib(self, key):
@@ -139,7 +134,6 @@ class Section:
 		body_str = self.str_body()
 		header_newline = "\n" if self.header and body_str else ""
 		return header_str + header_newline + body_str
-
 
 	def is_attrib_section(self):
 		"""
@@ -344,7 +338,7 @@ class Document:
 	added to the document.
 	The 'in progress' items are initially just loaded to their sections.  A 
 	make_in_progress method is provided to copy the in progress items to a section
-	initially named '#In progress' to represet tasks planned for the next day or 
+	initially named '#In progress' to represent tasks planned for the next day or
 	week, or agile sprint, or whatever period.
 
 	"""
@@ -384,7 +378,6 @@ class Document:
 
 	def _set_doc_name(self, name):
 		"setter for doc_name"
-		print("called Document _set_doc_name: ", name)
 		self.set_attrib(Document.dname_attr_str, name)
 
 	doc_name = property(_get_doc_name, _set_doc_name)
@@ -462,7 +455,6 @@ class Document:
 
 	def set_attrib(self, akey, aval):
 		"Set Document attributes by putting them in an otherwise empty first Section in the journal"
-		# if self.journal[0].is_empty():
 		if self.journal[0].is_attrib_section():
 		# Document set_attrib calling Section Set Attrib
 			self.journal[0].set_attrib(akey, aval )  
@@ -470,8 +462,6 @@ class Document:
 			s = Section()
 			s.set_attrib(akey, aval)
 			self.journal.insert(0, s)
-		# Test this.  It looks like if I add multiple atributes, 
-		# each one is in its own section object.
 
 	def journal_str(self):
 		"Return the journal as text lines"
@@ -491,7 +481,6 @@ class Document:
 		return str(self.backlog)
 
 	def __str__(self):
-		#s = "Document: " + str(self.name) + "\n"
 		s =  self.journal_str() + "\n" 
 		s += self.in_progress_str() + "\n" if not self.in_progress.is_empty() else ""
 		s += self.backlog_str()
@@ -529,15 +518,15 @@ class Document:
 			for item in section.update_progress():
 				self.in_progress.add_item(item)
 
-	def get_day_document(new_tasks_per_day):
-		"""create day_document as inprogress + pop some tasks of backlog."""
-		d_doc = Document()
-		# make_in_progress can be called even if it has already been called.
-		self.make_in_progress
-		# add in_progress to d_doc
-		# need to fundame ally change task update methodology to be in the 
-		#	latest curent day file
-		#	and the (latest) journal.
+	def drop_journal(self):
+		if len(self.journal) > 1:
+			firstSection = self.journal[0]
+			if firstSection.is_attrib_section():
+				self.journal = [firstSection]
+			else:
+				self.journal = []
+		else:
+			self.journal = []
 
 def	debExit(message = ""):
 	"This func just gets temporarily inserted for top down re checking of main()"

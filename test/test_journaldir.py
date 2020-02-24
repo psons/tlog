@@ -47,5 +47,5 @@ class Test(TestCase):
 			input_val = case[0]
 			expected = case[1]
 			actual = journaldir.get_prior_dir(input_val)
-			print("input: {} expected: {}, actual: {}".format(input_val, expected, actual))
+			#print("input: {} expected: {}, actual: {}".format(input_val, expected, actual))
 			self.assertEqual(expected, actual)

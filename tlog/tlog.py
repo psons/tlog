@@ -34,9 +34,9 @@ def sj_file_list_by_dir(latest_dir, history_months):
 	"""
 	file_count = 0
 	dirs_to_search = history_months
-	search_dir = latest_dir
+	next_search_dir = latest_dir
 	while file_count == 0 and dirs_to_search > 0:
-		file_count = 0
+		search_dir = next_search_dir
 		sfl = journaldir.get_file_names_by_pattern(
 			search_dir, journaldir.story_pat)
 		jfl = journaldir.get_file_names_by_pattern(
@@ -44,17 +44,14 @@ def sj_file_list_by_dir(latest_dir, history_months):
 		file_count = len(sfl) + len(jfl)
 		print("{} stories and {} journals in {}".
 			  format(len(sfl), len(jfl), search_dir))
-		search_dir = journaldir.get_prior_dir(search_dir)
-		# print("next search_dir is: {}".format(search_dir))
-		if not search_dir:
-			dirs_to_search = 0
+		next_search_dir = journaldir.get_prior_dir(search_dir) # can return None
+		if not next_search_dir:
+			dirs_to_search = 0 # loop to end if no sensible search_dir
 		else:
 			dirs_to_search -= 1
-		print("next search_dir is {}.  remaining dirs: {}".
-			  format(search_dir, dirs_to_search))
 
-	jfl = jfl[-1:]
-	return sfl, jfl
+	jfl = jfl[-1:] # just the last journal file in the list
+	return sfl, jfl, search_dir
 
 supported_commands = ["jdir"]
 """
@@ -64,7 +61,7 @@ my_journal_dir = journaldir.journal_dir
 look_back_months = 24
 if len(sys.argv) < 2:
 	journaldir.init(my_journal_dir)
-	s_file_list, j_file_list = sj_file_list_by_dir(my_journal_dir, look_back_months)
+	s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
 	print("no argument sfile_list, jfile_list:", s_file_list, j_file_list)
 else:
 	if sys.argv[1] in supported_commands:
@@ -72,8 +69,7 @@ else:
 		if tlog_command == "jdir":
 			# should treat the jdir as the journal dir: stories and a journal
 			my_journal_dir = sys.argv[2]
-			s_file_list, j_file_list = sj_file_list_by_dir(my_journal_dir, look_back_months)
-			# todo if no files, look in previous journaldir.
+			s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
 			print("jdir argument file_list:", tlog_command, s_file_list, j_file_list)
 		else:
 			raise TLogInternalException("A supported command has no implementation")
@@ -98,6 +94,10 @@ journal_document.make_in_progress("## " + journaldir.domth)
 # print("journal_document.doc_name", str(journal_document.doc_name) )
 
 journal_document.doc_name=journaldir.cday_fname
+if my_journal_dir != prev_journal_dir:
+	print("Wil drop journal because it is from a back month")
+	journal_document.drop_journal()
+
 journaldir.write_dir_file(str(journal_document) + '\n',
 						  journaldir.journal_dir, journal_document.doc_name)
 

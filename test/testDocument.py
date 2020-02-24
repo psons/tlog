@@ -194,7 +194,7 @@ d - put way misc paper tax files\
 		d1.set_attrib(ad1, vd1)
 		d1.set_attrib(ad1, vd2) # set it again
 		attr = d1.get_attrib(ad1)
-		print("d1 is: ", d1)
+		#print("d1 is: ", d1)
 		self.assertEqual(attr.value, vd2)
 
 	def testDocumentNameProperty(self):
