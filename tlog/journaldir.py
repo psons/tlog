@@ -37,7 +37,7 @@ def get_file_names_by_pattern(dir_name, a_pattern):
 	if not os.path.isdir(dir_name):
 		return matching_file_list
 
-	for f in listdir(dir_name):
+	for f in sorted(listdir(dir_name)):
 		fqp = join(dir_name, f)
 		if isfile(fqp) and a_pattern.match(f):
 			matching_file_list.append(fqp)
@@ -117,8 +117,6 @@ def write_dir_file(new_content, dir_name, doc_name):
 		jfd = open(filepath, "w")
 		jfd.write(new_content)
 		jfd.close
-
-	print("Journal File: " + str(filepath))
 
 
 def write_simple(new_content, dir_name, doc_name):
