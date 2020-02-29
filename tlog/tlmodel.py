@@ -528,6 +528,7 @@ class Document:
 		else:
 			self.journal = []
 
+
 def	debExit(message = ""):
 	"This func just gets temporarily inserted for top down re checking of main()"
 	print("EARLY DEBUG exit(): " + message)

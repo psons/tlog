@@ -41,11 +41,34 @@ prior_dir_cases = [
 	("/", None),
 	("~/journal/2020/12", "~/journal/2020/11")
 ]
+
+
 class Test(TestCase):
 	def test_get_prior_dir(self):
 		for case in prior_dir_cases:
 			input_val = case[0]
 			expected = case[1]
 			actual = journaldir.get_prior_dir(input_val)
-			#print("input: {} expected: {}, actual: {}".format(input_val, expected, actual))
+			# print("input: {} expected: {}, actual: {}".format(input_val, expected, actual))
 			self.assertEqual(expected, actual)
+
+
+class TestUserPaths(TestCase):
+
+	def testUserJournalPathRaisesE(self):
+		with self.assertRaises(journaldir.TaskSourceException) as tse:
+			journaldir.UserPaths("/some/bad/path", "/another/bad/path")
+		part_of_e_val = tse.exception.value[-31:]
+		self.assertEqual("for journals is not a directory", part_of_e_val)
+
+	def testUserEndeavorPathRaisesE(self):
+		with self.assertRaises(journaldir.TaskSourceException) as tse:
+			journaldir.UserPaths("/", "/another/bad/path")
+		part_of_e_val = tse.exception.value[-32:]
+		self.assertEqual("for endeavors is not a directory", part_of_e_val)
+
+	def testUserPathConstructor(self):
+		"doesn't really test anything, but can run a asegment of code for debugging"
+		user_path_object = journaldir.UserPaths()
+		print(str(user_path_object))
+		self.assertEqual("pass", "pass")

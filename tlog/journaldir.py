@@ -12,13 +12,50 @@ import re
 from os import listdir
 from os.path import isfile, join
 
+
+class TaskSourceException(Exception):
+    'Task source exception indicates a failure in a data source for endeavors, stories,  etc '
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+
 default_path = os.path.expanduser('~') + '/journal'
 
-journal_path = os.getenv('JOURNAL_PATH', default_path)
+convention_journal_dir = os.getenv('JOURNAL_PATH', default_path)
+endeavor_dir = convention_journal_dir + "/Endeavors"
 journal_pat = re.compile(
 	'[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
 story_pat = re.compile('.*story.md')
 
+
+class UserPaths:
+	"""
+	Builds the useful data paths based on the documented structure:
+		journal_dir:
+			<< various year subdirectories >>
+				<< various month subdirectories >>
+			<< possibly the endeavor_dir location>>
+		endeavor_dir:
+			endeavors.md
+			<< various endeavor subdirectories >>
+				<< various *story.txt files containing task items >>
+	"""
+	def __init__(self, user_journal_path=convention_journal_dir, user_endeavor_dir=endeavor_dir):
+		if os.path.isdir(user_journal_path):
+			self.journal_path = user_journal_path
+		else:
+			raise TaskSourceException(user_journal_path + " for journals is not a directory")
+		if os.path.isdir(user_endeavor_dir):
+			self.endeavor_path = user_endeavor_dir
+		else:
+			raise TaskSourceException(user_endeavor_dir + " for endeavors is not a directory")
+		self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
+
+	def __str__(self):
+		return "\n".join(["JournalPath: " + self.journal_path,
+						 "EndeavorFilePath: " + self.endeavor_file])
 
 def get_repos():
 	"""todo I think repos needs to change to endevors here."""
@@ -79,9 +116,15 @@ dayth_dict = {'1': "st", '2': "nd", '3': "rd", '4': "th",
 			  '29': "th", '30': "th", '31': "st"}
 
 domth = dow + ' ' + dom + dayth_dict[dom]
-journal_dir = os.path.join(journal_path, yyyy, mm)
+journal_dir = os.path.join(convention_journal_dir, yyyy, mm)
 
 cday_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+
+
+def load_endeavors(user_path_obj):
+	endeavor_text = read_file_str(user_path_obj.endeavor_file)
+	print("endeavor_text:", endeavor_text)
+	return [ Endeavor(e_str, user_path_obj) for e_str in endeavor_text.split()]
 
 
 def path_file_join(p, f):
@@ -175,3 +218,13 @@ def get_prior_dir(search_dir):
 
 	year_str = '{:04d}'.format(year_int)
 	return os.path.join(base_path, year_str, mm)
+
+
+class Endeavor:
+	def __init__(self, name, a_user_path_obj):
+		self.name = name
+		self.dir_path = os.path.join(a_user_path_obj.endeavor_path, self.name)
+		self.story_list = get_file_names_by_pattern(self.dir_path, story_pat)
+
+	def __str__(self):
+		return "Endeavor name:{} stories:{}".format(self.name, str(self.story_list))
