@@ -32,12 +32,14 @@ support endeavor dirs story.txt
 
 directories named in endeavors file will be scanned for stories.
 # feature branch: endeavors
-/ - get a list of endeavor dirs
-d - sj_file_list_by_dir for each of the list of endeavor dirs.
-d - add all the tasks from those stories, just as if they were found in the journal.
+x - get a list of endeavor dirs
+x - sj_file_list_by_dir for each of the list of endeavor dirs.
+x - add all the tasks from those stories, just as if they were found in the journal.
 d - build a comparator to detect if a story is already in the backlog before adding.
  - keep it simple for now, just compare the self.top ignoring 
-	- the leader and trailing whitespsce
+	- the leader and trailing whitespace
+d - don't add tasks that are already in the journal
+ - process the journal first.
  - for now ignore incoming, favoring support for edits in the journal.
 	- later support change detection via a hash attribute 
 		- or define a way to merge stories.
