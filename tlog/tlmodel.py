@@ -1,24 +1,25 @@
 #!/usr/local/bin/python3
 """
-There is allways a curent Section in a Document.
-There is allways a current Item in a Section.
+There is always a current Section in a Document.
+There is always a current Item in a Section.
 
 If data is a section header, 
 and 
-	if the curent section is empty, use it
-	else make a new curent section with the data.
+	if the current section is empty, use it
+	else make a new current section with the data.
 If data is an item header other than 'do', 
-	add it to the curent section.
+	add it to the current section.
 	adding an item to a Section will:
-		if the curent item is empty, use it.
-		else make a new curent Item with the data.
-		return a new curent_item
+		if the current item is empty, use it.
+		else make a new current Item with the data.
+		return a new current_item
 else if data is a 'do' item header 
 	add it to the backlog Section
 else 
 
-""" 
-#import pdb
+"""
+import base64
+import hashlib
 import re
 
 class TLogInternalException(Exception):
@@ -178,6 +179,7 @@ class Section:
 		#print("sec_in_progs:" + ",".join(map(str, sec_in_progs) ))
 		return sec_in_progs 
 
+
 class TLAttribute:
 	"T Log Attribute"
 	delim = ':'
@@ -190,7 +192,7 @@ class TLAttribute:
 
 	@classmethod
 	def fromline(cls, data):
-		"Create an atribute from a data line.  (e. g. a string read from a file)"
+		"Create an attribute from a data line.  (e. g. a string read from a file)"
 		attmo = TLAttribute.attr_pat.match(data) # return attribute match object
 		if attmo:
 			return TLAttribute(attmo.group(1), attmo.group(2))
@@ -235,6 +237,9 @@ class Item:
 	not_do_str = "|".join([done_str, in_progress_str, unfinished_str])
 	not_do_pat = re.compile(not_do_str)
 
+	leader_group_str = "(" + head_str + ")"
+	title_group_str = r"\s*(.*\S)\s*$"
+	top_parser_pat = re.compile(leader_group_str + title_group_str)
 
 	def __init__(self, data = None, subs = None, attrs = None):
 		self.top = ""
@@ -243,9 +248,10 @@ class Item:
 		if data:
 			self.add_line(data)
 
-	# todo use throw an error in Item if match Section.head_pat
+	# todo throw an error in Item if match Section.head_pat
 	#  using this method to put ^# lines in an item would be confusing.
-	#
+	#  (in normal document creation, ^# lines would be the header in the
+	#  Section, and would never be inserting ito an Item in the Section)
 	@classmethod
 	def fromtext(cls, text):
 		"""create an Item from multiline text parameter"""
@@ -273,9 +279,32 @@ class Item:
 		"Set Item attributes given akey and aval"
 		self.attribs[akey] = TLAttribute(akey, aval)
 
+	def get_title(self):
+		"""
+		The title is the top without any task type leader or trailing whitespace
+		"""
+		topmo = Item.top_parser_pat.match(self.top) # return top match object
+		if topmo:
+			return topmo.group(2)
+		else:
+			return None
+
+	# https://stackoverflow.com/questions/2510716/short-python-alphanumeric-hash-with-minimal-collisions
+	def get_title_hash(self):
+		"""returns a hash of the title if there is a title
+		otherwise returns an empty string"""
+		my_title = self.get_title()
+		if my_title:
+			my_bytes = my_title.encode('utf-8')
+			md5_of_bytes = hashlib.md5(my_bytes)
+			hex_digest_of_md5_of_byte_encode_of_title = md5_of_bytes.hexdigest()
+			print("hex md5 title: {}".format(hex_digest_of_md5_of_byte_encode_of_title))
+			return hex_digest_of_md5_of_byte_encode_of_title
+		else:
+			return ''
 
 	def add_line(self, data):
-		"Add a line as either the top task, an attribute, or sub text"
+		"""Add a line as either the top task, an attribute, or sub text"""
 		if Item.head_pat.match(data):
 			self.top = data
 		else:

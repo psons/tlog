@@ -8,7 +8,7 @@ like deep copy when I add attribute support.  Updating the test
 input should break tests for things that do not support the new 
 input.
 """
-
+import base64
 import unittest
 from tlmodel import Item
 from tlmodel import Section
@@ -154,6 +154,63 @@ free text\
 		itest1 = itest.deep_copy()
 		self.assertEqual(str(itest), str(itest1))
 
+	def testGetItemTitle1(self):
+		"""get_title() base case with leader and title"""
+		leader = "d -"
+		title_in = "item with no sub lines!"
+		itest = Item("{}{}".format(leader, title_in))
+		title_out = itest.get_title()
+		# print("x{}x".format(itest.top))
+		# print("title_in:{} title_out:{}".format(title_in, title_out))
+		self.assertEqual(title_in, title_out)
+
+	def testGetItemTitle2(self):
+		"""get_title() with trailing whitespace to ignore in title"""
+		leader = "d -"
+		title_in = "item with no sub lines!"
+		itest = Item("{} {} ".format(leader, title_in)) # trailing white space
+		title_out = itest.get_title()
+		# print("x{}x".format(itest.top))
+		# print("title_in:{} title_out:{}".format(title_in, title_out))
+		self.assertEqual(title_in, title_out)
+
+	def testGetItemTitle3(self):
+		"""get_title() with leading white space to ignore in title"""
+		leader = "d -"
+		title_in = "item with no sub lines!"
+		itest = Item("{} {} ".format(leader, title_in)) # leading white space
+		title_out = itest.get_title()
+		# print("x{}x".format(itest.top))
+		# print("title_in:{} title_out:{}".format(title_in, title_out))
+		self.assertEqual(title_in, title_out)
+
+	def testGetItemTitle4(self):
+		"""get_title() with only white space in title"""
+		leader = "d -"
+		title_in = ""
+		expected = None
+		itest = Item("{}{} ".format(leader, title_in))
+		title_out = itest.get_title()
+		print("x{}x".format(itest.top))
+		print("title_in:{} title_out:{} expected:{}".format(
+			title_in, title_out, expected))
+		self.assertEqual(expected, title_out)
+
+	def testGetItemTitleHash1(self):
+		"""Base case"""
+		leader = "d -"
+		title_in = "item with no sub lines!"
+		itest = Item("{} {} ".format(leader, title_in)) # leading white space
+		t_hash = itest.get_title_hash()
+		self.assertEqual(t_hash, 'f3ebd9014f32ae9890fd170e5b30d7ba')
+
+	def testGetItemTitleHash2(self):
+		"""empty title should return empty string for hash"""
+		leader = "d -"
+		title_in = ""
+		itest = Item("{} {} ".format(leader, title_in)) # leading white space
+		t_hash = itest.get_title_hash()
+		self.assertEqual('', t_hash)
 
 	def testItemNoSub(self):
 		out = "d - item with no sub lines!"

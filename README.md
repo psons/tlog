@@ -38,11 +38,15 @@ x - add all the tasks from those stories, just as if they were found in the jour
 d - build a comparator to detect if a story is already in the backlog before adding.
  - keep it simple for now, just compare the self.top ignoring 
 	- the leader and trailing whitespace
+x - Item get title and tile hash
 d - don't add tasks that are already in the journal
  - process the journal first.
  - for now ignore incoming, favoring support for edits in the journal.
 	- later support change detection via a hash attribute 
 		- or define a way to merge stories.
+		Stories need to be built into Document objects,
+		    then merge the story backlog into the journal backlog
+d - remake the testuser1.ta with the stories renames .txt to .md.
 		
 		
 # Project notes
