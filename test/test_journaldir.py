@@ -69,6 +69,8 @@ class TestUserPaths(TestCase):
 
 	def testUserPathConstructor(self):
 		"doesn't really test anything, but can run a asegment of code for debugging"
+		# may require JOURNAL_PATH set to run, such as
+		#  JOURNAL_PATH=/Users/paulsons/dev/tl2/testuser/testjournal
 		user_path_object = journaldir.UserPaths()
 		print(str(user_path_object))
 		self.assertEqual("pass", "pass")

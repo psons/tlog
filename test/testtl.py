@@ -368,9 +368,9 @@ AnAttributeName: the Attribute Value\
 
 	def testSectionWithNoBody(self):
 		out = """\
-#Section with no body\
+#Section with no body_items\
 """
-		stest = Section("#Section with no body")
+		stest = Section("#Section with no body_items")
 		self.assertEqual(str(stest), out)
 
 	def testSectionInProgItem(self):

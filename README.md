@@ -38,6 +38,7 @@ x - add all the tasks from those stories, just as if they were found in the jour
 d - build a comparator to detect if a story is already in the backlog before adding.
  - keep it simple for now, just compare the self.top ignoring 
 	- the leader and trailing whitespace
+d - Item someItem.titleIsSame(anotherItem)
 x - Item get title and tile hash
 d - don't add tasks that are already in the journal
  - process the journal first.
@@ -47,7 +48,28 @@ d - don't add tasks that are already in the journal
 		Stories need to be built into Document objects,
 		    then merge the story backlog into the journal backlog
 d - remake the testuser1.ta with the stories renames .txt to .md.
-		
+
+# more merge logic:
+1. Generate a Document from the Journal Dir
+2. Generate a Document from the Endeavors
+3. Iterate through the Endeavors Backlog
+    - set the saved_hash as an attribute from the title_hash 
+        in each item in the Endeavors backlog.
+        (Must Always store a hash when a backlog story gets put 
+        into the journal.)
+x - implement item save_title_hash()
+/ - implement _get_saved_title_hash()
+    - do this as a read only property, similar name in the Document class?
+        - return None if it hasn't been saved.
+    - need to keep code readable difference between calculated and saved title hash.
+/ - test for item save_title_hash() and get_saved_title_hash()
+d - implement matchesSavedTitleHash(anItem)
+    - compare the title_hash from Endeavor Items to saved hash In Journal Items
+        d - might want to write  Document method is_in_backlog()
+            alternately, caller can just access the backlog and call the 
+            Section hasItem().  Better for Document to have method add_merge(anItem)
+d - need Section hasItem()
+        add the item if the has 
 		
 # Project notes
 Add more explanatory notes about the project.

@@ -37,7 +37,7 @@ class Section:
 	def __init__(self, data = None):
 		self.current_item = Item()
 		self.header = ""
-		self.body = [ self.current_item ]
+		self.body_items = [self.current_item]
 		if data:
 			self.add_line(data)
 
@@ -46,31 +46,32 @@ class Section:
 		Makes a copy where
 		 - the header element refers to the same header string, which is ok
 		   because strings are immutable
-		 - the each element in the body is deep copied to a new list.
+		 - the each element in the body_items is deep copied to a new list.
 		 - the attribute dictionary is copied to a new dict
 		"""
 		return Section.fromtext(str(self))
 
-
+	# todo create Item get attrib.
+	#  Item does not have attrib getter leaving implementation exposed here.
 	def get_attrib(self, key):
 		"""
 		return section attribute matching key, or None
 		The Section attributes are the attribs in the first Item (index 0) 
-		on the body list, only if that Item has no text in its 'top' member. 
+		on the body_items list, only if that Item has no text in its 'top' member.
 		"""
-		if len(self.body[0].top) == 0:
-			if  key in self.body[0].attribs:
-				return self.body[0].attribs[key]
+		if len(self.body_items[0].top) == 0:
+			if  key in self.body_items[0].attribs:
+				return self.body_items[0].attribs[key]
 		return None
 
 	def set_attrib(self, akey, aval):
-		"Set Section attributes by putting then in an otherwise empty first Item in the body"
-		if self.body[0].is_attrib_only():
-			self.body[0].set_attrib(akey, aval)
+		"Set Section attributes by putting them in an otherwise empty first Item in the body_items"
+		if self.body_items[0].is_attrib_only():
+			self.body_items[0].set_attrib(akey, aval)
 		else:
 			i = Item()
 			i.set_attrib(akey, aval)
-			self.body.insert(0, i)
+			self.body_items.insert(0, i)
 
 
 	@classmethod
@@ -95,7 +96,7 @@ class Section:
 			else:
 				if Item.head_pat.match(data):
 					self.current_item = Item(data) #new Item
-					self.body.append(self.current_item) #add to section body
+					self.body_items.append(self.current_item) #add to section body_items
 				else:
 					#print("gotta add the data to curent item in section")
 					self.current_item.add_line(data)
@@ -104,24 +105,24 @@ class Section:
 	def add_item(self, arg_item):
 		if type(arg_item) is Item:
 			need_append = True   
-			for body_item in self.body:
+			for body_item in self.body_items:
 				if body_item.top == arg_item.top:
 					body_item.subs = list(arg_item.subs)
 					need_append = False
 
 			if need_append:
-				self.body.append(arg_item)
+				self.body_items.append(arg_item)
 		else:
 			raise TLogInternalException("Section.add_item was given a non-Item")
 
 	def str_body(self):
 		"""
-		Returns body items as a string.
+		Returns body_items items as a string.
 		Prevents adding an extra newline if there is an empty Item.
 		"""
 		aString = ""
-		#print("DEBUG str(self.body):" + str(self.body))
-		for item in self.body:
+		#print("DEBUG str(self.body_items):" + str(self.body_items))
+		for item in self.body_items:
 			if aString and not item.is_empty():
 				aString += "\n"    # some markdowns want 2 '\n' here.
 			if not item.is_empty():
@@ -142,25 +143,32 @@ class Section:
 		"""
 		if self.header != "":
 			return False
-		for item in self.body[0:1]: # just first Item
+		for item in self.body_items[0:1]: # just first Item
 			if not item.is_attrib_only():
 				return False
-		for item in self.body[1:]: # after first  Item
+		for item in self.body_items[1:]: # after first  Item
 			if not item.is_empty():
 				return False
 		return True
 
-
 	def is_empty(self):
-		"return true if no header or the body list contains only empty Items"
+		"""return true if no header or the body_items list contains only empty Items"""
 		if self.header != "":
 			return False
 
-		for item in self.body:
+		for item in self.body_items:
 			if not item.is_empty():
 				return False
 	
 		return True 
+
+	# def has_item(self, an_item):
+	# 	for item in self.body_items:
+	# 		if not item.is_empty():
+	# 			return False
+	#
+	# 	return True
+
 
 	def update_progress(self):
 		"""
@@ -171,7 +179,7 @@ class Section:
 		"""
 		#print("in Section:" + self.header)
 		sec_in_progs = []
-		for item in self.body:
+		for item in self.body_items:
 			if Item.in_progress_pat.match(item.top):
 				#print("\titem top:" + item.top)
 				sec_in_progs.append(item.deep_copy())
@@ -240,6 +248,7 @@ class Item:
 	leader_group_str = "(" + head_str + ")"
 	title_group_str = r"\s*(.*\S)\s*$"
 	top_parser_pat = re.compile(leader_group_str + title_group_str)
+	title_hash_attr_str = "titleHash"
 
 	def __init__(self, data = None, subs = None, attrs = None):
 		self.top = ""
@@ -279,6 +288,10 @@ class Item:
 		"Set Item attributes given akey and aval"
 		self.attribs[akey] = TLAttribute(akey, aval)
 
+	def get_attrib_holder(self, akey):
+		"Get Item attrib for key, returning TLAttribute object that has both key and val"
+		return self.attribs[akey]
+
 	def get_title(self):
 		"""
 		The title is the top without any task type leader or trailing whitespace
@@ -303,6 +316,16 @@ class Item:
 		else:
 			return ''
 
+	def save_title_hash(self):
+		"""Saves the hash of the title as an attribute so title can be edited
+		 without loosing the ability to match an incoming story task with the active
+		 journal."""
+		self.set_attrib(Item.title_hash_attr_str, self.get_title_hash())
+
+	def get_saved_title_hash(self):
+		"""gets the saved attribute title hash, which can differ from the get_title_hash() """
+		return getattr()
+
 	def add_line(self, data):
 		"""Add a line as either the top task, an attribute, or sub text"""
 		if Item.head_pat.match(data):
@@ -322,12 +345,12 @@ class Item:
 		return Item(data = self.top, subs = list(self.subs), attrs = dict(self.attribs))
 
 	def is_empty(self):
-		"return true if no header or body, else return false."
+		"return true if no header or body_items, else return false."
 		boolean_return_of_Item_is_empty = (not self.top) and (not len(self.subs)) and (not len(self.attribs))
 		return boolean_return_of_Item_is_empty
 
 	def is_attrib_only(self):
-		"return true if no header or body, else return false."
+		"return true if no header or body_items, else return false."
 		boolean_return_of_is_attrib_only = (not self.top) and  (not len(self.subs))
 		return boolean_return_of_is_attrib_only
 
@@ -431,7 +454,7 @@ class Document:
 			else:
 				prev_line_blank = False
 
-			data  = line.rstrip("\n") # todo: fix: stripping newline off blank line makes it not get in body.
+			data  = line.rstrip("\n") # todo: fix: stripping newline off blank line makes it not get in body_items.
 			#print("add_lines data:" + data)
 			self.add_line(data)
 
