@@ -95,7 +95,7 @@ class Section:
 					self.current_item = Item(data) #new Item
 					self.body_items.append(self.current_item) #add to section body_items
 				else:
-					#print("gotta add the data to curent item in section")
+					#print("gotta add the data to current item in section")
 					self.current_item.add_line(data)
 		return self.current_item
 
@@ -103,6 +103,8 @@ class Section:
 		if type(arg_item) is Item:
 			need_append = True   
 			for body_item in self.body_items:
+				# todo this is partly like the merge logic needed.  If the "top"
+				#  matches, it replaces the sub items.
 				if body_item.top == arg_item.top:
 					body_item.subs = list(arg_item.subs)
 					need_append = False
@@ -159,13 +161,33 @@ class Section:
 	
 		return True 
 
-	# def has_item(self, an_item):
-	# 	for item in self.body_items:
-	# 		if not item.is_empty():
-	# 			return False
-	#
-	# 	return True
+	def save_item_title_hashes(self):
+		for item in self.body_items:
+			if not item.is_attrib_only():
+				item.save_title_hash()
 
+	def add_merge_item(self, other_item):
+		"""
+		Do this by title hash.  If the item is already included, it came from a story
+		and has a title hash
+		:param other_item:
+		:return:
+		"""
+		match_existing_found = False
+		for item in self.body_items:
+			item_sth = item.get_saved_title_hash()
+			if item_sth:
+				if item_sth == other_item.get_title_hash():
+					# todo implement an item merge to call from here
+					print("matching hashes found. todo Need to do detailed item merge to update existing")
+					match_existing_found = True
+		if not match_existing_found:
+			print("adding item:\n", str(other_item) )
+			self.add_item(other_item)
+
+
+	# def has_item(self, an_item):
+	# 	for item in ...
 
 	def update_progress(self):
 		"""
@@ -209,20 +231,7 @@ class TLAttribute:
 
 class Item:
 	"""
-	todo - move this documentation to the Document class
-	Any thing beginning with d, D, x, X, /, \ followed by bullet list should be
-	kept together.  
-		d, D - represent do, and get added to the document.backlog
-		x, x - represent complete and get added to the curent Section
-		/, \ - represent in progress, and get added to the 
-				document.in_progres copied to u - and added to the curent 
-				section
-	Any line not that is not a Section or Item header gets added to the 
-	current Item. 
-
-	Support multiline backlog items.
-	in_progress items beginning with /, \ will stay with section and be copied 
-	to the in_progress list.
+	See documentation for the Document class
 	"""
 	done_str = "^[xX] *-"
 	done_pat = re.compile(done_str)
@@ -424,6 +433,23 @@ class Document:
 	initially named '#In progress' to represent tasks planned for the next day or
 	week, or agile sprint, or whatever period.
 
+	Any line beginning with d, D, x, X, /, \ is a task line.
+		d, D - represent 'do' tasks, and get added to the document.backlog
+		x, x - represent complete tasks and get added to the current Section
+		/, \ - represent in progress tasks, and get added to the
+				document.in_progress section with a copy changed to
+				u - (unfinished) and added to the current section
+	If a task line is followed by lines that are a bullet list, or free text,
+	the additional lines should be kept together as paryt of the task Item object.
+
+	Any line not that is not a Section or Item header gets added to the
+	current Item.
+
+	Items that begin a section, sometimes do not have a task line
+
+	Support multiline backlog items.
+	in_progress items beginning with /, \ will stay with section and be copied
+	to the in_progress list.
 	"""
 
 	defautInProgHead = "#In progress"
@@ -611,6 +637,12 @@ class Document:
 		else:
 			self.journal = []
 
+	def generate_backlog_title_hashes(self):
+		self.backlog.save_item_title_hashes()
+
+	def merge_backlog(self, other_backlog_section: Section):
+		for item in other_backlog_section.body_items:
+			self.backlog.add_merge_item(item)
 
 def	debExit(message = ""):
 	"This func just gets temporarily inserted for top down re checking of main()"
