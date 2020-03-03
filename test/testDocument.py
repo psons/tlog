@@ -174,28 +174,27 @@ d - put way misc paper tax files\
 		self.assertEqual(str(Document.fromtext(doc1_text)), doc1_text)
 
 	def testDocumentGetAttrib(self):
-		"Does get_attrib return a name and value for a Document attribute?"
-		attrib_l = TLAttribute.fromline(doc_attrib_line)
-		attrib_d = Document.fromtext(doc1_text).get_attrib(ad1)
-		self.assertEqual(attrib_d.value, attrib_l.value)
-		self.assertEqual(attrib_d.name, attrib_l.name)
+		"Does get_doc_attrib return a value for a Document attribute?"
+		val = Document.fromtext(doc1_text).get_doc_attrib(ad1)
+		self.assertEqual(vd1, val)
+
 
 	def testDocumentSetAttrib(self):
-		"Does set_attrib match get_attrib for a name and value for a Document attribute?"
+		"Does set_attrib match get_doc_attrib for a name and value for a Document attribute?"
 		d1 = Document.fromtext(testDocument.docIn)
 		d1.set_attrib(ad1, vd1)
-		attr = d1.get_attrib(ad1)
-		self.assertEqual(attr.value, vd1)
+		attr = d1.get_doc_attrib(ad1)
+		self.assertEqual(vd1, attr)
 
 	# todo modify this test to check for duplicat attribute in the un named section.
 	def testDocumentSecondSetAttrib(self):
-		"Does set_attrib match get_attrib for a name and value for a Document attribute?"
+		"Does set_attrib match get_doc_attrib for a name and value for a Document attribute?"
 		d1 = Document.fromtext(testDocument.docIn)
 		d1.set_attrib(ad1, vd1)
 		d1.set_attrib(ad1, vd2) # set it again
-		attr = d1.get_attrib(ad1)
+		attr = d1.get_doc_attrib(ad1)
 		#print("d1 is: ", d1)
-		self.assertEqual(attr.value, vd2)
+		self.assertEqual(vd2, attr)
 
 	def testDocumentNameProperty(self):
 		"Does assignment to adocument.doc_name work?"

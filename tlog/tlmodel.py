@@ -51,17 +51,14 @@ class Section:
 		"""
 		return Section.fromtext(str(self))
 
-	# todo create Item get attrib.
-	#  Item does not have attrib getter leaving implementation exposed here.
-	def get_attrib(self, key):
+	def get_section_attrib(self, key):
 		"""
 		return section attribute matching key, or None
 		The Section attributes are the attribs in the first Item (index 0) 
 		on the body_items list, only if that Item has no text in its 'top' member.
 		"""
 		if len(self.body_items[0].top) == 0:
-			if  key in self.body_items[0].attribs:
-				return self.body_items[0].attribs[key]
+			return self.body_items[0].get_item_attrib(key)
 		return None
 
 	def set_attrib(self, akey, aval):
@@ -247,6 +244,7 @@ class Item:
 
 	leader_group_str = "(" + head_str + ")"
 	title_group_str = r"\s*(.*\S)\s*$"
+	top_parser_str = leader_group_str + title_group_str
 	top_parser_pat = re.compile(leader_group_str + title_group_str)
 	title_hash_attr_str = "titleHash"
 
@@ -284,22 +282,40 @@ class Item:
 		else:
 			return None
 
+	def get_item_attrib(self, akey):
+		"""
+		return the value of the attribute object associated with akey
+		or None if it is not defined.
+		"""
+		attrib_obj = self.get_item_attrib_holder(akey)
+		if attrib_obj:
+			return attrib_obj.value
+		else:
+			return None
+
+
 	def set_attrib(self, akey, aval):
-		"Set Item attributes given akey and aval"
+		"""Set Item attributes given akey and aval"""
 		self.attribs[akey] = TLAttribute(akey, aval)
 
-	def get_attrib_holder(self, akey):
-		"Get Item attrib for key, returning TLAttribute object that has both key and val"
-		return self.attribs[akey]
+	def get_item_attrib_holder(self, akey):
+		"""Get Item attrib for key, returning TLAttribute object that has both key and val"""
+		if akey in self.attribs:
+			return self.attribs[akey]
+		else:
+			return None
 
 	def get_title(self):
 		"""
 		The title is the top without any task type leader or trailing whitespace
 		"""
-		topmo = Item.top_parser_pat.match(self.top) # return top match object
+		#print("regex string:" + Item.top_parser_str + ":")
+		item_top = self.top
+		topmo = Item.top_parser_pat.match(item_top) # return top match object
 		if topmo:
 			return topmo.group(2)
 		else:
+			#print("does not match:" + item_top + ":")
 			return None
 
 	# https://stackoverflow.com/questions/2510716/short-python-alphanumeric-hash-with-minimal-collisions
@@ -311,20 +327,35 @@ class Item:
 			my_bytes = my_title.encode('utf-8')
 			md5_of_bytes = hashlib.md5(my_bytes)
 			hex_digest_of_md5_of_byte_encode_of_title = md5_of_bytes.hexdigest()
-			print("hex md5 title: {}".format(hex_digest_of_md5_of_byte_encode_of_title))
+			# print("hex md5 title: {}".format(hex_digest_of_md5_of_byte_encode_of_title))
 			return hex_digest_of_md5_of_byte_encode_of_title
 		else:
 			return ''
 
 	def save_title_hash(self):
-		"""Saves the hash of the title as an attribute so title can be edited
-		 without loosing the ability to match an incoming story task with the active
-		 journal."""
+		"""
+		Saves the hash of the title as an attribute so title can be edited in the journal
+		without loosing the ability to match it with an incoming story task
+		"""
 		self.set_attrib(Item.title_hash_attr_str, self.get_title_hash())
 
+	# todo make saved title hash available as a read only property to
+	#  be consistent with notes in  Module and Object strategy.md
 	def get_saved_title_hash(self):
 		"""gets the saved attribute title hash, which can differ from the get_title_hash() """
-		return getattr()
+		return self.get_item_attrib(Item.title_hash_attr_str)
+
+	def title_hash_match(self):
+		"""returns True if the title and saved hash both exist and the hash of the
+		title matches saved hash"""
+		title = self.get_title()
+		if not title:
+			return False
+		sth = self.get_saved_title_hash()
+		if not sth:
+			return False
+		th = self.get_title_hash()
+		return th == sth
 
 	def add_line(self, data):
 		"""Add a line as either the top task, an attribute, or sub text"""
@@ -426,7 +457,7 @@ class Document:
 
 	def _get_doc_name(self):
 		"getter for doc_name"
-		return self.get_attrib(Document.dname_attr_str).value
+		return self.get_doc_attrib(Document.dname_attr_str)
 
 	def _set_doc_name(self, name):
 		"setter for doc_name"
@@ -494,14 +525,14 @@ class Document:
 		return new_document
 
 	# todo test this.
-	def get_attrib(self, key):
+	def get_doc_attrib(self, key):
 		"""
 		Return the Document attribute matching key, or None.
 		The Document attributes are the attributes of the first Section (index 0)
 		on the journal, only if that Section has no text in its 'header' member
 		"""
 		if len(self.journal[0].header) == 0:
-			return self.journal[0].get_attrib(key)
+			return self.journal[0].get_section_attrib(key)
 		else:
 			return None
 

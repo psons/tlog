@@ -47,10 +47,22 @@ dtask_sub1_line = " - sub item list item 1"
 dtask_sub2_line = " - sub item list item 2"
 dtask_text_line = "free text"
 
+# this gets computed in a test and is needed as an expected value
+dtask_saved_hash = "titleHash:9b35f4f8b4573f2c8239f0c49463f04f"
+
 dtask_item_text = "\n".join([dtask_line, item_attrib_line1, 
 	dtask_sub1_line, dtask_sub2_line, dtask_text_line])
 
-doc1_text = "\n".join( [doc_attrib_line, header_line, section_attrib_line, 
+dtask_item_text_w_saved_hash = "\n".join([dtask_line, item_attrib_line1,
+	dtask_saved_hash,
+	dtask_sub1_line, dtask_sub2_line, dtask_text_line])
+
+dtask_line_modified = "d - do task changed"
+dtask_item_text_w_saved_hash_modified_title = "\n".join([dtask_line_modified,
+	item_attrib_line1, dtask_saved_hash,
+	dtask_sub1_line, dtask_sub2_line, dtask_text_line])
+
+doc1_text = "\n".join( [doc_attrib_line, header_line, section_attrib_line,
 	xtask_line, xtask_sub_line, 
 	second_header_line, inprog_task_line,
 	dtask_line,dtask_sub1_line, dtask_sub2_line, dtask_text_line]
@@ -137,7 +149,7 @@ free text\
 		self.assertEqual(str(itest), out)
 
 	def testFullBlownItem(self):
-		"A full blown item can be created from text and converrted back to the same string."
+		"A full blown item can be created from text and converted back to the same string."
 		itest = Item.fromtext(dtask_item_text)
 		self.assertEqual(str(itest), dtask_item_text)
 
@@ -191,9 +203,9 @@ free text\
 		expected = None
 		itest = Item("{}{} ".format(leader, title_in))
 		title_out = itest.get_title()
-		print("x{}x".format(itest.top))
-		print("title_in:{} title_out:{} expected:{}".format(
-			title_in, title_out, expected))
+		# print("x{}x".format(itest.top))
+		# print("title_in:{} title_out:{} expected:{}".format(
+		# 	title_in, title_out, expected))
 		self.assertEqual(expected, title_out)
 
 	def testGetItemTitleHash1(self):
@@ -211,6 +223,40 @@ free text\
 		itest = Item("{} {} ".format(leader, title_in)) # leading white space
 		t_hash = itest.get_title_hash()
 		self.assertEqual('', t_hash)
+
+	def testSaveItemTitleHash1(self):
+		"""Saved title hash matches expected"""
+		itest = Item.fromtext(dtask_item_text)
+		itest.save_title_hash()
+		saved_hash = itest.get_saved_title_hash()
+		#print("itest:\n", itest)
+		#print("dtask_item_text_w_saved_hash:" + dtask_item_text_w_saved_hash)
+		self.assertEqual('9b35f4f8b4573f2c8239f0c49463f04f', saved_hash)
+
+	def testSaveItemModifiedTitleHash1(self):
+		"""
+		Saved title hash with modified title is detectable
+		Simulates detection of when a user has modified a task title that came in
+		from a story file
+		"""
+		itest = Item.fromtext(dtask_item_text_w_saved_hash_modified_title)
+		# hash is in the saved input
+		#print("itest:\n", itest)
+		#print("dtask_item_text_w_saved_hash (unmodified) :" + dtask_item_text_w_saved_hash)
+		# todo fix test
+		self.assertEqual(False, itest.title_hash_match())
+
+	def testSaveItemUnodifiedTitleHash1(self):
+		"""
+		Saved title hash with modified title is detectable
+		Simulates detection of when a user has modified a task title that came in
+		from a story file
+		"""
+		itest = Item.fromtext(dtask_item_text_w_saved_hash)
+		# hash is in the saved input
+		# print("itest:\n", itest)
+		# print("dtask_item_text_w_saved_hash (unmodified) :\n" + dtask_item_text_w_saved_hash)
+		self.assertEqual(True, itest.title_hash_match())
 
 	def testItemNoSub(self):
 		out = "d - item with no sub lines!"
@@ -237,15 +283,33 @@ free text\
 		itest.in_prog_2_unfin()
 		self.assertTrue(Item.unfinished_pat.match(itest.top))
 
+	def testItemSetAttribGetAttribSymmetry(self):
+		"""Item get_item_attrib / set_attrib symmetry"""
+		itest = Item()
+		itest.set_attrib(ai1, vi1)
+		self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
+
+
+	def testItemGetAttribNone1(self):
+		"""Item get_item_attrib should return None of the key is not present"""
+		itest = Item()
+		self.assertEqual(itest.get_item_attrib(ai1), None)
+
+
+	def testItemGetAttribNone2(self):
+		"""Item get_item_attrib should return None of the key is not present"""
+		itest = Item(dtask_line)
+		self.assertEqual(itest.get_item_attrib(ai1), None)
+
 	def testItemAttrib(self):
 		itest = Item(item_attrib_line1)
-		self.assertEqual(str(itest.attribs[ai1].value), vi1)
+		self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
 
 	def testItem2Attribs(self):
 		itest = Item(item_attrib_line1)
 		itest.add_line(item_attrib_line2)
-		self.assertEqual(str(itest.attribs[ai1].value), vi1)
-		self.assertEqual(str(itest.attribs[ai2].value), vi2)
+		self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
+		self.assertEqual(str(itest.get_item_attrib(ai2)), vi2)
 
 	def testItem2AttribsStr(self):
 		"Does attribs_str work for a 2 attribute Item?"
@@ -320,24 +384,24 @@ AnAttributeName: the Attribute Value\
 	def testSectionGetAttributeNone(self):
 		"Does Section get_attribute return None if the first Item has a top?"
 		stest = Section.fromtext(sec_attrib_wrong)
-		self.assertEqual(stest.get_attrib(as1), None)
+		self.assertEqual(stest.get_section_attrib(as1), None)
 
 	def testSectionGetAttribute(self):
 		"Does Section get_attribute return the attribute?"
 		stest = Section.fromtext(sec_w_attrib)
-		self.assertEqual(stest.get_attrib(as1).value, vs1)
+		self.assertEqual(vs1, stest.get_section_attrib(as1))
 
 	def testSectionSetAttributeNew(self):
 		"Does set_attribute add a new attribute"
 		stest = Section()
 		stest.set_attrib(as1, vs1)
-		self.assertEqual(stest.get_attrib(as1).value, vs1)
+		self.assertEqual(vs1, stest.get_section_attrib(as1))
  
 	def testSectionSetAttributeReplace(self):
 		"Does set_attribute update an existing attribute?"
 		stest = Section.fromtext(sec_w_attrib)
 		stest.set_attrib(as1, vs2	)
-		self.assertEqual(stest.get_attrib(as1).value, vs2)
+		self.assertEqual(vs2, stest.get_section_attrib(as1))
 
 	def testSectionSetAttributeAdd(self):
 		"""
@@ -346,7 +410,7 @@ AnAttributeName: the Attribute Value\
 		"""
 		stest = Section.fromtext(sec_w_attrib)
 		stest.set_attrib(as2, vs2)
-		self.assertEqual(stest.get_attrib(as2).value, vs2)
+		self.assertEqual(vs2, stest.get_section_attrib(as2))
 
 	def testSectionSetAttributeWithItem(self):
 		"""
@@ -354,13 +418,13 @@ AnAttributeName: the Attribute Value\
 		"""
 		stest = Section.fromtext(sec_two_items)
 		stest.set_attrib(as2, vs2)
-		self.assertEqual(stest.get_attrib(as2).value, vs2)
+		self.assertEqual(vs2, stest.get_section_attrib(as2))
 
 
 	def testSectionGetAttributeNotFound(self):
 		"Does Section get_attribute for a key that is not present return None?"
 		stest = Section.fromtext(sec_w_attrib)
-		self.assertIs(stest.get_attrib("wrongKey"), None)
+		self.assertIs(stest.get_section_attrib("wrongKey"), None)
 
 	def testSectionWith2Items(self):
 		stest = Section.fromtext(sec_two_items)

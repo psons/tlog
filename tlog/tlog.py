@@ -63,7 +63,8 @@ jdir - treat the next argment to tlog as the journal_dir.
 my_journal_dir = journaldir.journal_dir
 
 user_paths = journaldir.UserPaths()
-# todo read endeavors here.  file should be "type	name" such as dir dirname
+
+# More advanced versions of endeavor file format later.
 # should treat the jdir as the journal dir: stories and a journal
 endeavor_list = journaldir.load_endeavors(user_paths)
 print("endeavor_list: \n", " \n ".join([str(e) for e in endeavor_list]),)

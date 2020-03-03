@@ -58,9 +58,11 @@ d - remake the testuser1.ta with the stories renames .txt to .md.
         (Must Always store a hash when a backlog story gets put 
         into the journal.)
 x - implement item save_title_hash()
-/ - implement _get_saved_title_hash()
-    - do this as a read only property, similar name in the Document class?
+x - implement get_saved_title_hash()
+    / - do this as a read only property, similar name in the Document class?
         - return None if it hasn't been saved.
+    a - Do later Document, Section, and Item should have python 'properties' 
+      for the attributes they support.
     - need to keep code readable difference between calculated and saved title hash.
 / - test for item save_title_hash() and get_saved_title_hash()
 d - implement matchesSavedTitleHash(anItem)
