@@ -337,7 +337,7 @@ class Item:
 			md5_of_bytes = hashlib.md5(my_bytes)
 			hex_digest_of_md5_of_byte_encode_of_title = md5_of_bytes.hexdigest()
 			# print("hex md5 title: {}".format(hex_digest_of_md5_of_byte_encode_of_title))
-			return hex_digest_of_md5_of_byte_encode_of_title
+			return hex_digest_of_md5_of_byte_encode_of_title[0:10]
 		else:
 			return ''
 
@@ -354,7 +354,7 @@ class Item:
 		"""gets the saved attribute title hash, which can differ from the get_title_hash() """
 		return self.get_item_attrib(Item.title_hash_attr_str)
 
-	def title_hash_match(self):
+	def title_matches_hash(self):
 		"""returns True if the title and saved hash both exist and the hash of the
 		title matches saved hash"""
 		title = self.get_title()

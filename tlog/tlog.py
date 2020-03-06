@@ -1,5 +1,8 @@
 #!/usr/local/bin/python3
 """
+2020-03-06: Evolving toward a memory data structure built of collections of Document
+Objects.  Stories read from Endeavor files, for example.
+
 First, read and classify each input line as one or more of:
  - a mark down heading for a new Section
  - a task line to create a new Item to add to the list under the 

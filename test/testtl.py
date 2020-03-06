@@ -244,7 +244,7 @@ free text\
 		#print("itest:\n", itest)
 		#print("dtask_item_text_w_saved_hash (unmodified) :" + dtask_item_text_w_saved_hash)
 		# todo fix test
-		self.assertEqual(False, itest.title_hash_match())
+		self.assertEqual(False, itest.title_matches_hash())
 
 	def testSaveItemUnodifiedTitleHash1(self):
 		"""
@@ -256,7 +256,7 @@ free text\
 		# hash is in the saved input
 		# print("itest:\n", itest)
 		# print("dtask_item_text_w_saved_hash (unmodified) :\n" + dtask_item_text_w_saved_hash)
-		self.assertEqual(True, itest.title_hash_match())
+		self.assertEqual(True, itest.title_matches_hash())
 
 	def testItemNoSub(self):
 		out = "d - item with no sub lines!"
