@@ -182,7 +182,7 @@ class Section:
 					print("matching hashes found. todo Need to do detailed item merge to update existing")
 					match_existing_found = True
 		if not match_existing_found:
-			print("adding item:\n", str(other_item) )
+			#print("adding item:\n", str(other_item) )
 			self.add_item(other_item)
 
 
@@ -491,6 +491,17 @@ class Document:
 
 	doc_name = property(_get_doc_name, _set_doc_name)
 
+	max_tasks_attr_str = "maxTasks"
+	def _get_max_tasks(self):
+		"getter for maxTasks"
+		return self.get_doc_attrib(Document.max_tasks_attr_str)
+
+	def _set_max_tasks(self, max):
+		"setter for doc_name"
+		self.set_attrib(Document.max_tasks_attr_str, max)
+
+	max_tasks = property(_get_max_tasks, _set_max_tasks)
+
 	# todo - need tests for this
 	def add_lines(self, r_lines):
 		"""
@@ -585,8 +596,46 @@ class Document:
 		"Return the in_progress section as a string."
 		return str(self.in_progress)
 
+	# this works as expected, but the list is hard to deal with in tlog, so
+	#  I'm replacing it with somthing that returns a string
+	#  New approach is to favor tlog only knowing about documents,
+	#  and doing operations on documents.  Already have a merge
+	#  backlog operation, so to complement that, a method should
+	#  return a document with
+	#  a truncated backlog.  Maybe separately I'll need a copy
+	#  constructor, but for now, I'll just truncate the backlog
+	# todo check to see if this is still used.
+	def get_backlog_list(self, num_tasks=-1):
+		"""Typically the caller will pass in the self.max_tasks value,
+		or take the default -1 indicating all tasks
+		:return num_tasks entries from the backlog task list
+		"""
+		num_tasks = int(num_tasks)
+		if num_tasks == -1:
+			return self.backlog
+		if len(self.backlog.body_items) >= num_tasks:
+			return self.backlog.body_items[0:num_tasks]
+		else:
+			return self.backlog.body_items
+
+	# todo implement
+	def shorten_backlog(self, num_tasks=None):
+		"""
+		discard tasks in the backlog beyond num_tasks
+		If max_tasks is set and num_tasks is not provided,
+		use max_tasks as the number of tasks to keep.
+		If neither is provided, keep all tasks.
+		"""
+		max_t = self.max_tasks or len(self.backlog.body_items)
+		num_t = num_tasks or max_t
+		num_t = int(num_t)
+		self.backlog.body_items = list(self.backlog.body_items[0:num_t])
+		pass
+		return self
+
+
 	def backlog_str(self):
-		"Retun the backlog section as a string"	
+		"""Return the backlog section as a string"""
 		return str(self.backlog)
 
 	def __str__(self):
@@ -618,7 +667,7 @@ class Document:
 			# this Section might have 'x - ', and other Items
 			# that need to be preserved, as  for runs when user 
 			# has already completed some work for the day.
-			self.in_progres = journal_section
+			self.in_progres = journal_section  # todo: potential major bug in the variable misspelling here!
 			self.journal.remove(journal_section)
 		else:	
 			self.in_progress.add_line(in_prog_head)
@@ -641,8 +690,11 @@ class Document:
 		self.backlog.save_item_title_hashes()
 
 	def merge_backlog(self, other_backlog_section: Section):
-		for item in other_backlog_section.body_items:
-			self.backlog.add_merge_item(item)
+		if other_backlog_section:
+			for item in other_backlog_section.body_items:
+				self.backlog.add_merge_item(item)
+		else:
+			print("DEBUG warning: other_backlog_section is None merging into " + self.doc_name)
 
 def	debExit(message = ""):
 	"This func just gets temporarily inserted for top down re checking of main()"

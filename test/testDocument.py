@@ -2,9 +2,7 @@
 
 import unittest
 from tlmodel import Document
-from tlmodel import TLAttribute
 from testtl import doc1_text
-from testtl import doc_attrib_line
 from testtl import ad1
 from testtl import vd1
 from testtl import vd2
@@ -98,6 +96,20 @@ u - item with sub in progress
 
 	docInProgressOut = "\n".join( [ journalProgressOut, inProgressOut,
 									backlogOut])
+
+	small_story = """\
+maxTasks: 3
+d - start on the small story
+d - some more work on the small story
+d - refine the small story work
+d - finish the small story!\
+	"""
+
+	small_story_3_tasks = """\
+	d - start on the small story
+	d - some more work on the small story
+	d - refine the small story work\
+	"""
 
 	def testDocumentJournal(self):
 		text_lines = testDocument.docIn.split("\n")
@@ -203,6 +215,11 @@ d - put way misc paper tax files\
 		d1.doc_name = a_doc_name
 		self.assertEqual(d1.doc_name, a_doc_name)
 
+	def testDocumentMaxTasks(self):
+		small_story_doc = Document.fromtext(testDocument.small_story)
+		mt = small_story_doc.max_tasks
+		task_list = small_story_doc.get_backlog_list(mt)
+		self.assertEqual(mt, len(task_list))
 
 if __name__ == '__main__':
 	unittest.main()
