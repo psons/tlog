@@ -214,7 +214,7 @@ free text\
 		title_in = "item with no sub lines!"
 		itest = Item("{} {} ".format(leader, title_in)) # leading white space
 		t_hash = itest.get_title_hash()
-		self.assertEqual(t_hash, 'f3ebd9014f32ae9890fd170e5b30d7ba')
+		self.assertEqual(t_hash, 'f3ebd9014f')
 
 	def testGetItemTitleHash2(self):
 		"""empty title should return empty string for hash"""
@@ -231,7 +231,7 @@ free text\
 		saved_hash = itest.get_saved_title_hash()
 		#print("itest:\n", itest)
 		#print("dtask_item_text_w_saved_hash:" + dtask_item_text_w_saved_hash)
-		self.assertEqual('9b35f4f8b4573f2c8239f0c49463f04f', saved_hash)
+		self.assertEqual('9b35f4f8b4', saved_hash)
 
 	def testSaveItemModifiedTitleHash1(self):
 		"""

@@ -70,27 +70,14 @@ def load_doc_from_file(file_name):
 	file_text = journaldir.read_file_str(file_name)
 	return Document.fromtext(file_text)
 
+def shorten_stories(long_story_doc_list):
+	short_s_doc_list = [Document.fromtext(str(doc)) for doc in long_story_doc_list]
+	return [doc.shorten_backlog() for doc in short_s_doc_list]
+
 supported_commands = ["jdir"]
 """
 jdir - treat the next argment to tlog as the journal_dir.
 """
-
-# More advanced versions of endeavor file format later.
-# should treat the jdir as the journal dir: stories and a journal
-endeavor_list = journaldir.load_endeavors(user_paths)
-print("endeavor_list: \n", " \n ".join([str(e) for e in endeavor_list]),)
-
-# list of Documents from the story files.
-endeavor_story_doc_list = [load_doc_from_file(es_file) for e_list in endeavor_list for es_file in e_list.story_list]
-
-# copy the lists do I can truncate them to maxTasks
-short_story_doc_list = [Document.fromtext(str(doc)) for doc in endeavor_story_doc_list]
-[print("doc: " + str(doc)) for doc in short_story_doc_list]
-short_story_doc_list = [doc.shorten_backlog() for doc in short_story_doc_list]
-[print("short doc: " + str(short_story)) for short_story in short_story_doc_list]
-
-for short_story_doc in short_story_doc_list:
-	story_task_document.merge_backlog(short_story_doc.backlog)
 
 look_back_months = 24
 if len(sys.argv) < 2:
@@ -111,26 +98,27 @@ else:
 		j_file_list = []
 		print("(re) initializing Journal from stories:", s_file_list)
 
-# no longer needed for endeavor files, since tasks are contributed above.
-# for in_document_file in endeavor_story_file_list:
-# 	story_task_document.add_lines(fileinput.input(in_document_file))
+journal_story_doc_list = [load_doc_from_file(js_file) for js_file in s_file_list]
+short_j_story_doc_list = shorten_stories(journal_story_doc_list)
 
-for in_document_file in s_file_list:
-	story_task_document.add_lines(fileinput.input(in_document_file))
+# More advanced versions of endeavor file format later.
+# should treat the jdir as the journal dir: stories and a journal
+endeavor_list = journaldir.load_endeavors(user_paths)
+# print("endeavor_list: \n", " \n ".join([str(e) for e in endeavor_list]),)
+endeavor_story_doc_list = [load_doc_from_file(es_file) for e_list in endeavor_list for es_file in e_list.story_list]
+short_e_story_doc_list = shorten_stories(endeavor_story_doc_list)
 
+short_s_doc_list = short_j_story_doc_list + short_e_story_doc_list
+for short_story_doc in short_s_doc_list:
+	story_task_document.merge_backlog(short_story_doc.backlog)
 
 story_task_document.generate_backlog_title_hashes()
-print("The story task doc:\n", str(story_task_document) + '\n')
 
 for in_document_file in j_file_list:
 	journal_document.add_lines(fileinput.input(in_document_file))
 
 journal_document.make_in_progress("## " + journaldir.domth)
 journal_document.merge_backlog(story_task_document.backlog)
-
-print("The journal doc:\n", str(journal_document) + '\n')
-# print("journaldir.journal_dir", str(journaldir.journal_dir) )
-# print("journal_document.doc_name", str(journal_document.doc_name) )
 
 journal_document.doc_name=journaldir.cday_fname
 if my_journal_dir != prev_journal_dir:
