@@ -219,7 +219,7 @@ d - put way misc paper tax files\
 		small_story_doc = Document.fromtext(testDocument.small_story)
 		mt = small_story_doc.max_tasks
 		task_list = small_story_doc.get_backlog_list(mt)
-		self.assertEqual(mt, len(task_list))
+		self.assertEqual(int(mt), len(task_list))
 
 if __name__ == '__main__':
 	unittest.main()

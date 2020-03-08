@@ -48,7 +48,8 @@ dtask_sub2_line = " - sub item list item 2"
 dtask_text_line = "free text"
 
 # this gets computed in a test and is needed as an expected value
-dtask_saved_hash = "titleHash:9b35f4f8b4573f2c8239f0c49463f04f"
+#dtask_saved_hash = "titleHash:9b35f4f8b4573f2c8239f0c49463f04f"
+dtask_saved_hash = "titleHash:9b35f4f8b4"
 
 dtask_item_text = "\n".join([dtask_line, item_attrib_line1, 
 	dtask_sub1_line, dtask_sub2_line, dtask_text_line])
@@ -246,7 +247,7 @@ free text\
 		# todo fix test
 		self.assertEqual(False, itest.title_matches_hash())
 
-	def testSaveItemUnodifiedTitleHash1(self):
+	def testSaveItemUnModifiedTitleHash1(self):
 		"""
 		Saved title hash with modified title is detectable
 		Simulates detection of when a user has modified a task title that came in
@@ -254,6 +255,7 @@ free text\
 		"""
 		itest = Item.fromtext(dtask_item_text_w_saved_hash)
 		# hash is in the saved input
+		# print(itest.get_title_hash())
 		# print("itest:\n", itest)
 		# print("dtask_item_text_w_saved_hash (unmodified) :\n" + dtask_item_text_w_saved_hash)
 		self.assertEqual(True, itest.title_matches_hash())
