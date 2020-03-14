@@ -26,6 +26,7 @@ import sys
 my_journal_dir = journaldir.journal_dir
 
 user_paths = journaldir.UserPaths()
+user_paths.git_init_journal()
 
 journal_document = Document()
 journal_document.doc_name = journaldir.cday_fname
@@ -124,7 +125,7 @@ journal_document.doc_name=journaldir.cday_fname
 if my_journal_dir != prev_journal_dir:
 	print("Wil drop journal because it is from a back month")
 	journal_document.drop_journal()
-
+user_paths.git_add_all()
 journaldir.write_dir_file(str(journal_document) + '\n',
 						  journaldir.journal_dir, journal_document.doc_name)
 

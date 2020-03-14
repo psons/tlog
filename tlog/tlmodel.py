@@ -173,13 +173,16 @@ class Section:
 		:param other_item:
 		:return:
 		"""
+		# print("Checking to see if item is in Section ", self.header)
+		# print("Item is:", other_item.top)
 		match_existing_found = False
 		for item in self.body_items:
 			item_sth = item.get_saved_title_hash()
+			# print("Section:add_merge_item:self.item", item.top)
 			if item_sth:
 				if item_sth == other_item.get_title_hash():
 					# todo implement an item merge to call from here
-					print("matching hashes found. todo Need to do detailed item merge to update existing")
+					# print("matching hashes found. ")
 					match_existing_found = True
 		if not match_existing_found:
 			#print("adding item:\n", str(other_item) )

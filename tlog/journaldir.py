@@ -2,6 +2,9 @@
 import sys
 
 # journaldir.py
+from git import Repo
+from git import IndexFile
+
 """
 determine directory for journal files based on curent year and month.
 if invoked as script, print it to stdout so a shell alias can cd there.
@@ -52,17 +55,32 @@ class UserPaths:
 		else:
 			raise TaskSourceException(user_endeavor_dir + " for endeavors is not a directory")
 		self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
+		self.git_repo_obj = None
+
+	def git_init_journal(self):
+		print(self.journal_path)
+		self.git_repo_obj = make_git_repo(self.journal_path)
+
+	def git_add_all(self):
+		untracked = self.git_repo_obj.untracked_files
+		commit_message = ",".join(untracked)[0:50]
+		commit_message = "tlog commit"
+		journal_index: IndexFile = self.git_repo_obj.index
+		print(type(journal_index))
+		journal_index.commit(commit_message)
+		print("untracked", commit_message)
+		self.git_repo_obj.git.add('--all')
 
 	def __str__(self):
 		return "\n".join(["JournalPath: " + self.journal_path,
 						 "EndeavorFilePath: " + self.endeavor_file])
 
-def get_repos():
-	"""todo I think repos needs to change to endevors here."""
-	repos_file = os.path.expanduser('~') + "/.tlog/repos"
-	with open(repos_file) as f:
-		repos = f.read().splitlines()  # .filter(re.match'!^#', repos)
-	return repos
+# def get_repos():
+# 	"""todo I think repos needs to change to endevors here."""
+# 	repos_file = os.path.expanduser('~') + "/.tlog/repos"
+# 	with open(repos_file) as f:
+# 		repos = f.read().splitlines()  # .filter(re.match'!^#', repos)
+# 	return repos
 
 
 def get_file_names_by_pattern(dir_name, a_pattern):
@@ -81,22 +99,22 @@ def get_file_names_by_pattern(dir_name, a_pattern):
 	return matching_file_list
 
 
-def get_file_names(dir_name):
-	"Get the file names in dir_name that are not directories"
-
-	return_file_list = []
-	journal_file_list = []
-	for f in listdir(dir_name):
-		fqp = join(dir_name, f)
-		if isfile(fqp):
-			if journal_pat.match(f):
-				journal_file_list.append(fqp)
-			else:
-				return_file_list.append(fqp)
-	last_journal = sorted(journal_file_list)[-1]
-	# todo can do full list when I am tagging story under task
-	return_file_list.append(last_journal)
-	return return_file_list
+# def get_file_names(dir_name):
+# 	"Get the file names in dir_name that are not directories"
+#
+# 	return_file_list = []
+# 	journal_file_list = []
+# 	for f in listdir(dir_name):
+# 		fqp = join(dir_name, f)
+# 		if isfile(fqp):
+# 			if journal_pat.match(f):
+# 				journal_file_list.append(fqp)
+# 			else:
+# 				return_file_list.append(fqp)
+# 	last_journal = sorted(journal_file_list)[-1]
+# 	# todo can do full list when I am tagging story under task
+# 	return_file_list.append(last_journal)
+# 	return return_file_list
 
 
 dtn = datetime.datetime.now()
@@ -170,6 +188,13 @@ def write_simple(new_content, dir_name, doc_name):
 
 	print("New File: " + str(filepath))
 
+def make_git_repo(path):
+		new_rw_repo = Repo.init(path)
+		# new_rw_repo.config_reader()  # get a config reader for read-only access
+		with new_rw_repo.config_writer():  # get a config writer to change configuration
+			pass  # call release() to be sure changes are written and locks are released
+		print(new_rw_repo)
+		return new_rw_repo
 
 def init(aDir):
 	"""
@@ -188,7 +213,6 @@ if __name__ == "__main__":
 
 # print(dom + dayth_dict[dom])
 
-# todo implement this
 def get_prior_dir(search_dir):
 	"""search_dir ends with a path like somthing/yyyy/mm
 	then the pathname of the prior dir  will be returned"""
