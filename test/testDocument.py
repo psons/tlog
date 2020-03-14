@@ -192,18 +192,18 @@ d - put way misc paper tax files\
 
 
 	def testDocumentSetAttrib(self):
-		"Does set_attrib match get_doc_attrib for a name and value for a Document attribute?"
+		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
 		d1 = Document.fromtext(testDocument.docIn)
-		d1.set_attrib(ad1, vd1)
+		d1.set_doc_attrib(ad1, vd1)
 		attr = d1.get_doc_attrib(ad1)
 		self.assertEqual(vd1, attr)
 
 	# todo modify this test to check for duplicat attribute in the un named section.
 	def testDocumentSecondSetAttrib(self):
-		"Does set_attrib match get_doc_attrib for a name and value for a Document attribute?"
+		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
 		d1 = Document.fromtext(testDocument.docIn)
-		d1.set_attrib(ad1, vd1)
-		d1.set_attrib(ad1, vd2) # set it again
+		d1.set_doc_attrib(ad1, vd1)
+		d1.set_doc_attrib(ad1, vd2) # set it again
 		attr = d1.get_doc_attrib(ad1)
 		#print("d1 is: ", d1)
 		self.assertEqual(vd2, attr)

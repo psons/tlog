@@ -286,7 +286,7 @@ free text\
 		self.assertTrue(Item.unfinished_pat.match(itest.top))
 
 	def testItemSetAttribGetAttribSymmetry(self):
-		"""Item get_item_attrib / set_attrib symmetry"""
+		"""Item get_item_attrib / set_doc_attrib symmetry"""
 		itest = Item()
 		itest.set_attrib(ai1, vi1)
 		self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
@@ -396,13 +396,13 @@ AnAttributeName: the Attribute Value\
 	def testSectionSetAttributeNew(self):
 		"Does set_attribute add a new attribute"
 		stest = Section()
-		stest.set_attrib(as1, vs1)
+		stest.set_sec_attrib(as1, vs1)
 		self.assertEqual(vs1, stest.get_section_attrib(as1))
  
 	def testSectionSetAttributeReplace(self):
 		"Does set_attribute update an existing attribute?"
 		stest = Section.fromtext(sec_w_attrib)
-		stest.set_attrib(as1, vs2	)
+		stest.set_sec_attrib(as1, vs2)
 		self.assertEqual(vs2, stest.get_section_attrib(as1))
 
 	def testSectionSetAttributeAdd(self):
@@ -411,7 +411,7 @@ AnAttributeName: the Attribute Value\
 		already exists?
 		"""
 		stest = Section.fromtext(sec_w_attrib)
-		stest.set_attrib(as2, vs2)
+		stest.set_sec_attrib(as2, vs2)
 		self.assertEqual(vs2, stest.get_section_attrib(as2))
 
 	def testSectionSetAttributeWithItem(self):
@@ -419,7 +419,7 @@ AnAttributeName: the Attribute Value\
 		Does set_attribute add an attribute if there are Items in the Section? 
 		"""
 		stest = Section.fromtext(sec_two_items)
-		stest.set_attrib(as2, vs2)
+		stest.set_sec_attrib(as2, vs2)
 		self.assertEqual(vs2, stest.get_section_attrib(as2))
 
 

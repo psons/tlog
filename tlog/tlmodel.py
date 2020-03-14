@@ -61,7 +61,7 @@ class Section:
 			return self.body_items[0].get_item_attrib(key)
 		return None
 
-	def set_attrib(self, akey, aval):
+	def set_sec_attrib(self, akey, aval):
 		"Set Section attributes by putting them in an otherwise empty first Item in the body_items"
 		if self.body_items[0].is_attrib_only():
 			self.body_items[0].set_attrib(akey, aval)
@@ -394,7 +394,7 @@ class Item:
 
 	def is_attrib_only(self):
 		"return true if no header or body_items, else return false."
-		boolean_return_of_is_attrib_only = (not self.top) and  (not len(self.subs))
+		boolean_return_of_is_attrib_only = (not self.top) and (not len(self.subs))
 		return boolean_return_of_is_attrib_only
 
 	def attribs_str (self):
@@ -490,7 +490,7 @@ class Document:
 
 	def _set_doc_name(self, name):
 		"setter for doc_name"
-		self.set_attrib(Document.dname_attr_str, name)
+		self.set_doc_attrib(Document.dname_attr_str, name)
 
 	doc_name = property(_get_doc_name, _set_doc_name)
 
@@ -501,7 +501,7 @@ class Document:
 
 	def _set_max_tasks(self, max):
 		"setter for doc_name"
-		self.set_attrib(Document.max_tasks_attr_str, max)
+		self.set_doc_attrib(Document.max_tasks_attr_str, max)
 
 	max_tasks = property(_get_max_tasks, _set_max_tasks)
 
@@ -576,14 +576,14 @@ class Document:
 		else:
 			return None
 
-	def set_attrib(self, akey, aval):
+	def set_doc_attrib(self, akey, aval):
 		"Set Document attributes by putting them in an otherwise empty first Section in the journal"
 		if self.journal[0].is_attrib_section():
-		# Document set_attrib calling Section Set Attrib
-			self.journal[0].set_attrib(akey, aval )  
+		# Document set_doc_attrib calling Section Set Attrib
+			self.journal[0].set_sec_attrib(akey, aval)
 		else:
 			s = Section()
-			s.set_attrib(akey, aval)
+			s.set_sec_attrib(akey, aval)
 			self.journal.insert(0, s)
 
 	def journal_str(self):
