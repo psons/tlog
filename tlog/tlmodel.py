@@ -599,15 +599,8 @@ class Document:
 		"Return the in_progress section as a string."
 		return str(self.in_progress)
 
-	# this works as expected, but the list is hard to deal with in tlog, so
-	#  I'm replacing it with somthing that returns a string
-	#  New approach is to favor tlog only knowing about documents,
-	#  and doing operations on documents.  Already have a merge
-	#  backlog operation, so to complement that, a method should
-	#  return a document with
-	#  a truncated backlog.  Maybe separately I'll need a copy
-	#  constructor, but for now, I'll just truncate the backlog
 	# todo check to see if this is still used.
+	#  Its only used in a test.
 	def get_backlog_list(self, num_tasks=-1):
 		"""Typically the caller will pass in the self.max_tasks value,
 		or take the default -1 indicating all tasks
@@ -620,6 +613,10 @@ class Document:
 			return self.backlog.body_items[0:num_tasks]
 		else:
 			return self.backlog.body_items
+
+	def attribute_all_backlog_items(self, key, val):
+		for item in self.backlog.body_items:
+			item.set_attrib(key, val)
 
 	# todo implement
 	def shorten_backlog(self, num_tasks=None):

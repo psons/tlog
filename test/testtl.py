@@ -8,7 +8,6 @@ like deep copy when I add attribute support.  Updating the test
 input should break tests for things that do not support the new 
 input.
 """
-import base64
 import unittest
 from tlmodel import Item
 from tlmodel import Section
