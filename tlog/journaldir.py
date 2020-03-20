@@ -37,26 +37,23 @@ story_pat = re.compile('.*story.md')
 
 class UserPaths:
     """
-	Builds the useful data paths based on the documented structure:
-		journal_dir:
-			<< various year subdirectories >>
-				<< various month subdirectories >>
-			<< possibly the endeavor_dir location>>
-		endeavor_dir:
-			endeavors.md
-			<< various endeavor subdirectories >>
-				<< various *story.txt files containing task items >>
-	"""
-
+    Builds the useful data paths based on the documented structure:
+        journal_dir:
+        << various year subdirectories >>
+                << various month subdirectories >>
+        << possibly the endeavor_dir location>>
+    endeavor_dir:
+            endeavors.md
+            << various endeavor subdirectories >>
+                << various *story.txt files containing task items >>
+    """
     def __init__(self, user_journal_path=convention_journal_root, user_endeavor_dir=endeavor_dir):
         if os.path.isdir(user_journal_path):
             self.journal_path = user_journal_path
         else:
             raise TaskSourceException(user_journal_path + " for journals is not a directory")
-        if os.path.isdir(user_endeavor_dir):
-            self.endeavor_path = user_endeavor_dir
-        else:
-            raise TaskSourceException(user_endeavor_dir + " for endeavors is not a directory")
+        self.endeavor_path = user_endeavor_dir
+        # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
         self.git_repo_obj = None
 
@@ -69,10 +66,8 @@ class UserPaths:
         commit_message = ",".join(untracked)[0:50]
         commit_message = "tlog commit"
         journal_index: IndexFile = self.git_repo_obj.index
-        print(type(journal_index))
-        journal_index.commit(commit_message)
-        print("untracked", commit_message)
         self.git_repo_obj.git.add('--all')
+        journal_index.commit(commit_message)
 
     def __str__(self):
         return "\n".join(["JournalPath: " + self.journal_path,
@@ -94,12 +89,14 @@ def get_file_names_by_pattern(dir_name, a_pattern):
             matching_file_list.append(fqp)
     return matching_file_list
 
+
 class JournalDay:
     def __init__(self, ):
         pass
 
+
 class Daily:
-    def __init__(self, dt: datetime.datetime =None):
+    def __init__(self, dt: datetime.datetime = None):
         """
         Set some daily values needed in some names and labels
         :param dt: type: datetime.datetime
@@ -122,20 +119,20 @@ class Daily:
         self.jdir = os.path.join(convention_journal_root, yyyy, mm)
         self.cday_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
 
+
 def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
     # More advanced versions of endeavor file format later.
     endeavor_text = read_file_str(user_path_obj.endeavor_file)
     print("endeavor_text:", endeavor_text)
-    return [ StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
-              for e_str in endeavor_text.split()]
+    return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
+            for e_str in endeavor_text.split()]
 
 
 def load_endeavors_deprecated(user_path_obj):
     endeavor_text = read_file_str(user_path_obj.endeavor_file)
     print("endeavor_text:", endeavor_text)
     return [Endeavor_deprecated(e_str, user_path_obj) for e_str in endeavor_text.split()]
-
 
 
 def load_endeavor_stories_deprecated(user_path_obj):
@@ -198,7 +195,7 @@ def make_git_repo(path):
     # new_rw_repo.config_reader()  # get a config reader for read-only access
     with new_rw_repo.config_writer():  # get a config writer to change configuration
         pass  # call release() to be sure changes are written and locks are released
-    print(new_rw_repo)
+    # print(new_rw_repo)
     return new_rw_repo
 
 
@@ -268,7 +265,6 @@ class StoryDir:
             self.story_list = get_file_names_by_pattern(sdir, story_pat)
         else:
             raise TaskSourceException("{} is not a directory, so can not be a StoryDir".format(sdir))
+
     def __str__(self):
         return "StoryDir:({}):".format(self.path) + ",".join(self.story_list)
-
-

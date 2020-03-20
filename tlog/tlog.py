@@ -15,6 +15,8 @@ backlog Section at the end
 See tlmodel module journal_documentation for patterns that classify input
 lines
 """
+from typing import List
+
 from tlmodel import Document  # import re
 from tlmodel import TLogInternalException
 import fileinput
@@ -115,9 +117,9 @@ def load_doc_from_file(file_name):
     return Document.fromtext(file_text)
 
 
-def shorten_stories(long_story_doc_list):
-    short_s_doc_list = [Document.fromtext(str(doc)) for doc in long_story_doc_list]
-    return [doc.shorten_backlog() for doc in short_s_doc_list]
+# def shorten_stories(long_story_doc_list):
+#     short_s_doc_list = [Document.fromtext(str(doc)) for doc in long_story_doc_list]
+#     return [doc.shorten_backlog() for doc in short_s_doc_list]
 
 
 def short_copy(long_story_doc):
@@ -135,46 +137,55 @@ jdir - treat the next argument to tlog as the journal_dir.
 def main():
     daily_o = journaldir.Daily()
     my_journal_dir = daily_o.jdir
-    user_paths = journaldir.UserPaths()
-    user_paths.git_init_journal()
+    user_path_o = journaldir.UserPaths()
+    user_path_o.git_init_journal()
     journal_document = Document()
-    journal_document.doc_name = daily_o.cday_fname
     story_task_document = Document()
-    story_task_document.doc_name = "Story tasks from" + user_paths.endeavor_file
+    story_task_document.doc_name = "Story tasks from" + user_path_o.endeavor_file
     look_back_months = 24
     cmd_line_story_docs = []
     journal_story_docs = []
     if len(sys.argv) < 2:
         journaldir.init(my_journal_dir)
         prev_journal_dir = find_prev_journal_dir(my_journal_dir, look_back_months)
-        journal_story_docs = StoryGroup(journaldir.StoryDir(prev_journal_dir)).get_short_stories()
+        story_dir_o = journaldir.StoryDir(prev_journal_dir)
+        journal_story_docs = StoryGroup(story_dir_o).get_short_stories()
         # todo write a journal loader and replace the line below.
-        s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
-        print("no argument sfile_list, jfile_list:", s_file_list, j_file_list)
+        # s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
+        j_file_list = journaldir.get_file_names_by_pattern(
+            story_dir_o.path, journaldir.journal_pat)
+        # j_file_list = list(j_file_list[-1])
+        print("no argument sfile_list:", ",".join(story_dir_o.story_list))
+        print("no argument jfile_list:", j_file_list)
     else:
         if sys.argv[1] in supported_commands:
             tlog_command = sys.argv[1]
             if tlog_command == "jdir":
-                my_journal_dir = sys.argv[2]
-                prev_journal_dir = find_prev_journal_dir(my_journal_dir, look_back_months)
-                journal_story_docs = StoryGroup(journaldir.StoryDir(prev_journal_dir)).get_short_stories()
-                s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
-                print("jdir argument file_list:", tlog_command, s_file_list, j_file_list)
+                # This feature needs work to support endeavors.
+                #  Should I change from default user_path_o?
+                my_journal_dir = sys.argv[2] # the actual dated jdir the user wants to use
+                journal_story_docs = StoryGroup(journaldir.StoryDir(
+                                my_journal_dir)).get_short_stories()
+                j_file_list = journaldir.get_file_names_by_pattern(
+                                my_journal_dir, journaldir.journal_pat)
+                # s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
+                # todo fix this: print("jdir argument file_list:", tlog_command, s_file_list, j_file_list)
             else:
                 raise TLogInternalException("A supported command has no implementation")
         else:
+            # todo test cmd line stories
             s_file_list = sys.argv[1:]
             cmd_line_story_docs = [load_doc_from_file(s_file) for s_file in s_file_list]
             j_file_list = []
             print("(re) initializing Journal from stories:", s_file_list)
 
     # load story files from above into a document list
-    journal_story_doc_list = [load_doc_from_file(js_file) for js_file in s_file_list]  # todo get to docs based on above
-    short_j_story_doc_list = shorten_stories(journal_story_doc_list) # todo deprecate. use
+    #journal_story_doc_list = [load_doc_from_file(js_file) for js_file in s_file_list]  # todo get to docs based on above
+    #short_j_story_doc_list = shorten_stories(journal_story_doc_list) # todo deprecate. use
 
     # get the trimmed story docs from endeavors
-    story_dir_objects = journaldir.load_endeavor_stories(user_paths)
-    endeavor_story_docs = [story_doc for sdo in story_dir_objects
+    story_dir_objects = journaldir.load_endeavor_stories(user_path_o)
+    endeavor_story_docs: List[Document] = [story_doc for sdo in story_dir_objects
                            for story_doc in StoryGroup(sdo).get_short_stories()]
 
     # short_s_doc_list = short_j_story_doc_list + endeavor_story_docs  # todo do story_j like endeavors
@@ -197,8 +208,11 @@ def main():
     if my_journal_dir != prev_journal_dir:
         print("Wil drop journal because it is from a back month")
         journal_document.drop_journal()
-    user_paths.git_add_all()
 
+    # todo clarify where the commit is that goes with this.   I think it is somewhere.
+    user_path_o.git_add_all()
+
+    journal_document.doc_name = daily_o.cday_fname
     # write the daily journal doc
     journaldir.write_dir_file(str(journal_document) + '\n',
                               daily_o.jdir, journal_document.doc_name)

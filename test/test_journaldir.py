@@ -60,18 +60,19 @@ class TestUserPaths(TestCase):
         part_of_e_val = tse.exception.value[-31:]
         self.assertEqual("for journals is not a directory", part_of_e_val)
 
-    def testUserEndeavorPathRaisesE(self):
-        with self.assertRaises(journaldir.TaskSourceException) as tse:
-            journaldir.UserPaths("/", "/another/bad/path")
-        part_of_e_val = tse.exception.value[-32:]
-        self.assertEqual("for endeavors is not a directory", part_of_e_val)
+    # ok not raising exception.  Endeavor dir is not required.
+    # def testUserEndeavorPathRaisesE(self):
+    #     with self.assertRaises(journaldir.TaskSourceException) as tse:
+    #         journaldir.UserPaths("/", "/another/bad/path")
+    #     part_of_e_val = tse.exception.value[-32:]
+    #     self.assertEqual("for endeavors is not a directory", part_of_e_val)
 
     def testUserPathConstructor(self):
         "doesn't really test anything, but can run a asegment of code for debugging"
         # may require JOURNAL_PATH set to run, such as
         #  JOURNAL_PATH=/Users/paulsons/dev/tl2/testuser/testjournal
         user_path_object = journaldir.UserPaths()
-        print(str(user_path_object))
+        # print(str(user_path_object))
         self.assertEqual("pass", "pass")
 
 

@@ -456,6 +456,7 @@ class Document:
 	"""
 
 	defautInProgHead = "#In progress"
+	dname_attr_str = "DocName"
 
 	# need a constructor that takes a list of lines
 	# todo - need tests for this
@@ -472,17 +473,22 @@ class Document:
 		# d - this is suspect when name is provided
 		self._doc_name = name or ""
 
-		self.journal = []
-		self.in_progress = Section(None) # external logic sets to today
-		self.backlog = Section()
-
-		self.current_section = Section(None)		
-		self.journal.append(self.current_section)
-		self.last_add = self.current_section
+		self.initialize_journal()
 
 		self.add_lines(input_lines)
 
-	dname_attr_str = "DocName"
+	def initialize_journal(self):
+		"""
+		Initializes the journal list of sections to make sure a section at jornal[0]
+		and a current section
+		"""
+		self.journal = []
+		self.in_progress = Section(None)  # external logic sets to today
+		self.backlog = Section()
+		self.current_section = Section(None)
+		self.journal.append(self.current_section)
+		self.last_add = self.current_section
+
 
 	def _get_doc_name(self):
 		"getter for doc_name"
@@ -682,9 +688,9 @@ class Document:
 			if firstSection.is_attrib_section():
 				self.journal = [firstSection]
 			else:
-				self.journal = []
+				self.initialize_journal()
 		else:
-			self.journal = []
+			self.initialize_journal()
 
 	def generate_backlog_title_hashes(self):
 		self.backlog.save_item_title_hashes()

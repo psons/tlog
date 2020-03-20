@@ -32,6 +32,6 @@ class TestTlog(unittest.TestCase):
 	def testKnownStoryInGroup(self):
 		story_group = StoryGroup(sd)
 		first_story = story_group.story_docs[0]
-		print("first_story", first_story)
+		# print("first_story", first_story)
 		self.assertEqual(expected_story_text, str(first_story))
 
