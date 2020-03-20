@@ -9,6 +9,7 @@ input should break tests for things that do not support the new
 input.
 """
 import unittest
+from tlmodel import TLogInternalException
 from tlmodel import Item
 from tlmodel import Section
 from tlmodel import TLAttribute
@@ -283,6 +284,14 @@ free text\
 		itest = Item(data)
 		itest.in_prog_2_unfin()
 		self.assertTrue(Item.unfinished_pat.match(itest.top))
+
+	def testSecHeadTiIremRaisesE(self):
+		with self.assertRaises(TLogInternalException) as tle:
+			an_item = Item()
+			an_item.add_line(sec_head)
+		part_of_e_val = tle.exception.value[:62]
+		# print("part_of_e_val:", part_of_e_val)
+		self.assertEqual("Putting a Section.head_pat line inside a Item is not allowed: ", part_of_e_val)
 
 	def testItemSetAttribGetAttribSymmetry(self):
 		"""Item get_item_attrib / set_doc_attrib symmetry"""

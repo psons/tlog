@@ -267,10 +267,6 @@ class Item:
 		if data:
 			self.add_line(data)
 
-	# todo throw an error in Item if match Section.head_pat
-	#  using this method to put ^# lines in an item would be confusing.
-	#  (in normal document creation, ^# lines would be the header in the
-	#  Section, and would never be inserting ito an Item in the Section)
 	@classmethod
 	def fromtext(cls, text):
 		"""create an Item from multiline text parameter"""
@@ -371,6 +367,11 @@ class Item:
 
 	def add_line(self, data):
 		"""Add a line as either the top task, an attribute, or sub text"""
+		if Section.head_pat.match(data):
+			raise TLogInternalException(
+				"Putting a Section.head_pat line inside a Item is not allowed: " +
+				data)
+
 		if Item.head_pat.match(data):
 			self.top = data
 		else:
