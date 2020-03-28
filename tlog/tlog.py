@@ -12,13 +12,14 @@ First, read and classify each input line as one or more of:
 Then Print out the list of Sections in order with the 
 backlog Section at the end 
 
-See tlmodel module journal_documentation for patterns that classify input
+See tlmodel module journal_documentation for pattern_strs that classify input
 lines
 """
 from typing import List
 
-from tlmodel import Document  # import re
+from tlmodel import Document, Item  # import re
 from tlmodel import TLogInternalException
+from tlmodel import TLAttribute
 import fileinput
 import journaldir
 import sys
@@ -57,6 +58,18 @@ def load_story_from_file(file_name):
     story_doc.attribute_all_backlog_items(StoryGroup.story_source_attr_name, file_name)
     return story_doc
 
+# todo test write_back_updated_story
+def write_back_updated_story(item: Item):
+    story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
+    if story_source is None:
+        raise TLogInternalException(
+            f"Can not write_back_updated_story() for ({item.top}). missing {StoryGroup.story_source_attr_name}")
+    else:
+        filepath = story_source
+    story_doc = load_doc_from_file(filepath)
+    story_doc.update_journal_item(item, Item.title_hash_attr_str)
+    journaldir.write_filepath(str(item), filepath)
+    return story_doc
 
 def find_prev_journal_dir(latest_dir, history_months):
     file_count = 0
@@ -139,9 +152,9 @@ def main():
     my_journal_dir = daily_o.jdir
     user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
-    journal_document = Document()
+    journal_document = Document(day=daily_o.domth)
     story_task_document = Document()
-    story_task_document.doc_name = "Story tasks from" + user_path_o.endeavor_file
+    story_task_document.doc_name = "Endeavor story tasks based on" + user_path_o.endeavor_file
     look_back_months = 24
     cmd_line_story_docs = []
     journal_story_docs = []
@@ -203,18 +216,25 @@ def main():
         journal_document.add_lines(fileinput.input(in_document_file))
     journal_document.make_in_progress("## " + daily_o.domth)
     journal_document.merge_backlog(story_task_document.backlog)
+    journal_document.make_scrum()
+    write_back_xa_story_items = journal_document.\
+        get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
 
+    for xa_story_item in write_back_xa_story_items:
+        write_back_updated_story(xa_story_item)
     # prevent whole previous month text from rolling to new month
+    # todo might not need this after converting to daily scrum.
     if my_journal_dir != prev_journal_dir:
         print("Wil drop journal because it is from a back month")
         journal_document.drop_journal()
+
 
     # todo clarify where the commit is that goes with this.   I think it is somewhere.
     user_path_o.git_add_all()
 
     journal_document.doc_name = daily_o.cday_fname
     # write the daily journal doc
-    journaldir.write_dir_file(str(journal_document) + '\n',
+    journaldir.write_dir_file(str(journal_document.scrum) + '\n',
                               daily_o.jdir, journal_document.doc_name)
 
 

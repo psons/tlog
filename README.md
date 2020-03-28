@@ -8,12 +8,27 @@ maxTasks: 2
 write back to story story.md
 x - track source story story.txt
  - write the story file as task attrib: storySource: endeavor>story
-# lift completed tasks in journal back to source story.
-d - support abandoned tasks 'a-' similar to complete.
-d - Document method get_xa_story_tasks()
-d - for story_tasks update source stories 
+### lift completed tasks in journal back to source story.
+x - support abandoned tasks 'a - ' similar to complete.
+x - make a 'done' section in the Document.
+ - implemented in the class DocumentStructure
+ - nested in the Document Class
+ - re-engineer Document to have a special_sections map with: 
+    a header pattern as a key
+    a regex pattern set of leader types to put in the section.
+    
+    First implement '# Done' as DocumentStructure '# Past Tasks', ['^[aA] *-', '^[xX] *-']
+    Then re-implement the backlog as DocumentStructure'# Current Tasks', ['^[dD] *-'])
+    
+    make a Scrum instance of DocStructure ...
+    
+x - write daily journal as DocStructure w past and current section instead of the journal.    
+x - make current section heading include today's date
+x - Document method get_xa_story_tasks()
+x - for xa_story_tasks update source stories 
 x - limit tasks pulled from a story to the maxTasks: value
-d - imit the stories in an endeavor to those listed in the prioritized.md
+d - don't count xa against maxTasks read from a story
+d - limit the stories in an endeavor to those listed in the prioritized.md
 		
 # Project notes
 Add more explanatory notes about the project.

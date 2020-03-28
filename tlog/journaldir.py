@@ -108,7 +108,7 @@ class Daily:
         dow = self.dt.strftime('%a')
         dd = self.dt.strftime('%d')
         dom = self.dt.strftime('%-d')
-        dayth_dict = {'1': "expected_story_text", '2': "nd", '3': "rd", '4': "th",
+        dayth_dict = {'1': "st", '2': "nd", '3': "rd", '4': "th",
                       '5': "th", '6': "th", '7': "th", '8': "th", '9': "th", '10': "th",
                       '11': "th", '12': "th", '13': "th", '14': "th", '15': "th", '16': "th",
                       '17': "th", '18': "th", '19': "th", '20': "th", '21': "expected_story_text", '22': "nd",
@@ -158,6 +158,10 @@ def read_file_str(filepath):
             data = data_file.read()
     return str(data)
 
+def write_filepath(new_content, filepath):
+    sfd = open(filepath, "w")
+    sfd.write(new_content)
+    sfd.close
 
 def write_dir_file(new_content, dir_name, doc_name):
     filepath = os.path.join(dir_name, doc_name)

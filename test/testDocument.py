@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
-
+import re
 import unittest
-from tlmodel import Document
+from tlmodel import Document, DocStructure, Item
 from testtl import doc1_text
 from testtl import ad1
 from testtl import vd1
@@ -220,6 +220,40 @@ d - put way misc paper tax files\
 		mt = small_story_doc.max_tasks
 		task_list = small_story_doc.get_backlog_list(mt)
 		self.assertEqual(int(mt), len(task_list))
+
+class special_sections:
+	"holds some test data for DocumentStructure"
+	def __init__(self):
+		self.ds = DocStructure('^#')
+		self.a_pat = re.compile('^[aA] *-')
+		self.x_pat = re.compile('^[xX] *-')
+		self.ds.add_leader_entry('# Past Tasks', [self.a_pat, self.x_pat])
+		self.ds.add_leader_entry('# Current Tasks', ['^[dD] *-'])
+		self.test_line = 'x - is a completed task'
+		self.test_item = Item().fromtext(self.test_line)
+		# print(str(self.ds) + "\n")
+		# place_to_put = special_sections.insert_item("")
+
+class testDocumentStructure(unittest.TestCase):
+
+	def testDocumentStructure(self):
+		"""
+		show that leader lookups from the same add_leader_entry refer to
+		 the same instance object
+		"""
+		test_data_o = special_sections()
+		test_data_o.ds.insert_item(test_data_o.test_item)
+		self.assertIs(test_data_o.ds.leader_instance_dict[test_data_o.x_pat],
+					  test_data_o.ds.insert_item(test_data_o.test_item))
+
+
+	def testGetSection(self):
+		"""
+		get a section that matches some text
+		"""
+		ss = special_sections()
+		self.assertIs(ss.ds.leader_instance_dict[ss.a_pat], ss.ds.leader_instance_dict[ss.x_pat])
+
 
 if __name__ == '__main__':
 	unittest.main()
