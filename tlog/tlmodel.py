@@ -730,7 +730,8 @@ class Document:
          This method assumes make_in_progress() has already been called to make and
          'u - ' unfinished copy of any '/ - ' in progress items.
          """
-        self.add_scrum_items(self.backlog)  # d and / tasks from backlog
+        self.add_scrum_items(self.in_progress)  # / tasks from in_progress
+        self.add_scrum_items(self.backlog)  # d tasks from backlog
         for section in self.journal:        # u, a, and x tasks from journal
             print("tmpdebug - section", section)
             # todo do this also for the special backlog section.  (extract a method)
