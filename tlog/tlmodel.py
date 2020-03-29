@@ -192,7 +192,7 @@ class Section:
                     return item_attribute
         return None
 
-    def find_replace_item_by_attribute(self, new_item, attribute_key):
+    def find_replace_item_by_titleHash(self, new_item):
         """
         search the self.body_items list for an item matching attribute_key and attribute_value
         :param new_item:
@@ -200,18 +200,18 @@ class Section:
         :param aval:
         :return:
         """
-        value = new_item.get_item_attrib(attribute_key)
+        hash_attr_str = Item.title_hash_attr_str
+        value = new_item.get_item_attrib(hash_attr_str)
         index: int = 0
         item: Item
         for item in self.body_items:
-            item_attribute: TLAttribute = item.get_item_attrib_holder(attribute_key)
-            if item_attribute:
-                if item_attribute.value == value:
-                    print(f"found item matching {item_attribute} to replace")
-                    print(f"replacing item:\n{item}")
-                    print(f"replacing item:\n{item}")
-                    self.body_items[index] = new_item
-                    return item # this is the old item.  is it of any use?
+            title_hash = item.get_title_hash()
+            if title_hash == value:
+                print(f"found item matching {hash_attr_str} to replace")
+                print(f"replacing item:\n{item}")
+                print(f"replacing item:\n{new_item}")
+                self.body_items[index] = new_item
+                return item  # this is the old item.  is it of any use?
             index += 1
         return None
 
@@ -493,18 +493,44 @@ class Document:
                 document.in_progress section with a copy changed to
                 u - (unfinished) and added to the current section
     If a task line is followed by lines that are a bullet list, or free text,
-    the additional lines should be kept together as part of the task Item object.
+    the additional lines will be kept together as part of the task Item object.
 
-    Any line not that is not a Section or Item header gets added to the
+    Any input text line line not that is not a Section or Item header gets added to the
     current Item.
 
     Items that begin a section, sometimes do not have a task line
 
     Support multiline backlog items.
-    in_progress items beginning with /, \ will stay with section and be copied
-    to the in_progress list.
-    """
 
+    in_progress items beginning with /, \ will stay with section and be copied
+    to the in_progress list make_in_progress is run.
+
+    Attributes are supported using the class TLAttribute
+
+    Some attributes are supported as properties in the Document class and
+    implemented as Attributes on a special first section:
+        doc_name DocName: ((read / write)
+        max_tasks maxTasks: todo someday implement max_tasks property
+
+    The Section and Item classes can be injected with attributes, but
+    they should be optional in most or all cases.
+
+    ## Evolution:
+    The class Document should be refactored over time to hold any semantic meaning for the
+    documents needed by tlog. Perhaps a class name TLDocument.
+
+    The 'journal' should evolve to be created of Sections and Items *as read from disk*.
+    The name journal may not make sense anymore, and this could be a list
+    named document_sections in a generic Document class free of TLog semantics,
+    possibly just being a Markdown Document.
+    todo someday refactor to leave the backlog tasks in the journal, and build it with a separate
+    processing method, like make_in_progress, the goal being a general; purpose Document
+
+    The class DocStructure should be used to associate Item leader types
+    with semantically meaningful special sections like Backlog and In_Progress.
+
+    """
+    default_maxTasks = 1 # used if not specified in a story.txt
     defautInProgHead = "#In progress"
     dname_attr_str = "DocName"
 
@@ -697,8 +723,37 @@ class Document:
         for item in self.backlog.body_items:
             item.set_attrib(key, val)
 
+
+    def shorten_task_list(self, task_list: List, num_tasks=None):
+        """discard tasks in the task_list beyond num_tasks
+        If max_tasks is set and num_tasks is not provided,
+        use max_tasks as the number of tasks to keep.
+        If neither is provided, keep all tasks.
+        """
+        max_t = self.max_tasks or len(self.backlog.body_items)
+        num_t = num_tasks or max_t
+        num_t = int(num_t)
+        return list(task_list[0:num_t])
+
+    def shorten_in_progress(self, num_tasks=None):
+        """
+        discard extra tasks in the in_progress section
+        """
+        self.in_progress.body_items = self.shorten_task_list(
+            self.in_progress.body_items, num_tasks)
+        return self
+
     def shorten_backlog(self, num_tasks=None):
         """
+        discard extra tasks in the backlog section
+        """
+        self.backlog.body_items = self.shorten_task_list(
+            self.backlog.body_items, num_tasks)
+        return self
+
+    def shorten_backlog_deprecated(self, num_tasks=None):
+        """
+        todo delete this after the replacement above is working
         discard tasks in the backlog beyond num_tasks
         If max_tasks is set and num_tasks is not provided,
         use max_tasks as the number of tasks to keep.
@@ -796,10 +851,10 @@ class Document:
         """
         index = 0
         for section in self.journal:
-            replaced_item = section.find_replace_item_by_attribute(item, attribute_key)
+            replaced_item = section.find_replace_item_by_titleHash(item)
             if replaced_item:
                 return section
-        return None
+        return self.backlog.find_replace_item_by_titleHash(item)
 
 
     def generate_backlog_title_hashes(self):

@@ -68,7 +68,7 @@ def write_back_updated_story(item: Item):
         filepath = story_source
     story_doc = load_doc_from_file(filepath)
     story_doc.update_journal_item(item, Item.title_hash_attr_str)
-    journaldir.write_filepath(str(item), filepath)
+    journaldir.write_filepath(str(story_doc), filepath)
     return story_doc
 
 def find_prev_journal_dir(latest_dir, history_months):
@@ -130,15 +130,26 @@ def load_doc_from_file(file_name):
     return Document.fromtext(file_text)
 
 
-# def shorten_stories(long_story_doc_list):
-#     short_s_doc_list = [Document.fromtext(str(doc)) for doc in long_story_doc_list]
-#     return [doc.shorten_backlog() for doc in short_s_doc_list]
+# todo WTF is in_progres with only one 's'?
 
-
+# todo test various short_copy cases.
 def short_copy(long_story_doc):
-    """copy the long_story_doc arg and shorten to only maxTasks"""
+    """copy the long_story_doc arg and shorten to only maxTasks,
+    making sure '/ -' tasks + 'd - ' tasks is less than maxTasks
+    """
     short_doc = Document.fromtext(str(long_story_doc))
-    return short_doc.shorten_backlog()
+    doc_max_tasks: int
+    if long_story_doc.max_tasks:
+         doc_max_tasks = int(long_story_doc.max_tasks)
+    else:
+        doc_max_tasks = Document.default_maxTasks
+    short_doc.make_in_progress()
+    short_doc.shorten_in_progress()
+    remaining_tasks_allowed = doc_max_tasks - len(short_doc.in_progress.body_items)
+    if remaining_tasks_allowed < 0:
+        remaining_tasks_allowed = 0
+    short_doc.shorten_backlog(remaining_tasks_allowed)
+    return short_doc
 
 
 supported_commands = ["jdir"]
@@ -192,16 +203,11 @@ def main():
             j_file_list = []
             print("(re) initializing Journal from stories:", s_file_list)
 
-    # load story files from above into a document list
-    #journal_story_doc_list = [load_doc_from_file(js_file) for js_file in s_file_list]  # todo get to docs based on above
-    #short_j_story_doc_list = shorten_stories(journal_story_doc_list) # todo deprecate. use
-
     # get the trimmed story docs from endeavors
     story_dir_objects = journaldir.load_endeavor_stories(user_path_o)
     endeavor_story_docs: List[Document] = [story_doc for sdo in story_dir_objects
                            for story_doc in StoryGroup(sdo).get_short_stories()]
 
-    # short_s_doc_list = short_j_story_doc_list + endeavor_story_docs  # todo do story_j like endeavors
     short_s_doc_list = cmd_line_story_docs + journal_story_docs + endeavor_story_docs  # todo do story_j like endeavors
 
     # load merge all the story tasks into one document

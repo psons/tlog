@@ -28,6 +28,8 @@ x - Document method get_xa_story_tasks()
 x - for xa_story_tasks update source stories 
 x - limit tasks pulled from a story to the maxTasks: value
 x - fix bug: in progress isn't in scrum currently.
+x - fix bug: write back obliterating all the other tasks in source story
+d - bug: pulling less than max_tasks from for example small story.md  
 d - don't count xa against maxTasks read from a story
 d - limit the stories in an endeavor to those listed in the prioritized.md
 		
