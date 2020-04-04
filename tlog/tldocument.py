@@ -26,7 +26,7 @@ from docsec import Section, TLogInternalException, Item
 blank_ln_pat = re.compile("^\s*$")
 
 
-class Document:
+class TLDocument:
     """
     Document objects are made from lists of text lines to be made into Sections
     and Items, with special handling for 'do' Items and 'in progress' Items.
@@ -86,6 +86,37 @@ class Document:
     defautInProgHead = "#In progress"
     dname_attr_str = "DocName"
 
+    # Item and leader related settings:
+    abandoned_str = "^[aA] *-"
+    abandoned_pat = re.compile(abandoned_str)
+    completed_str = "^[xX] *-"
+    completed_pat = re.compile(completed_str)
+    done_str = "|".join([completed_str, abandoned_str])
+    done_pat = re.compile(done_str)  # Used externally in in TLDocument get_xa ..
+
+    in_progress_str = r'^[/\\] *-' # used here in head_str and not_do_str
+    in_progress_pat = re.compile(in_progress_str) # used in Item in in_prog_2_unfin() that i am refactoring
+
+    unfinished_s = "u -"  # used in Item in in_prog_2_unfin() that i am refactoring
+    unfinished_str = "^[uU] *-"
+    unfinished_pat = re.compile(unfinished_str)  # used in test for Item in in_prog_2_unfin() that i am refactoring
+                                                # Good usage in Document to configures the scrum Docstruct
+    do_str = "^[dD] *-"  # used here as part of head_str
+    do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
+
+    head_str = "|".join([done_str, in_progress_str, do_str, unfinished_str])  # used here in head_pat and leader_group_str
+    head_pat = re.compile(head_str)
+
+    not_do_str = "|".join([done_str, in_progress_str, unfinished_str])  # just used here
+    not_do_pat = re.compile(not_do_str)  # only used in Document
+
+    leader_group_str = "(" + head_str + ")" # only used here
+    title_group_str = r"\s*(.*\S)\s*$"  # only used here
+    # top_parser_str = leader_group_str + title_group_str
+    top_parser_pat = re.compile(leader_group_str + title_group_str)
+
+
+
     # need a constructor that takes a list of lines
     # todo - need tests for this
     def __init__(self, name=None, input_lines=None, day=None):
@@ -100,10 +131,10 @@ class Document:
         domth: str = day if day else ""
         current_task_head = f'# Current Tasks {domth}'
         self.past_task_head = '# Past Tasks'
-        self.scrum = DocStructure(Section.head_pat)
-        self.scrum.add_leader_entry(self.past_task_head, [Item.abandoned_pat,
-                                                          Item.completed_pat, Item.unfinished_pat])
-        self.scrum.add_leader_entry(current_task_head, [Item.in_progress_pat, Item.do_pat])
+        self.scrum = DocStructure(Section.head_pat, TLDocument.top_parser_pat)
+        self.scrum.add_leader_entry(self.past_task_head, [TLDocument.abandoned_pat,
+                                                          TLDocument.completed_pat, TLDocument.unfinished_pat])
+        self.scrum.add_leader_entry(current_task_head, [TLDocument.in_progress_pat, TLDocument.do_pat])
 
         self._doc_name = name or ""
 
@@ -117,19 +148,19 @@ class Document:
         and a current section
         """
         self.journal = []
-        self.in_progress = Section(None)  # external logic sets to today
-        self.backlog = Section()
-        self.current_section = Section(None)
+        self.in_progress = Section(TLDocument.top_parser_pat, None)  # external logic sets to today
+        self.backlog = Section(TLDocument.top_parser_pat)
+        self.current_section = Section(TLDocument.top_parser_pat, None)
         self.journal.append(self.current_section)
         self.last_add = self.current_section
 
     def _get_doc_name(self):
         "getter for doc_name"
-        return self.get_doc_attrib(Document.dname_attr_str)
+        return self.get_doc_attrib(TLDocument.dname_attr_str)
 
     def _set_doc_name(self, name):
         "setter for doc_name"
-        self.set_doc_attrib(Document.dname_attr_str, name)
+        self.set_doc_attrib(TLDocument.dname_attr_str, name)
 
     doc_name = property(_get_doc_name, _set_doc_name)
 
@@ -137,11 +168,11 @@ class Document:
 
     def _get_max_tasks(self):
         "getter for maxTasks"
-        return self.get_doc_attrib(Document.max_tasks_attr_str)
+        return self.get_doc_attrib(TLDocument.max_tasks_attr_str)
 
     def _set_max_tasks(self, max):
         "setter for doc_name"
-        self.set_doc_attrib(Document.max_tasks_attr_str, max)
+        self.set_doc_attrib(TLDocument.max_tasks_attr_str, max)
 
     max_tasks = property(_get_max_tasks, _set_max_tasks)
 
@@ -174,7 +205,7 @@ class Document:
         Add a single data line into the document according to
         pattern_strs in the Item and Section classes.
         """
-        if Item.do_pat.match(data):
+        if TLDocument.do_pat.match(data):
             self.backlog.add_line(data)
             self.last_add = self.backlog
 
@@ -186,11 +217,11 @@ class Document:
                 self.last_add = self.current_section
             else:
                 # New section.
-                self.current_section = Section(data)
+                self.current_section = Section(TLDocument.top_parser_pat, data)
                 self.journal.append(self.current_section)
                 self.last_add = self.current_section
 
-        elif Item.not_do_pat.match(data):
+        elif TLDocument.not_do_pat.match(data):
             self.current_section.add_line(data)
             self.last_add = self.current_section
         else:
@@ -199,7 +230,7 @@ class Document:
     @classmethod
     def fromtext(cls, text):
         "create a Document from multiline text paramater"
-        new_document = Document()
+        new_document = TLDocument()
         lines = text.split("\n")
         new_document.add_lines(lines)
         return new_document
@@ -222,7 +253,7 @@ class Document:
             # Document set_doc_attrib calling Section Set Attrib
             self.journal[0].set_sec_attrib(akey, aval)
         else:
-            s = Section()
+            s = Section(TLDocument.top_parser_pat)
             s.set_sec_attrib(akey, aval)
             self.journal.insert(0, s)
 
@@ -381,7 +412,7 @@ class Document:
             self.in_progress.add_line(in_prog_head)
 
         for section in self.journal:
-            for item in section.update_progress():
+            for item in section.update_progress(TLDocument.in_progress_pat, TLDocument.unfinished_s):
                 self.in_progress.add_item(item)
 
     def drop_journal(self):
@@ -450,10 +481,11 @@ class DocStructure:
     special_sections.add_leader_entry('# Current Tasks', ['^[dD] *-'])
     place_to_put = special_sections.insert_item("")
     """
-    def __init__(self, header_pattern_str: str):
+    def __init__(self, header_pattern_str: str, item_top_parser_pat: Pattern):
         # regex that defines what a header is.  Need for validation
         self.header_str = header_pattern_str
         self.header_pat = re.compile(self.header_str)
+        self.item_top_parser_pat = item_top_parser_pat # todo use a str instead of re to be consistent with header_pattern_str
         self.head_leaders_dict: Dict[str, List[str]] = {} # do i need this?  maybe for error messages?
         self.head_instance_dict: Dict[str, Section] = {} # map string headers -> Section instances
         self.leader_instance_dict:[str, Section] = {} # for callers to add to the correct instances

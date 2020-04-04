@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 import re
 import unittest
-from tldocument import Document
+from tldocument import TLDocument
 from tldocument import DocStructure
 from docsec import Item
 from testtl import doc1_text
@@ -90,7 +90,7 @@ u - item with sub in progress
  - sub of the in progress.\
 """
 
-	inProgressOut = Document.defautInProgHead + "\n" + """\
+	inProgressOut = TLDocument.defautInProgHead + "\n" + """\
 / - item in progress
 / - item with sub in progress
  - sub of the in progress.\
@@ -115,32 +115,32 @@ d - finish the small story!\
 
 	def testDocumentJournal(self):
 		text_lines = testDocument.docIn.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		#print("str(dtest):" + str(dtest))
 		self.assertEqual(dtest.journal_str(), testDocument.journalOut)
 
 	def testDocumentBacklog(self):
 		text_lines = testDocument.docIn.split("\n")
-		dtest = Document(testDocument.docTitle, text_lines)
+		dtest = TLDocument(testDocument.docTitle, text_lines)
 		self.assertEqual(testDocument.backlogOut, dtest.backlog_str())
 
 	def testDocumentWhole(self):
 		"Lines from docIn should match str() of Document made from them."
 		text_lines = testDocument.docIn.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		self.assertEqual(str(dtest), testDocument.docOut)
 
 	def testDocumentJournalProgress(self):
 		"Journal after make_in_progress() called.  Has items marked unfinished"
 		text_lines = testDocument.docIn.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		dtest.make_in_progress()
 		self.assertEqual(dtest.journal_str(), testDocument.journalProgressOut)
 
 	def testDocumentInProgress(self):
 		"In progress section after make_in_progress() called"
 		text_lines = testDocument.docIn.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		dtest.make_in_progress()
 		self.assertEqual(testDocument.inProgressOut, dtest.in_progress_str())
 
@@ -150,14 +150,14 @@ d - finish the small story!\
 	def testDocumentExistingProgressSection(self):
 		"Re use In progress section for make_in_progress()"
 		text_lines = testDocument.docIn2.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		dtest.make_in_progress("# Mon 22nd")
 		self.assertEqual(str(dtest), testDocument.docOut2)
 
 	def testDocumentWholeInProgres(self):
 		"Whole document after make_in_progress() called"
 		text_lines = testDocument.docIn.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		dtest.make_in_progress()
 		self.assertEqual(str(dtest), testDocument.docInProgressOut)
 
@@ -179,23 +179,23 @@ x - save taxes as encrypted 7zip to fireproof box
 d - put way misc paper tax files\
 """
 		text_lines = inDoc2.split("\n")
-		dtest  = Document(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(testDocument.docTitle, text_lines)
 		#print("testDocumentWhole2 str(dtest):" + str(dtest))
 		self.assertEqual(str(dtest), outDoc2)
 
 	#@unittest.skip("Document attribute screwing this up. ")
 	def testDocumentWhole3(self):
-		self.assertEqual(str(Document.fromtext(doc1_text)), doc1_text)
+		self.assertEqual(str(TLDocument.fromtext(doc1_text)), doc1_text)
 
 	def testDocumentGetAttrib(self):
 		"Does get_doc_attrib return a value for a Document attribute?"
-		val = Document.fromtext(doc1_text).get_doc_attrib(ad1)
+		val = TLDocument.fromtext(doc1_text).get_doc_attrib(ad1)
 		self.assertEqual(vd1, val)
 
 
 	def testDocumentSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
-		d1 = Document.fromtext(testDocument.docIn)
+		d1 = TLDocument.fromtext(testDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		attr = d1.get_doc_attrib(ad1)
 		self.assertEqual(vd1, attr)
@@ -203,7 +203,7 @@ d - put way misc paper tax files\
 	# todo modify this test to check for duplicat attribute in the un named section.
 	def testDocumentSecondSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
-		d1 = Document.fromtext(testDocument.docIn)
+		d1 = TLDocument.fromtext(testDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		d1.set_doc_attrib(ad1, vd2) # set it again
 		attr = d1.get_doc_attrib(ad1)
@@ -212,13 +212,13 @@ d - put way misc paper tax files\
 
 	def testDocumentNameProperty(self):
 		"Does assignment to adocument.doc_name work?"
-		d1 = Document.fromtext(testDocument.docIn)
+		d1 = TLDocument.fromtext(testDocument.docIn)
 		a_doc_name = "Moby Doc.txt"
 		d1.doc_name = a_doc_name
 		self.assertEqual(d1.doc_name, a_doc_name)
 
 	def testDocumentMaxTasks(self):
-		small_story_doc = Document.fromtext(testDocument.small_story)
+		small_story_doc = TLDocument.fromtext(testDocument.small_story)
 		mt = small_story_doc.max_tasks
 		task_list = small_story_doc.get_backlog_list(mt)
 		self.assertEqual(int(mt), len(task_list))
@@ -226,13 +226,13 @@ d - put way misc paper tax files\
 class special_sections:
 	"holds some test data for DocumentStructure"
 	def __init__(self):
-		self.ds = DocStructure('^#')
+		self.ds = DocStructure( '^#', TLDocument.top_parser_pat)
 		self.a_pat = re.compile('^[aA] *-')
 		self.x_pat = re.compile('^[xX] *-')
 		self.ds.add_leader_entry('# Past Tasks', [self.a_pat, self.x_pat])
 		self.ds.add_leader_entry('# Current Tasks', ['^[dD] *-'])
 		self.test_line = 'x - is a completed task'
-		self.test_item = Item().fromtext(self.test_line)
+		self.test_item = Item(TLDocument.top_parser_pat).fromtext(TLDocument.top_parser_pat, self.test_line) # todo canthis just call the class method fromText on Item?
 		# print(str(self.ds) + "\n")
 		# place_to_put = special_sections.insert_item("")
 

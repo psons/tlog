@@ -6,8 +6,9 @@ from typing import Pattern, Dict
 class Section:
     head_pat = re.compile("^#")
 
-    def __init__(self, data: str = None) -> None:
-        self.current_item = Item()
+    def __init__(self, item_top_parser_pat, data: str = None) -> None:
+        self.item_top_parser_pat = item_top_parser_pat
+        self.current_item = Item(self.item_top_parser_pat)
         self.header = ""
         self.body_items = [self.current_item]
         if data:
@@ -38,14 +39,14 @@ class Section:
         if self.body_items[0].is_attrib_only():
             self.body_items[0].set_attrib(akey, aval)
         else:
-            i = Item()
+            i = Item(self.item_top_parser_pat)
             i.set_attrib(akey, aval)
             self.body_items.insert(0, i)
 
     @classmethod
-    def fromtext(cls, text):
-        "create a Section from multiline text paramater"
-        new_section = Section()
+    def fromtext(cls, item_top_parser_pat, text):
+        "create a Section from multiline text parameter"
+        new_section = Section(item_top_parser_pat)
         lines = text.split("\n")
         for line in lines:
             new_section.add_line(line)
@@ -61,8 +62,8 @@ class Section:
                 # print("adding data to item that was empty:", data)
                 self.current_item.add_line(data)
             else:
-                if Item.head_pat.match(data):
-                    self.current_item = Item(data)  # new Item
+                if self.item_top_parser_pat.match(data):
+                    self.current_item = Item(self.item_top_parser_pat, data)  # new Item
                     self.body_items.append(self.current_item)  # add to section body_items
                 else:
                     # print("gotta add the data to current item in section")
@@ -206,7 +207,7 @@ class Section:
     # def has_item(self, an_item):
     # 	for item in ...
 
-    def update_progress(self):
+    def update_progress(self, in_progress_pat, unfinished_s):
         """
         Make a list containing copies of the in_progress items in the section.
         Toggle the original items to unfinished.
@@ -216,10 +217,10 @@ class Section:
         # print("in Section:" + self.header)
         sec_in_progs = []
         for item in self.body_items:
-            if Item.in_progress_pat.match(item.top):
+            if in_progress_pat.match(item.top):
                 # print("\titem top:" + item.top)
-                sec_in_progs.append(item.deep_copy())
-                item.in_prog_2_unfin()
+                sec_in_progs.append(item.deep_copy(self.item_top_parser_pat))
+                item.in_prog_2_unfin(in_progress_pat, unfinished_s)
         # print("sec_in_progs:" + ",".join(map(str, sec_in_progs) ))
         return sec_in_progs
 
@@ -261,46 +262,21 @@ class Item:
     """
     See documentation for the Document class
     """
-    abandoned_str = "^[aA] *-"
-    abandoned_pat = re.compile(abandoned_str)
-    completed_str = "^[xX] *-"
-    completed_pat = re.compile(completed_str)
-    done_str = head_str = "|".join([completed_str, abandoned_str])
-    done_pat = re.compile(done_str)
 
-    in_progress_str = r'^[/\\] *-'
-    in_progress_pat = re.compile(in_progress_str)
-
-    unfinished_s = "u -"
-    unfinished_str = "^[uU] *-"
-    unfinished_pat = re.compile(unfinished_str)
-
-    do_str = "^[dD] *-"
-    do_pat = re.compile(do_str)
-
-    head_str = "|".join([done_str, in_progress_str, do_str, unfinished_str])
-    head_pat = re.compile(head_str)
-
-    not_do_str = "|".join([done_str, in_progress_str, unfinished_str])
-    not_do_pat = re.compile(not_do_str)
-
-    leader_group_str = "(" + head_str + ")"
-    title_group_str = r"\s*(.*\S)\s*$"
-    top_parser_str = leader_group_str + title_group_str
-    top_parser_pat = re.compile(leader_group_str + title_group_str)
     title_hash_attr_str = "titleHash"
 
-    def __init__(self, data:str=None, subs:[str]=None, attrs:Dict[str, TLAttribute]=None):
+    def __init__(self, top_parser_pat, data:str=None, subs:[str]=None, attrs:Dict[str, TLAttribute]=None):
         self.top = ""
         self.subs = subs or []
         self.attribs = attrs or dict()
+        self.top_parser_pat = top_parser_pat
         if data:
             self.add_line(data)
 
     @classmethod
-    def fromtext(cls, text):
+    def fromtext(cls, top_parser_pat, text):
         """create an Item from multiline text parameter"""
-        new_item = Item()
+        new_item = Item(top_parser_pat)
         lines = text.split("\n")
         for line in lines:
             new_item.add_line(line)
@@ -347,7 +323,7 @@ class Item:
         """
         # print("regex string:" + Item.top_parser_str + ":")
         item_top = self.top
-        topmo = Item.top_parser_pat.match(item_top)  # return top match object
+        topmo = self.top_parser_pat.match(item_top)  # return top match object
         if topmo:
             return topmo.group(2)
         else:
@@ -400,13 +376,13 @@ class Item:
                 "Putting a Section.head_pat line inside a Item is not allowed: " +
                 data)
 
-        if Item.head_pat.match(data):
+        if self.top_parser_pat.match(data):
             self.top = data
         else:
             if not self.attrib_by_line(data):
                 self.subs.append(data)
 
-    def deep_copy(self):
+    def deep_copy(self, top_parser_pat):
         """
         Makes a copy where
          - the top element refers to the same top string, which is ok
@@ -414,7 +390,7 @@ class Item:
          - the subs list is copied to a new list.
          - the attribute dictionary is copied to a new dict
         """
-        return Item(data=self.top, subs=list(self.subs), attrs=dict(self.attribs))
+        return Item(top_parser_pat, data=self.top, subs=list(self.subs), attrs=dict(self.attribs))
 
     def is_empty(self):
         "return true if no header or body_items, else return false."
@@ -444,7 +420,8 @@ class Item:
         return t + s
 
     # see commentary in Module and Object strategy.md
-    def in_prog_2_unfin(self):
+    # replace with transform_top which should pass in the pattern and the replacement string
+    def in_prog_2_unfin(self, in_progress_pat, unfinished_s):
         r"""Changes the item's patten from '/' or '\' to 'u' """
-        self.top = Item.in_progress_pat.sub(Item.unfinished_s, self.top)
+        self.top = in_progress_pat.sub(unfinished_s, self.top)
         return self

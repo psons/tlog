@@ -17,7 +17,7 @@ lines
 """
 from typing import List
 
-from tldocument import Document  # import re
+from tldocument import TLDocument  # import re
 from docsec import TLogInternalException, TLAttribute, Item
 import fileinput
 import journaldir
@@ -126,7 +126,7 @@ def sj_file_list_by_dir(latest_dir, history_months):
 
 def load_doc_from_file(file_name):
     file_text = journaldir.read_file_str(file_name)
-    return Document.fromtext(file_text)
+    return TLDocument.fromtext(file_text)
 
 
 # todo WTF is in_progres with only one 's'?
@@ -136,12 +136,12 @@ def short_copy(long_story_doc):
     """copy the long_story_doc arg and shorten to only maxTasks,
     making sure '/ -' tasks + 'd - ' tasks is less than maxTasks
     """
-    short_doc = Document.fromtext(str(long_story_doc))
+    short_doc = TLDocument.fromtext(str(long_story_doc))
     doc_max_tasks: int
     if long_story_doc.max_tasks:
          doc_max_tasks = int(long_story_doc.max_tasks)
     else:
-        doc_max_tasks = Document.default_maxTasks
+        doc_max_tasks = TLDocument.default_maxTasks
     short_doc.make_in_progress()
     short_doc.shorten_in_progress()
     remaining_tasks_allowed = doc_max_tasks - len(short_doc.in_progress.body_items)
@@ -162,8 +162,8 @@ def main():
     my_journal_dir = daily_o.jdir
     user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
-    journal_document = Document(day=daily_o.domth)
-    story_task_document = Document()
+    journal_document = TLDocument(day=daily_o.domth)
+    story_task_document = TLDocument()
     story_task_document.doc_name = "Endeavor story tasks based on" + user_path_o.endeavor_file
     look_back_months = 24
     cmd_line_story_docs = []
@@ -204,8 +204,8 @@ def main():
 
     # get the trimmed story docs from endeavors
     story_dir_objects = journaldir.load_endeavor_stories(user_path_o)
-    endeavor_story_docs: List[Document] = [story_doc for sdo in story_dir_objects
-                           for story_doc in StoryGroup(sdo).get_short_stories()]
+    endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
+                                             for story_doc in StoryGroup(sdo).get_short_stories()]
 
     short_s_doc_list = cmd_line_story_docs + journal_story_docs + endeavor_story_docs  # todo do story_j like endeavors
 
