@@ -9,10 +9,7 @@ input should break tests for things that do not support the new
 input.
 """
 import unittest
-from tlmodel import TLogInternalException
-from tlmodel import Item
-from tlmodel import Section
-from tlmodel import TLAttribute
+from docsec import Section, TLogInternalException, TLAttribute, Item
 
 ad1 = "aDocAttribute"
 vd1 = " TheDocValue"

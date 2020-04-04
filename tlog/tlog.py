@@ -17,9 +17,8 @@ lines
 """
 from typing import List
 
-from tlmodel import Document, Item  # import re
-from tlmodel import TLogInternalException
-from tlmodel import TLAttribute
+from tldocument import Document  # import re
+from docsec import TLogInternalException, TLAttribute, Item
 import fileinput
 import journaldir
 import sys

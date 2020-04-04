@@ -1,7 +1,9 @@
 #!/usr/local/bin/python3
 import re
 import unittest
-from tlmodel import Document, DocStructure, Item
+from tldocument import Document
+from tldocument import DocStructure
+from docsec import Item
 from testtl import doc1_text
 from testtl import ad1
 from testtl import vd1
