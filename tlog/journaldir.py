@@ -8,6 +8,8 @@ from git import IndexFile
 """
 determine directory for journal files based on current year and month.
 if invoked as script, print it to stdout so a shell alias can cd there.
+
+Composition: Contains all the file system operations needed by tlog.py
 """
 import datetime
 import os
@@ -124,7 +126,7 @@ def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
     # More advanced versions of endeavor file format later.
     endeavor_text = read_file_str(user_path_obj.endeavor_file)
-    print("endeavor_text:", endeavor_text)
+    # print("endeavor_text:", endeavor_text)
     return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
             for e_str in endeavor_text.split()]
 
@@ -133,18 +135,6 @@ def load_endeavors_deprecated(user_path_obj):
     endeavor_text = read_file_str(user_path_obj.endeavor_file)
     print("endeavor_text:", endeavor_text)
     return [Endeavor_deprecated(e_str, user_path_obj) for e_str in endeavor_text.split()]
-
-
-def load_endeavor_stories_deprecated(user_path_obj):
-    endeavor_text = read_file_str(user_path_obj.endeavor_file)
-    print("endeavor_text:", endeavor_text)
-    # todo assemble storyDirs from endeavor dir = name
-    story_dirs = [os.path.join(user_path_obj.endeavor_path, e_str) for e_str in endeavor_text.split()]
-    # todo probably deprecate this function.  replace with somthing
-    #  that returns a list of StoryDirs.   Add a constructor to StoryGroup(StoryDir)
-    #
-    return [Endeavor_deprecated(e_str, user_path_obj) for e_str in endeavor_text.split()]
-
 
 def path_join(p, f):
     "wrapper helps prevent module os from being needed in calling modules."

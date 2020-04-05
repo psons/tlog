@@ -2,29 +2,28 @@
 import re
 import unittest
 from tldocument import TLDocument
-from tldocument import DocStructure
-from docsec import Item
+from docsec import Item, Section, DocStructure
 from testtl import doc1_text
 from testtl import ad1
 from testtl import vd1
 from testtl import vd2
 
-class testDocument(unittest.TestCase):
-	"Tests for the Documet class."
+class TestDocument(unittest.TestCase):
+	"""Tests for the Document class."""
 
 	docTitle = "A Test Doc"
 
 	docIn = """\
 a little preamble text
 #Section
-x - did somthing
+x - did something
  - sub item list item done
 ## a section below
 text in a section below
 / - item in progress
 / - item with sub in progress
  - sub of the in progress.
-d - do somthing
+d - do something
  - sub item list item 1
  - sub item list item 2
 free text\
@@ -33,12 +32,12 @@ free text\
 # Sun 21st
 x - rest
 # Mon 22nd
-x - did somthing
- - sub of did somthing
+x - did something
+ - sub of did something
 / - item in progress
 / - item with sub in progress
  - sub of the in progress.
-d - do somthing
+d - do something
  - sub item list item 1
  - sub item list item 2
 free text\
@@ -47,12 +46,12 @@ free text\
 # Sun 21st
 x - rest
 # Mon 22nd
-x - did somthing
- - sub of did somthing
+x - did something
+ - sub of did something
 / - item in progress
 / - item with sub in progress
  - sub of the in progress.
-d - do somthing
+d - do something
  - sub item list item 1
  - sub item list item 2
 free text\
@@ -60,7 +59,7 @@ free text\
 	journalOut = """\
 a little preamble text
 #Section
-x - did somthing
+x - did something
  - sub item list item done
 ## a section below
 text in a section below
@@ -69,7 +68,7 @@ text in a section below
  - sub of the in progress.\
 """
 	backlogOut = """\
-d - do somthing
+d - do something
  - sub item list item 1
  - sub item list item 2
 free text\
@@ -81,7 +80,7 @@ free text\
 	journalProgressOut = """\
 a little preamble text
 #Section
-x - did somthing
+x - did something
  - sub item list item done
 ## a section below
 text in a section below
@@ -114,52 +113,52 @@ d - finish the small story!\
 	"""
 
 	def testDocumentJournal(self):
-		text_lines = testDocument.docIn.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
+		text_lines = TestDocument.docIn.split("\n")
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		#print("str(dtest):" + str(dtest))
-		self.assertEqual(dtest.journal_str(), testDocument.journalOut)
+		self.assertEqual(dtest.journal_str(), TestDocument.journalOut)
 
 	def testDocumentBacklog(self):
-		text_lines = testDocument.docIn.split("\n")
-		dtest = TLDocument(testDocument.docTitle, text_lines)
-		self.assertEqual(testDocument.backlogOut, dtest.backlog_str())
+		text_lines = TestDocument.docIn.split("\n")
+		dtest = TLDocument(TestDocument.docTitle, text_lines)
+		self.assertEqual(TestDocument.backlogOut, dtest.backlog_str())
 
 	def testDocumentWhole(self):
 		"Lines from docIn should match str() of Document made from them."
-		text_lines = testDocument.docIn.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
-		self.assertEqual(str(dtest), testDocument.docOut)
+		text_lines = TestDocument.docIn.split("\n")
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
+		self.assertEqual(str(dtest), TestDocument.docOut)
 
 	def testDocumentJournalProgress(self):
 		"Journal after make_in_progress() called.  Has items marked unfinished"
-		text_lines = testDocument.docIn.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
+		text_lines = TestDocument.docIn.split("\n")
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		dtest.make_in_progress()
-		self.assertEqual(dtest.journal_str(), testDocument.journalProgressOut)
+		self.assertEqual(dtest.journal_str(), TestDocument.journalProgressOut)
 
 	def testDocumentInProgress(self):
 		"In progress section after make_in_progress() called"
-		text_lines = testDocument.docIn.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
+		text_lines = TestDocument.docIn.split("\n")
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		dtest.make_in_progress()
-		self.assertEqual(testDocument.inProgressOut, dtest.in_progress_str())
+		self.assertEqual(TestDocument.inProgressOut, dtest.in_progress_str())
 
 # add test for scenarios where the in progress section is existing,
 # especially with some completed tasks, that must not get lost!
 
 	def testDocumentExistingProgressSection(self):
 		"Re use In progress section for make_in_progress()"
-		text_lines = testDocument.docIn2.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
+		text_lines = TestDocument.docIn2.split("\n")
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		dtest.make_in_progress("# Mon 22nd")
-		self.assertEqual(str(dtest), testDocument.docOut2)
+		self.assertEqual(str(dtest), TestDocument.docOut2)
 
 	def testDocumentWholeInProgres(self):
 		"Whole document after make_in_progress() called"
-		text_lines = testDocument.docIn.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
+		text_lines = TestDocument.docIn.split("\n")
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		dtest.make_in_progress()
-		self.assertEqual(str(dtest), testDocument.docInProgressOut)
+		self.assertEqual(str(dtest), TestDocument.docInProgressOut)
 
 	def testDocumentWhole2(self):
 		inDoc2  = """\
@@ -179,7 +178,7 @@ x - save taxes as encrypted 7zip to fireproof box
 d - put way misc paper tax files\
 """
 		text_lines = inDoc2.split("\n")
-		dtest  = TLDocument(testDocument.docTitle, text_lines)
+		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		#print("testDocumentWhole2 str(dtest):" + str(dtest))
 		self.assertEqual(str(dtest), outDoc2)
 
@@ -195,7 +194,7 @@ d - put way misc paper tax files\
 
 	def testDocumentSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
-		d1 = TLDocument.fromtext(testDocument.docIn)
+		d1 = TLDocument.fromtext(TestDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		attr = d1.get_doc_attrib(ad1)
 		self.assertEqual(vd1, attr)
@@ -203,7 +202,7 @@ d - put way misc paper tax files\
 	# todo modify this test to check for duplicat attribute in the un named section.
 	def testDocumentSecondSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
-		d1 = TLDocument.fromtext(testDocument.docIn)
+		d1 = TLDocument.fromtext(TestDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		d1.set_doc_attrib(ad1, vd2) # set it again
 		attr = d1.get_doc_attrib(ad1)
@@ -212,13 +211,13 @@ d - put way misc paper tax files\
 
 	def testDocumentNameProperty(self):
 		"Does assignment to adocument.doc_name work?"
-		d1 = TLDocument.fromtext(testDocument.docIn)
+		d1 = TLDocument.fromtext(TestDocument.docIn)
 		a_doc_name = "Moby Doc.txt"
 		d1.doc_name = a_doc_name
 		self.assertEqual(d1.doc_name, a_doc_name)
 
 	def testDocumentMaxTasks(self):
-		small_story_doc = TLDocument.fromtext(testDocument.small_story)
+		small_story_doc = TLDocument.fromtext(TestDocument.small_story)
 		mt = small_story_doc.max_tasks
 		task_list = small_story_doc.get_backlog_list(mt)
 		self.assertEqual(int(mt), len(task_list))
@@ -226,7 +225,8 @@ d - put way misc paper tax files\
 class special_sections:
 	"holds some test data for DocumentStructure"
 	def __init__(self):
-		self.ds = DocStructure( '^#', TLDocument.top_parser_pat)
+		# self.ds = DocStructure( '^#', TLDocument.top_parser_pat)
+		self.ds = DocStructure( Section.head_pat, TLDocument.top_parser_pat)
 		self.a_pat = re.compile('^[aA] *-')
 		self.x_pat = re.compile('^[xX] *-')
 		self.ds.add_leader_entry('# Past Tasks', [self.a_pat, self.x_pat])

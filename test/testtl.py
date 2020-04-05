@@ -9,7 +9,7 @@ input should break tests for things that do not support the new
 input.
 """
 import unittest
-from docsec import Section, TLogInternalException, TLAttribute, Item
+from docsec import Section, TLogInternalException, ItemAttribute, Item
 from tldocument import TLDocument
 
 ad1 = "aDocAttribute"
@@ -282,7 +282,7 @@ free text\
 	def testChange_in_prog_2_unfin(self):
 		data = "\ - doing somthing else"
 		itest = Item(TLDocument.top_parser_pat, data)
-		itest.in_prog_2_unfin(TLDocument.in_progress_pat, TLDocument.unfinished_s)
+		itest.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s)
 		self.assertTrue(TLDocument.unfinished_pat.match(itest.top))
 
 	def testSecHeadTiIremRaisesE(self):
@@ -461,7 +461,7 @@ AnAttributeName: the Attribute Value\
 		data = "\ - one thing going on"
 		out = "u - one thing going on"
 		itest = Item(TLDocument.top_parser_pat, data)
-		itest.in_prog_2_unfin(TLDocument.in_progress_pat, TLDocument.unfinished_s)
+		itest.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s)
 		self.assertEqual(str(itest), out) 
 
 	def testUpdateProgress2(self):
@@ -469,7 +469,7 @@ AnAttributeName: the Attribute Value\
 		data = "/ - another thing going on"
 		out = "u - another thing going on"
 		itest = Item(TLDocument.top_parser_pat, data)
-		itest.in_prog_2_unfin(TLDocument.in_progress_pat, TLDocument.unfinished_s)
+		itest.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s)
 		self.assertEqual(str(itest), out) 
 
 	def test_is_attrib_section(self):
@@ -487,12 +487,12 @@ class testTLAttribute(unittest.TestCase):
 	valid_line = positive_key + ":" + positive_value
 
 	def positive_pattern():
-		return TLAttribute.attr_pat.match(testTLAttribute.valid_line)
+		return ItemAttribute.attr_pat.match(testTLAttribute.valid_line)
 
 
 	def negitive_pattern():
 		data = "SomeAttribute the value of it"
-		return TLAttribute.attr_pat.match(data)
+		return ItemAttribute.attr_pat.match(data)
 
 
 	def testTLAttributePatternMatch(self):
@@ -508,7 +508,7 @@ class testTLAttribute(unittest.TestCase):
 		"Does a pattern match set the key?"
 
 		mo = testTLAttribute.positive_pattern() # mo is match Object
-		testAttr = TLAttribute(mo.group(1), mo.group(2))
+		testAttr = ItemAttribute(mo.group(1), mo.group(2))
 
 		self.assertEqual(testAttr.name, testTLAttribute.positive_key)
 		self.assertEqual(testAttr.value, testTLAttribute.positive_value)
@@ -516,7 +516,7 @@ class testTLAttribute(unittest.TestCase):
 	def testTLAttributeStr(self):
 		"str() of a TLAttribute should give the text it was made from"
 		self.assertEqual(
-			str(TLAttribute.fromline(testTLAttribute.valid_line)), 
+			str(ItemAttribute.fromline(testTLAttribute.valid_line)),
 			testTLAttribute.valid_line)
 
 

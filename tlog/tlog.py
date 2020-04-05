@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 """
-2020-03-06: Evolving toward a memory data structure built of collections of Document
+Composition: Top level application built of collections of TLDocument
 Objects.  Stories read from Endeavor files, for example.
 
 First, read and classify each input line as one or more of:
@@ -18,7 +18,7 @@ lines
 from typing import List
 
 from tldocument import TLDocument  # import re
-from docsec import TLogInternalException, TLAttribute, Item
+from docsec import TLogInternalException, Item
 import fileinput
 import journaldir
 import sys
@@ -246,11 +246,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-## support a method in Document to:
-# create day_document as inprogress + pop 3 off backlog from journal.
-# new_tasks_per_day = 3
-# journal_document.get_day_document(new_tasks_per_day)
-
-# html = markdown.markdown(journal_document.in_progress_str() + '\n')
-# journaldir.write_simple( html,
-#	journaldir.journal_dir, "todayfile.html")

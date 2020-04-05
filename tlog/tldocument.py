@@ -1,27 +1,32 @@
 #!/usr/local/bin/python3
 """
-There is always a current Section in a Document.
-There is always a current Item in a Section.
+Composition: TLDocument class contains the tlog application semantics purpose
+for Section objects and the text parsing patterns for Sections and Items along
+with the semantic significance of those patterns
 
-If data is a section header, 
-and 
-    if the current section is empty, use it
-    else make a new current section with the data.
-If data is an item header other than 'do', 
-    add it to the current section.
-    adding an item to a Section will:
-        if the current item is empty, use it.
-        else make a new current Item with the data.
-        return a new current_item
-else if data is a 'do' item header 
-    add it to the backlog Section
-else 
+Logic for building TLDocuments from text: (needs update)
+    There is always a current Section in a Document.
+    There is always a current Item in a Section.
+
+    If data is a section header,
+    and
+        if the current section is empty, use it
+        else make a new current section with the data.
+    If data is an item header other than 'do',
+        add it to the current section.
+        adding an item to a Section will:
+            if the current item is empty, use it.
+            else make a new current Item with the data.
+            return a new current_item
+    else if data is a 'do' item header
+        add it to the backlog Section
+    else
 
 """
 import re
-from typing import List, Dict, Pattern
+from typing import List
 
-from docsec import Section, TLogInternalException, Item
+from docsec import Section, DocStructure
 
 blank_ln_pat = re.compile("^\s*$")
 
@@ -95,11 +100,11 @@ class TLDocument:
     done_pat = re.compile(done_str)  # Used externally in in TLDocument get_xa ..
 
     in_progress_str = r'^[/\\] *-' # used here in head_str and not_do_str
-    in_progress_pat = re.compile(in_progress_str) # used in Item in in_prog_2_unfin() that i am refactoring
+    in_progress_pat = re.compile(in_progress_str) # used in Item in modify_item_top() that i am refactoring
 
-    unfinished_s = "u -"  # used in Item in in_prog_2_unfin() that i am refactoring
+    unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
     unfinished_str = "^[uU] *-"
-    unfinished_pat = re.compile(unfinished_str)  # used in test for Item in in_prog_2_unfin() that i am refactoring
+    unfinished_pat = re.compile(unfinished_str)  # used in test for Item in modify_item_top() that i am refactoring
                                                 # Good usage in Document to configures the scrum Docstruct
     do_str = "^[dD] *-"  # used here as part of head_str
     do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
@@ -270,25 +275,19 @@ class TLDocument:
         "Return the in_progress section as a string."
         return str(self.in_progress)
 
-    # coupled to:
-    #   Item.done_pat which matches the xa.
-    #   self.past_task_head.
-    # would like to push these Story and task semantics out to the caller.
     def get_xa_story_tasks(self, story_key: str):
         """
         get tasks from the scrum that have a storySource: attribute
-        and are complete or abandoned.
+        and are complete ('x - ') or abandoned ('a -').
         """
         past_section: Section = self.scrum.head_instance_dict[self.past_task_head]
-        xa_items = past_section.get_matching_items(Item.done_pat)
+        xa_items = past_section.get_matching_items(TLDocument.done_pat)
         xa_items_w_stories  = [ i for i in xa_items if i.get_item_attrib(story_key)]
-        print(f"xa_items:\n{xa_items}")
         return xa_items_w_stories
 
         # get_matching_items(pattern: Pattern[str])
 
-    # todo check to see if this is still used.
-    #  Its only used in a test.
+    #  This is only only used in a test, and could be moved.
     def get_backlog_list(self, num_tasks=-1):
         """Typically the caller will pass in the self.max_tasks value,
         or take the default -1 indicating all tasks
@@ -371,7 +370,6 @@ class TLDocument:
         self.add_scrum_items(self.in_progress)  # / tasks from in_progress
         self.add_scrum_items(self.backlog)  # d tasks from backlog
         for section in self.journal:        # u, a, and x tasks from journal
-            print("tmpdebug - section", section)
             # todo do this also for the special backlog section.  (extract a method)
             self.add_scrum_items(section)
 
@@ -380,8 +378,8 @@ class TLDocument:
     def add_scrum_items(self, section):
         for item in section.body_items:
             category_section: Section = self.scrum.insert_item(item)
-            if category_section is None:
-                print(f"tmpdebug for Section head '{section.header}', uncategorized - item", item)
+            # if category_section is None:
+            #     print(f"tmpdebug for Section head '{section.header}', uncategorized - item", item)
 
     def make_in_progress(self, in_prog_head=defautInProgHead):
         """
@@ -449,84 +447,6 @@ class TLDocument:
                 self.backlog.add_merge_item(item)
         else:
             print("DEBUG warning: other_backlog_section is None merging into " + self.doc_name)
-
-class DocStructure:
-    """
-    ----------------
-    This is a partial step slightly in the direction making Section and
-    Item be a generic by extracting the Section *header* and Item *header*
-    patterns out to an encompassing Doc.   It is not quite right for reading
-    story docs because it is going in the direction of inserting things into
-    named sections by item Leader type.  This is good for Journal Documents
-    (see "use:" below)  Stories should keep Items under the Sections they
-    appear in.  The value is to be able to load a Document as a Story, and
-    extract the specialized sections by leader type.
-    The existing Document code suitable for loading stories just needs to know if
-    a particular pattern means a new Section or Item grouping should be
-    started as a series of lines is read.
-    ----------------
-    Goal: provide a structure where multiple leader types such as '^d - ' are associated with a
-    single section instance
-
-    Construction notes:
-    initialize with nothing, but add pairs of #head_str, [list of leader strings]
-    build: map of leader pattern -> Section instances for classifying
-        <instead of adding to journal or backlog>
-        adding each pair rebuilds the map
-    need: access to the values of the map.  each #head_str has semantic meaning to the caller, tlog
-
-    use:
-    special_sections = DocStructure('^#')
-    special_sections.add_leader_entry('# Past Tasks', ['^[aA] *-', '^[xX] *-'])
-    special_sections.add_leader_entry('# Current Tasks', ['^[dD] *-'])
-    place_to_put = special_sections.insert_item("")
-    """
-    def __init__(self, header_pattern_str: str, item_top_parser_pat: Pattern):
-        # regex that defines what a header is.  Need for validation
-        self.header_str = header_pattern_str
-        self.header_pat = re.compile(self.header_str)
-        self.item_top_parser_pat = item_top_parser_pat # todo use a str instead of re to be consistent with header_pattern_str
-        self.head_leaders_dict: Dict[str, List[str]] = {} # do i need this?  maybe for error messages?
-        self.head_instance_dict: Dict[str, Section] = {} # map string headers -> Section instances
-        self.leader_instance_dict:[str, Section] = {} # for callers to add to the correct instances
-
-
-    def add_leader_entry(self, heading: str, pattern_strs: List[Pattern[str]]):
-        """
-        Add an association between a list of leader pattern_strs and a heading and
-        Section instance for that heading
-        Will not support update of a heading once it is added.
-        """
-        if not self.header_pat.match(heading):
-            raise TLogInternalException(f"heading {heading} does not match {self.header_str}")
-        if heading in self.head_instance_dict:
-            raise TLogInternalException(f"update of existing heading ({heading}) not supported")
-        self.head_leaders_dict[heading] = pattern_strs
-        self.head_instance_dict[heading] = Section(heading)
-        for leader in pattern_strs:
-            self.leader_instance_dict[re.compile(leader)] = self.head_instance_dict[heading]
-            #print("compile re for {} is {}".format(leader, str(re.compile(leader))))
-
-    def __repr__(self):
-        return "\n".join([ str(leader) + " => " + self.leader_instance_dict[leader].header
-                           + " (" + repr(self.leader_instance_dict[leader]) + ")"
-                           for leader in self.leader_instance_dict.keys()])
-
-    def __str__(self):
-        ds = "\n".join([str(self.head_instance_dict[s]) for s in self.head_instance_dict.keys()])
-        return ds
-
-
-    def insert_item(self, item: Item):
-        """
-        Side affect: insert Item in first matching section in leader_instance_dict
-        Return the instance from leader_instance_dict matching item.top or None"""
-        for key_pat in self.leader_instance_dict.keys():
-            if key_pat.match(item.top):
-                section_match: Section = self.leader_instance_dict[key_pat]
-                section_match.add_item(item)
-                return section_match
-        return None
 
 
 def debExit(message=""):

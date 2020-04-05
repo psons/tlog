@@ -1,12 +1,21 @@
+"""
+Composition: Classes that have a general purpose usage, free of application
+semantics, which are added by the calling code when DocStructure, Section,
+and Item objects are instantiated.
+"""
+
 import hashlib
 import re
-from typing import Pattern, Dict
+from typing import Pattern, Dict, List
 
 
 class Section:
     head_pat = re.compile("^#")
 
     def __init__(self, item_top_parser_pat, data: str = None) -> None:
+        if not isinstance(item_top_parser_pat, Pattern):
+            raise TLogInternalException(
+                "Section __init__ was not passed a Pattern as the first object")
         self.item_top_parser_pat = item_top_parser_pat
         self.current_item = Item(self.item_top_parser_pat)
         self.header = ""
@@ -53,7 +62,7 @@ class Section:
         return new_section
 
     def add_line(self, data):
-        "See doc under Document.add_line()"
+        """See doc under TLDocument.add_line()"""
         if Section.head_pat.match(data):
             # print("trying to add a section header data:", data)
             self.header = data
@@ -139,7 +148,7 @@ class Section:
         """
         used by get_xa_...
         :param pattern: compiled re to use to select matching items
-        :return:
+        :return: list of matching Items
         """
         matching_items = [ i  for i in self.body_items if pattern.match(i.top)]
         return matching_items
@@ -153,7 +162,7 @@ class Section:
         """
         item: Item
         for item in self.body_items:
-            item_attribute: TLAttribute = item.get_item_attrib_holder(akey)
+            item_attribute: ItemAttribute = item.get_item_attrib_holder(akey)
             if item_attribute:
                 if item_attribute.value == aval:
                     return item_attribute
@@ -220,7 +229,7 @@ class Section:
             if in_progress_pat.match(item.top):
                 # print("\titem top:" + item.top)
                 sec_in_progs.append(item.deep_copy(self.item_top_parser_pat))
-                item.in_prog_2_unfin(in_progress_pat, unfinished_s)
+                item.modify_item_top(in_progress_pat, unfinished_s)
         # print("sec_in_progs:" + ",".join(map(str, sec_in_progs) ))
         return sec_in_progs
 
@@ -235,7 +244,7 @@ class TLogInternalException(Exception):
         return repr(self.value)
 
 
-class TLAttribute:
+class ItemAttribute:
     "T Log Attribute"
     delim = ':'
     attr_str = r'^(\w+)' + delim + r'(.*)'
@@ -248,14 +257,14 @@ class TLAttribute:
     @classmethod
     def fromline(cls, data):
         "Create an attribute from a data line.  (e. g. a string read from a file)"
-        attmo = TLAttribute.attr_pat.match(data)  # return attribute match object
+        attmo = ItemAttribute.attr_pat.match(data)  # return attribute match object
         if attmo:
-            return TLAttribute(attmo.group(1), attmo.group(2))
+            return ItemAttribute(attmo.group(1), attmo.group(2))
         else:
             return None
 
     def __str__(self):
-        return str(self.name) + TLAttribute.delim + str(self.value)
+        return str(self.name) + ItemAttribute.delim + str(self.value)
 
 
 class Item:
@@ -265,7 +274,7 @@ class Item:
 
     title_hash_attr_str = "titleHash"
 
-    def __init__(self, top_parser_pat, data:str=None, subs:[str]=None, attrs:Dict[str, TLAttribute]=None):
+    def __init__(self, top_parser_pat, data:str=None, subs:[str]=None, attrs:Dict[str, ItemAttribute]=None):
         self.top = ""
         self.subs = subs or []
         self.attribs = attrs or dict()
@@ -288,7 +297,7 @@ class Item:
         set it as an item attribute and return it.
         Else, return None
         """
-        attr = TLAttribute.fromline(data)
+        attr = ItemAttribute.fromline(data)
         if attr:
             self.attribs[attr.name] = attr
             return attr
@@ -308,7 +317,7 @@ class Item:
 
     def set_attrib(self, akey, aval):
         """Set Item attributes given akey and aval"""
-        self.attribs[akey] = TLAttribute(akey, aval)
+        self.attribs[akey] = ItemAttribute(akey, aval)
 
     def get_item_attrib_holder(self, akey):
         """Get Item attrib for key, returning TLAttribute object that has both key and val"""
@@ -419,9 +428,91 @@ class Item:
 
         return t + s
 
-    # see commentary in Module and Object strategy.md
-    # replace with transform_top which should pass in the pattern and the replacement string
-    def in_prog_2_unfin(self, in_progress_pat, unfinished_s):
-        r"""Changes the item's patten from '/' or '\' to 'u' """
-        self.top = in_progress_pat.sub(unfinished_s, self.top)
+
+    def modify_item_top(self, pattern, new_string):
+        r"""
+        Changes the item's patten to new_string.  i.e '/' or '\' to 'u'
+        :param pattern:
+        :param new_string:
+        :return:
+        """
+        self.top = pattern.sub(new_string, self.top)
         return self
+
+
+class DocStructure:
+    """
+    ----------------
+    This is a partial step slightly in the direction making Section and
+    Item be a generic by extracting the Section *header* and Item *header*
+    patterns out to an encompassing Doc.   It is not quite right for reading
+    story docs because it is going in the direction of inserting things into
+    named sections by item Leader type.  This is good for Journal Documents
+    (see "use:" below)  Stories should keep Items under the Sections they
+    appear in.  The value is to be able to load a Document as a Story, and
+    extract the specialized sections by leader type.
+    The existing Document code suitable for loading stories just needs to know if
+    a particular pattern means a new Section or Item grouping should be
+    started as a series of lines is read.
+    ----------------
+    Goal: provide a structure where multiple leader types such as '^d - ' are associated with a
+    single section instance
+
+    Construction notes:
+    initialize with nothing, but add pairs of #head_str, [list of leader strings]
+    build: map of leader pattern -> Section instances for classifying
+        <instead of adding to journal or backlog>
+        adding each pair rebuilds the map
+    need: access to the values of the map.  each #head_str has semantic meaning to the caller, tlog
+
+    use:
+    special_sections = DocStructure('^#')
+    special_sections.add_leader_entry('# Past Tasks', ['^[aA] *-', '^[xX] *-'])
+    special_sections.add_leader_entry('# Current Tasks', ['^[dD] *-'])
+    place_to_put = special_sections.insert_item("")
+    """
+    def __init__(self, header_pattern: Pattern, item_top_parser_pat: Pattern):
+        # regex that defines what a header is.  Need for validation
+        self.header_pat = header_pattern
+        self.item_top_parser_pat = item_top_parser_pat
+        self.head_leaders_dict: Dict[str, List[str]] = {} # do i need this?  maybe for error messages?
+        self.head_instance_dict: Dict[str, Section] = {} # map string headers -> Section instances
+        self.leader_instance_dict:[str, Section] = {} # for callers to add to the correct instances
+
+
+    def add_leader_entry(self, heading: str, pattern_strs: List[Pattern[str]]):
+        """
+        Add an association between a list of leader pattern_strs and a heading and
+        Section instance for that heading
+        Will not support update of a heading once it is added.
+        """
+        if not self.header_pat.match(heading):
+            raise TLogInternalException(f"heading {heading} does not match {self.header_str}")
+        if heading in self.head_instance_dict:
+            raise TLogInternalException(f"update of existing heading ({heading}) not supported")
+        self.head_leaders_dict[heading] = pattern_strs
+        self.head_instance_dict[heading] = Section(self.item_top_parser_pat, heading)
+        for leader in pattern_strs:
+            self.leader_instance_dict[re.compile(leader)] = self.head_instance_dict[heading]
+            #print("compile re for {} is {}".format(leader, str(re.compile(leader))))
+
+    def __repr__(self):
+        return "\n".join([ str(leader) + " => " + self.leader_instance_dict[leader].header
+                           + " (" + repr(self.leader_instance_dict[leader]) + ")"
+                           for leader in self.leader_instance_dict.keys()])
+
+    def __str__(self):
+        ds = "\n".join([str(self.head_instance_dict[s]) for s in self.head_instance_dict.keys()])
+        return ds
+
+
+    def insert_item(self, item: Item):
+        """
+        Side affect: insert Item in first matching section in leader_instance_dict
+        Return the instance from leader_instance_dict matching item.top or None"""
+        for key_pat in self.leader_instance_dict.keys():
+            if key_pat.match(item.top):
+                section_match: Section = self.leader_instance_dict[key_pat]
+                section_match.add_item(item)
+                return section_match
+        return None
