@@ -210,6 +210,8 @@ class TLDocument:
         Add a single data line into the document according to
         pattern_strs in the Item and Section classes.
         """
+        if data is None:
+            return
         if TLDocument.do_pat.match(data):
             self.backlog.add_line(data)
             self.last_add = self.backlog
@@ -236,6 +238,8 @@ class TLDocument:
     def fromtext(cls, text):
         "create a Document from multiline text paramater"
         new_document = TLDocument()
+        if not text:
+            return new_document
         lines = text.split("\n")
         new_document.add_lines(lines)
         return new_document

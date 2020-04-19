@@ -103,6 +103,7 @@ class Daily:
         Set some daily values needed in some names and labels
         :param dt: type: datetime.datetime
         """
+        self.jroot = convention_journal_root
         self.dt = dt or datetime.datetime.now()
         # see http://strftime.org/
         yyyy = self.dt.strftime('%Y')
@@ -118,8 +119,14 @@ class Daily:
                       '29': "th", '30': "th", '31': "expected_story_text"}
 
         self.domth = dow + ' ' + dom + dayth_dict[dom]
-        self.jdir = os.path.join(convention_journal_root, yyyy, mm)
+        self.jdir = os.path.join(self.jroot, yyyy, mm)
+        self.debug_log_file = os.path.join(self.jroot, "tl.debug.log")
+        # self.user_log_file = os.path.join(self.jroot, "tl.user.log")
+        self.info_log_file = os.path.join(self.jroot, "tl.info.log")
         self.cday_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+
+    def __str__(self):
+        return f"{self.jdir} {self.cday_fname} {self.domth}"
 
 
 def load_endeavor_stories(user_path_obj):

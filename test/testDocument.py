@@ -186,6 +186,24 @@ d - put way misc paper tax files\
 	def testDocumentWhole3(self):
 		self.assertEqual(str(TLDocument.fromtext(doc1_text)), doc1_text)
 
+
+	def testDocumentFromTextNone(self):
+		"""TLDocument.fromtext handles None"""
+		self.assertEqual(str(TLDocument.fromtext(None)), str(TLDocument()))
+
+	def testDocumentAddLinesNone(self):
+		"""TLDocument.add_lines handles None"""
+		adoc = TLDocument()
+		adoc.add_lines(None)
+		self.assertEqual(str(adoc), str(TLDocument()))
+
+	def testDocumentAddLineNone(self):
+		"""TLDocument.add_line handles None"""
+		adoc = TLDocument()
+		adoc.add_line(None)
+		self.assertEqual(str(adoc), str(TLDocument()))
+
+
 	def testDocumentGetAttrib(self):
 		"Does get_doc_attrib return a value for a Document attribute?"
 		val = TLDocument.fromtext(doc1_text).get_doc_attrib(ad1)

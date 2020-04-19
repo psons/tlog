@@ -22,6 +22,7 @@ from docsec import TLogInternalException, Item
 import fileinput
 import journaldir
 import sys
+import logging
 
 
 # import markdown # avoid html support and coupling to markdown for now
@@ -150,6 +151,39 @@ def short_copy(long_story_doc):
     short_doc.shorten_backlog(remaining_tasks_allowed)
     return short_doc
 
+# todo redo extend logging.Logger to add the specifics, and the screen lo method.
+#  alternately, add a custom level that is for just writing user prompts to the
+#  screen.
+class Messaging:
+    def __init__(self, lname, info_file, debug_file):
+        self.ulog = logging.getLogger(lname)
+        self.ulog.setLevel(logging.DEBUG)
+        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+
+        user_handler = logging.FileHandler(info_file)
+        user_handler.setLevel(logging.INFO)
+        user_handler.setFormatter(formatter)
+        self.ulog.addHandler(user_handler)
+
+        programmer_handler = logging.FileHandler(debug_file)
+        programmer_handler.setLevel(logging.DEBUG)
+        programmer_handler.setFormatter(formatter)
+        self.ulog.addHandler(programmer_handler)
+
+
+    def screen_log(self, tag, msg):
+        print(msg)
+        self.ulog.info(tag + msg)
+
+
+
+
+def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
+    str_list = [str(o) for o in in_list]
+    r_str = delimiter.join(str_list)
+    if prefix_delim:
+        r_str = delimiter + r_str
+    return r_str
 
 supported_commands = ["jdir"]
 """
@@ -158,7 +192,12 @@ jdir - treat the next argument to tlog as the journal_dir.
 
 
 def main():
+    tag = "tlog main:"
     daily_o = journaldir.Daily()
+    msgr = Messaging('user', daily_o.info_log_file, daily_o.debug_log_file)
+    msgr.screen_log(tag, f"logging to: {daily_o.info_log_file}")
+    msgr.ulog.info(f"run start: {daily_o.dt}")
+    msgr.ulog.debug(tag + str(daily_o))
     my_journal_dir = daily_o.jdir
     user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
@@ -173,13 +212,11 @@ def main():
         prev_journal_dir = find_prev_journal_dir(my_journal_dir, look_back_months)
         story_dir_o = journaldir.StoryDir(prev_journal_dir)
         journal_story_docs = StoryGroup(story_dir_o).get_short_stories()
-        # todo write a journal loader and replace the line below.
-        # s_file_list, j_file_list, prev_journal_dir = sj_file_list_by_dir(my_journal_dir, look_back_months)
         j_file_list = journaldir.get_file_names_by_pattern(
             story_dir_o.path, journaldir.journal_pat)
-        # j_file_list = list(j_file_list[-1])
-        print("no argument sfile_list:", ",".join(story_dir_o.story_list))
-        print("no argument jfile_list:", j_file_list)
+        msg = "no argument sfile_list: " + ",".join(story_dir_o.story_list)
+        msgr.screen_log(tag, msg)
+        msgr.screen_log(tag, "no argument jfile_list:" + ",".join(j_file_list))
     else:
         if sys.argv[1] in supported_commands:
             tlog_command = sys.argv[1]
@@ -200,14 +237,15 @@ def main():
             s_file_list = sys.argv[1:]
             cmd_line_story_docs = [load_doc_from_file(s_file) for s_file in s_file_list]
             j_file_list = []
-            print("(re) initializing Journal from stories:", s_file_list)
+            msgr.screen_log(tag, "(re) initializing Journal from stories:" + ",".join(s_file_list))
 
     # get the trimmed story docs from endeavors
     story_dir_objects = journaldir.load_endeavor_stories(user_path_o)
     endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
                                              for story_doc in StoryGroup(sdo).get_short_stories()]
 
-    short_s_doc_list = cmd_line_story_docs + journal_story_docs + endeavor_story_docs  # todo do story_j like endeavors
+    short_s_doc_list = cmd_line_story_docs + journal_story_docs + endeavor_story_docs
+    msgr.ulog.info("trimmed story docs: " + str_o_list(short_s_doc_list, delimiter="\nStory:\n", prefix_delim=True))
 
     # load merge all the story tasks into one document
     for short_story_doc in short_s_doc_list:
@@ -217,8 +255,10 @@ def main():
     story_task_document.generate_backlog_title_hashes()
 
     # load the latest journal into the journal for today
-    for in_document_file in j_file_list:
-        journal_document.add_lines(fileinput.input(in_document_file))
+    last_journal = j_file_list[-1] if j_file_list else None
+    journal_document.add_lines(fileinput.input(last_journal))
+    # for in_document_file in j_file_list:
+    #     journal_document.add_lines(fileinput.input(in_document_file))
     journal_document.make_in_progress("## " + daily_o.domth)
     journal_document.merge_backlog(story_task_document.backlog)
     journal_document.make_scrum()
@@ -230,11 +270,10 @@ def main():
     # prevent whole previous month text from rolling to new month
     # todo might not need this after converting to daily scrum.
     if my_journal_dir != prev_journal_dir:
-        print("Wil drop journal because it is from a back month")
+        screen_log(tag, "Will drop journal because it is from a back month")
         journal_document.drop_journal()
 
 
-    # todo clarify where the commit is that goes with this.   I think it is somewhere.
     user_path_o.git_add_all()
 
     journal_document.doc_name = daily_o.cday_fname

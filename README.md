@@ -4,8 +4,6 @@ On a feature or fix branch, paste the current story text
 from the backlog into here.
 # current work
 write back to story story.md
-maxTasks: 2
-write back to story story.md
 x - track source story story.txt
  - write the story file as task attrib: storySource: endeavor>story
 ### lift completed tasks in journal back to source story.
@@ -29,9 +27,6 @@ x - for xa_story_tasks update source stories
 x - limit tasks pulled from a story to the maxTasks: value
 x - fix bug: in progress isn't in scrum currently.
 x - fix bug: write back obliterating all the other tasks in source story
-d - bug: pulling less than max_tasks from for example small story.md  
-d - don't count xa against maxTasks read from a story
-d - limit the stories in an endeavor to those listed in the prioritized.md
 		
 # Project notes
 Add more explanatory notes about the project.
