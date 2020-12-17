@@ -40,8 +40,7 @@ class TLDocument:
     added to the document.
     The 'in progress' items are initially just loaded to their sections.  A
     make_in_progress method is provided to copy the in progress items to a section
-    initially named '#In progress' to represent tasks planned for the next day or
-    week, or agile sprint, or whatever period.
+    initially named '#In progress' to represent tasks that have begun, but are not complete.
 
     Any line beginning with d, D, x, X,  /, \ is a task line.
         d, D - represent 'do' tasks, and get added to the document.backlog
@@ -88,6 +87,8 @@ class TLDocument:
 
     """
     default_maxTasks = 1 # used if not specified in a story.txt
+    default_initial_task_capacity = 5  # default number of backlog tasks to tae into a day sprint
+
     defautInProgHead = "#In progress"
     dname_attr_str = "DocName"
 
@@ -120,11 +121,10 @@ class TLDocument:
     # top_parser_str = leader_group_str + title_group_str
     top_parser_pat = re.compile(leader_group_str + title_group_str)
 
-
-
     # need a constructor that takes a list of lines
     # todo - need tests for this
-    def __init__(self, name=None, input_lines=None, day=None):
+    def __init__(self, name=None, input_lines=None, day=None,
+                 initial_task_capacity=default_initial_task_capacity):
         """
         Public interface Instance attributes:
             journal - the Sections and Items collected in past days
@@ -142,6 +142,7 @@ class TLDocument:
         self.scrum.add_leader_entry(current_task_head, [TLDocument.in_progress_pat, TLDocument.do_pat])
 
         self._doc_name = name or ""
+        self.task_capacity = initial_task_capacity
 
         self.initialize_journal()
 
@@ -306,6 +307,11 @@ class TLDocument:
             return self.backlog.body_items
 
     def attribute_all_backlog_items(self, key, val):
+        """creates attribute on every item in the backlog section.
+        Useful for putting the storySource attribute on all the items read out of a story.
+        :key the name of the attribute to set.
+        :val the value to set for the attribute.
+        """
         for item in self.backlog.body_items:
             item.set_attrib(key, val)
 
@@ -363,7 +369,7 @@ class TLDocument:
 
     def make_scrum(self):
         """
-        return a DocumetStructure with two sections representing part of
+        return a DocumentStructure with two sections representing part of
         what a scrum team member should report at the standup:
          - what did I accomplish yesterday: '# Past Tasks'
          - what will I work on today: '# Current Tasks'
@@ -388,7 +394,7 @@ class TLDocument:
     def make_in_progress(self, in_prog_head=defautInProgHead):
         """
         If in_prog_head exists in the self.journal,
-            take it out of the journal and make it the in_progress section.
+            take it out of the journal and make it the in_progress section in self TLDocument
 
         loop through Sections in the Document
             loop through Items in the Sections,
@@ -408,7 +414,7 @@ class TLDocument:
             # this Section might have 'x - ', and other Items
             # that need to be preserved, as  for runs when user
             # has already completed some work for the day.
-            self.in_progres = journal_section  # todo: potential major bug in the variable misspelling here!
+            #self.in_progress = journal_section
             self.journal.remove(journal_section)
         else:
             self.in_progress.add_line(in_prog_head)
@@ -446,6 +452,7 @@ class TLDocument:
         self.backlog.save_item_title_hashes()
 
     def merge_backlog(self, other_backlog_section: Section):
+        # todo: enforce a configurable max of how many tasks go into backlog.
         if other_backlog_section:
             for item in other_backlog_section.body_items:
                 self.backlog.add_merge_item(item)

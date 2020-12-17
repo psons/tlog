@@ -3,30 +3,38 @@ README.md
 On a feature or fix branch, paste the current story text 
 from the backlog into here.
 # current work
-write back to story story.md
-x - track source story story.txt
- - write the story file as task attrib: storySource: endeavor>story
-### lift completed tasks in journal back to source story.
-x - support abandoned tasks 'a - ' similar to complete.
-x - make a 'done' section in the Document.
- - implemented in the class DocumentStructure
- - nested in the Document Class
- - re-engineer Document to have a special_sections map with: 
-    a header pattern as a key
-    a regex pattern set of leader types to put in the section.
-    
-    First implement '# Done' as DocumentStructure '# Past Tasks', ['^[aA] *-', '^[xX] *-']
-    Then re-implement the backlog as DocumentStructure'# Current Tasks', ['^[dD] *-'])
-    
-    make a Scrum instance of DocStructure ...
-    
-x - write daily journal as DocStructure w past and current section instead of the journal.    
-x - make current section heading include today's date
-x - Document method get_xa_story_tasks()
-x - for xa_story_tasks update source stories 
-x - limit tasks pulled from a story to the maxTasks: value
-x - fix bug: in progress isn't in scrum currently.
-x - fix bug: write back obliterating all the other tasks in source story
+It is really important to get a version of tlog that only shows me 3 tasks.
+
+-->  
+1 - make sure write back is working, an writes all story source tasks back to where they came from.
+	1a - make tests for write back.
+---
+
+
+d - do stories relating to flow to fix strange behaviors 
+left from write back to story story.md
+The following is pulled from user doc, and should be reconciled with 
+story texts.
+ 
+### The User Flow.
+#### Day 1
+1. Create Endeavor directories with story.md files containing tasks.
+
+2. Run tlog, and a daily task file will be created in the journal directory.
+ (obsolete: journal-2019-11-16.md is the task file)
+ tasks-2019-11-16.md.  Since no journal file exists, and no task file exists 
+ matching the date, they will be created. 
+
+3. Mark a few tasks as complete or abandoned, and run tlog again.  
+The completed and abandoned tasks will be updated in the source 
+story, and moved out of the task file and into the to the 
+journal-yyyy-mm-dd.md file for the day (in the journal directory).
+_Should new tasks be pulled into the tasks file?  No for now 2020-04-19_
+#### Day 2
+1. Run tlog, and since no journal file exists, and no task file exists 
+ matching the date, they will be created. New tasks will be pulled 
+ according to 
+    1. the story level max tasks settings
 		
 # Project notes
 Add more explanatory notes about the project.

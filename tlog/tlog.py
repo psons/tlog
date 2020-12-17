@@ -32,7 +32,7 @@ class StoryGroup:
     Adds story sematics around a group of Documents read from files in a directory
 	Combines the journaldir.StoryDir and the tlmodel.Document to get
 	a collection of tasks.
-	Sets attributes in the tasks in the Documents to allow changes in the tasks in the
+	Sets attributes in the tasks in the Documents to allow changes in the tasks to bewritten back to the
 	    storySource: endeavor/story
 	journal to be written back to the original stories
 	"""
@@ -129,9 +129,6 @@ def load_doc_from_file(file_name):
     file_text = journaldir.read_file_str(file_name)
     return TLDocument.fromtext(file_text)
 
-
-# todo WTF is in_progres with only one 's'?
-
 # todo test various short_copy cases.
 def short_copy(long_story_doc):
     """copy the long_story_doc arg and shorten to only maxTasks,
@@ -145,7 +142,8 @@ def short_copy(long_story_doc):
         doc_max_tasks = TLDocument.default_maxTasks
     short_doc.make_in_progress()
     short_doc.shorten_in_progress()
-    remaining_tasks_allowed = doc_max_tasks - len(short_doc.in_progress.body_items)
+    num_in_progress = short_doc.in_progress.get_num_items()
+    remaining_tasks_allowed = doc_max_tasks - num_in_progress
     if remaining_tasks_allowed < 0:
         remaining_tasks_allowed = 0
     short_doc.shorten_backlog(remaining_tasks_allowed)
@@ -179,6 +177,13 @@ class Messaging:
 
 
 def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
+    """
+    Like 'join()' but optionally print leading delimiter
+    :param in_list: List of objects to call str() on.
+    :param delimiter:
+    :param prefix_delim:
+    :return:
+    """
     str_list = [str(o) for o in in_list]
     r_str = delimiter.join(str_list)
     if prefix_delim:
@@ -218,6 +223,7 @@ def main():
         msgr.screen_log(tag, msg)
         msgr.screen_log(tag, "no argument jfile_list:" + ",".join(j_file_list))
     else:
+        # usage: tlog jdir some_path_to_a_dir
         if sys.argv[1] in supported_commands:
             tlog_command = sys.argv[1]
             if tlog_command == "jdir":
@@ -233,7 +239,9 @@ def main():
             else:
                 raise TLogInternalException("A supported command has no implementation")
         else:
+            # user has not provided a command arg, so treat the arguments as a list of story files.
             # todo test cmd line stories
+            # these stories are not shortened to max tasks.  Think about the use case should they be?
             s_file_list = sys.argv[1:]
             cmd_line_story_docs = [load_doc_from_file(s_file) for s_file in s_file_list]
             j_file_list = []
@@ -244,11 +252,19 @@ def main():
     endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
                                              for story_doc in StoryGroup(sdo).get_short_stories()]
 
+    # At this point the short_stories have the short list of tasks in the 'backlog' section of each Doc.
+    # They really are 'sprint candidates': the top tasks in each story that may get into the day sprint.
+    # Picking off the top 3 stories will always take from the top endeavor
+    #       (if they are written in priority order)
+    # however the stories within an endeavor are just in file listing order.
+    # (see tlog story 'Prioritized Backlog story.txt'
     short_s_doc_list = cmd_line_story_docs + journal_story_docs + endeavor_story_docs
     msgr.ulog.info("trimmed story docs: " + str_o_list(short_s_doc_list, delimiter="\nStory:\n", prefix_delim=True))
 
     # load merge all the story tasks into one document
     for short_story_doc in short_s_doc_list:
+        # added support for a task capacity in TLDocument.
+        # todo then stop adding tasks in the merge if capacity will be exceeded.
         story_task_document.merge_backlog(short_story_doc.backlog)
 
     # set the title hashes on tasks for change detection

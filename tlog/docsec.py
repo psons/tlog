@@ -139,6 +139,19 @@ class Section:
 
         return True
 
+    # get_num_items method that ignores meta data item or empty item
+    def get_num_items(self):
+        """
+        :return: the number of non-metadata or empty items
+        """
+        count: int = 0
+        for item in self.body_items:
+            if not item.is_empty():
+                count += 1
+        return count
+
+
+
     def save_item_title_hashes(self):
         for item in self.body_items:
             if not item.is_attrib_only():
@@ -442,6 +455,8 @@ class Item:
 
 class DocStructure:
     """
+    This class is designed to be a generic Document class without the semantics of tlog baked in.
+    The class TLDocument has the tlog semantics and uses this class.
     ----------------
     This is a partial step slightly in the direction making Section and
     Item be a generic by extracting the Section *header* and Item *header*

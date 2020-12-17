@@ -5,6 +5,11 @@
 TaskLog helps you reconcile the multiple demands on your time and attention into a single set of activities for a day 
 with the objective that you only switch tasks when it increases productivity.
 
+A primary goal of Tlog is to provide a small focused and achievable list of about 3 tasks for each day.  
+Those tasks are the right tasks to work on because they reflect your highest priorities and obligations based
+on your goals and plans.  (You still have to decide what those priorities are, but not every day, because 
+they do not change every day!)
+
 [link to a finalized document summarizing features and Philosophy ] 
 
 TaskLog is especially well suited to analytical work where your effort is to document and communicate resolutions to issues, or build software systems.
@@ -15,7 +20,8 @@ are disinterested in each others priorities, and allows you to draw from a list
 of tasks for each of those sources of work and manage them into your single 
 threaded consciousness!  For example you may be working on a project that assigns 
 you "tickets" to work on.  You have e-mail that demands attention, possibly 
-multiple accounts.  You have career skills to develop, and a personal life.
+multiple accounts.  You have career skills to develop, and a personal life including 
+relationships with other demands.
 
 If it is possible to break tasks down at the source to things that can be 
 completed in a day you should do so because it will improve transparency to 
@@ -26,7 +32,8 @@ as opposed to having an issue that takes many days to complete.  It will make
 reconciliation with your list much easier.
 
 Tasklog represents all of your work that it can get information about in simple 
-text files on a local device.  If you occasionally update your priorities, TaskLog will help you keep a sharp focus on the most important things.
+text files on a local device.  If you occasionally update your priorities, 
+TaskLog will help you keep a sharp focus on the most important things.
 
 ## Terms and Object hierarchy
 ### Endeavor, Document, Section, Item, Subtext, Attribute.
@@ -36,7 +43,7 @@ A Document is a file in an Endeavor directory with explanatory text under Sectio
 
 Section headings are markdown headings under which you keep notes and organize tasks.
 
-Items are tasks todo, in progress, unfinished, planned, completed, or abandoned.  They are lines that start with a leader patten indicating which status the task is, such as 'd - ' for do or 'x - ' for done. 
+Items are tasks todo, in progress, unfinished, planned, completed, or abandoned.  They are lines in Documents under Sections that start with a leader patten indicating which status the task is, such as 'd - ' for do or 'x - ' for done. 
 	'd - '	todo (or do) are tasks in the backlog for a future work period.
 	'/ - '	in progress are tasks that are being worked on.
 	'u - '	unfinished is how tasks show in past planing periods where they were in progress
@@ -53,7 +60,7 @@ For any line that matches '^word: ', 'word' is an attribute key and the rest of 
 
 Some attributes may have a special conventional significance in TaskLog. 
 An item attribute is an attribute under an Item, and a section attribute is an attribute under a Section header. (actually in an unnamed Item that is the first item in the section)
-A documet attribute is an attribute in a document preamble. (actually in an unnamed Item in an unnamed Section that is the first section in the document.)
+A document attribute is an attribute in a document preamble. (actually in an unnamed Item in an unnamed Section that is the first section in the document.)
 
 ### The Flow.
 #### Day 1
