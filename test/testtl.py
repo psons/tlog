@@ -11,6 +11,7 @@ input.
 import unittest
 from docsec import Section, TLogInternalException, ItemAttribute, Item
 from tldocument import TLDocument
+import testdata
 
 ad1 = "aDocAttribute"
 vd1 = " TheDocValue"
@@ -40,7 +41,7 @@ item_attrib_line2 = ai2 + ':' + vi2
 
 item_2attr_str = "\n".join([item_attrib_line1, item_attrib_line2])
 
-dtask_line = "d - do task"
+dtask_line = testdata.dtask_line
 dtask_sub1_line = " - sub item list item 1"
 dtask_sub2_line = " - sub item list item 2"
 dtask_text_line = "free text"

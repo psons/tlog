@@ -8,8 +8,10 @@ It is really important to get a version of tlog that only shows me 3 tasks.
 Writeback 2 story.md
 
 # tasks
+d - test journaldir read_file_str and write_filepath
+
 d - test write back 'd-'  
- - given a 'd -' task in the journal section (or later sprint section) of the curent doc file story with a storySource Attribute: 
+ - given a 'd -' task in the journal section (or later sprint section) of the current doc file story with a storySource Attribute: 
  - when tlog is run
  - then 
     the task story is written to the StorySource File

@@ -29,10 +29,10 @@ import logging
 
 class StoryGroup:
     """
-    Adds story sematics around a group of Documents read from files in a directory
+    Adds story semantics around a group of Documents read from files in a directory
 	Combines the journaldir.StoryDir and the tlmodel.Document to get
 	a collection of tasks.
-	Sets attributes in the tasks in the Documents to allow changes in the tasks to bewritten back to the
+	Sets attributes in the tasks in the Documents to allow changes in the tasks to be written back to the
 	    storySource: endeavor/story
 	journal to be written back to the original stories
 	"""
@@ -125,7 +125,7 @@ def sj_file_list_by_dir(latest_dir, history_months):
     return sfl, jfl, search_dir
 
 
-def load_doc_from_file(file_name):
+def load_doc_from_file(file_name) -> TLDocument:
     file_text = journaldir.read_file_str(file_name)
     return TLDocument.fromtext(file_text)
 

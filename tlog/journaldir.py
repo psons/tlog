@@ -148,7 +148,7 @@ def path_join(p, f):
     return (os.path.join(p, f))
 
 
-def read_file_str(filepath):
+def read_file_str(filepath) -> str:
     data = ""
     if os.path.isfile(filepath):
         with open(filepath, 'r') as data_file:

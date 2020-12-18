@@ -78,7 +78,7 @@ class TestUserPaths(TestCase):
 
 # todo when I have a story writer, make test scaffolding that writes a story dir
 #  and reads it back
-upo = journaldir.UserPaths() # defaults based on environmet
+upo = journaldir.UserPaths() # defaults based on environment
 test_storydir_str = journaldir.path_join(upo.endeavor_path, "aGoal")
 expected_storydir_str = "StoryDir:(/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal):/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md,/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/the rest of the work story.md"
 
@@ -96,3 +96,17 @@ class TestStoryDir(TestCase):
         sd = journaldir.StoryDir(test_storydir_str)
         # print("sd", sd)
         self.assertEqual(expected_storydir_str, str(sd))
+
+class TestFileIO(TestCase):
+    """
+    # test file i/o
+    """
+    def testWriteFilePathAndRead_file_str(self):
+        """
+        verify symmetry between  write_filepath() and  read_file_str()
+        :return:
+        """
+        fileIOPath = journaldir.path_join(upo.endeavor_path, "file-io-test.txt")
+        journaldir.write_filepath(testdata.dtask_line, fileIOPath)
+        expected_str = journaldir.read_file_str(fileIOPath)
+        self.assertEqual(expected_str, testdata.dtask_line)

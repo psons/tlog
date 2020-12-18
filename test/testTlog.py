@@ -22,7 +22,7 @@ sd = journaldir.StoryDir(test_storydir_str)
 
 class TestTlog(unittest.TestCase):
 
-	# todo should this test somthing about the state of the object?
+	# todo should this test something about the state of the object?
 	def testStoryGroupConstructor(self):
 		"""doesn't test anything but runs constructor"""
 		story_group = StoryGroup(sd)
