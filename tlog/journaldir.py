@@ -260,7 +260,14 @@ class Endeavor_deprecated:
 
 
 class StoryDir:
+    """
+    loads a list of story files with full path info
+    """
     def __init__(self, sdir):
+        """
+        Given a directory path, loads list of stories
+        :param sdir: directory path
+        """
         self.path = sdir
         if os.path.isdir(sdir):
             self.story_list = get_file_names_by_pattern(sdir, story_pat)

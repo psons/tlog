@@ -97,11 +97,13 @@ class TestStoryDir(TestCase):
         # print("sd", sd)
         self.assertEqual(expected_storydir_str, str(sd))
 
+#    def test
+
 class TestFileIO(TestCase):
     """
     # test file i/o
     """
-    def testWriteFilePathAndRead_file_str(self):
+    def testWriteFilePathAndReadFileStr(self):
         """
         verify symmetry between  write_filepath() and  read_file_str()
         :return:

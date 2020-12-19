@@ -1,3 +1,5 @@
+Status:  This is aspirational user documentation that has parts that are not yet implemented.
+Development stories will be created to push toward functionality as described here
 
 #General Purpose and Objective
 ##TaskLog is a to do list manager that helps you get tasks done to help you accomplish your goals.
@@ -23,6 +25,7 @@ you "tickets" to work on.  You have e-mail that demands attention, possibly
 multiple accounts.  You have career skills to develop, and a personal life including 
 relationships with other demands.
 
+### Sidebar on managing task size at the source
 If it is possible to break tasks down at the source to things that can be 
 completed in a day you should do so because it will improve transparency to 
 that "project".  For example if you have Jira stories assigned to you, 
@@ -31,6 +34,7 @@ manage the creation and completion of sub tasks involved `in resolving an issue'
 as opposed to having an issue that takes many days to complete.  It will make 
 reconciliation with your list much easier.
 
+### TaskLog
 Tasklog represents all of your work that it can get information about in simple 
 text files on a local device.  If you occasionally update your priorities, 
 TaskLog will help you keep a sharp focus on the most important things.
@@ -44,29 +48,54 @@ A Document is a file in an Endeavor directory with explanatory text under Sectio
 Section headings are markdown headings under which you keep notes and organize tasks.
 
 Items are tasks todo, in progress, unfinished, planned, completed, or abandoned.  They are lines in Documents under Sections that start with a leader patten indicating which status the task is, such as 'd - ' for do or 'x - ' for done. 
-	'd - '	todo (or do) are tasks in the backlog for a future work period.
+	
+	'd - '	todo (or do) are un started tasks in to _do_.
+	
 	'/ - '	in progress are tasks that are being worked on.
+	
 	'u - '	unfinished is how tasks show in past planing periods where they were in progress
 			when tlog ran, and tlog shows the task in the current planning period as in progress.  If a task shows as unfinished for more than a few planning periods, it is too big, and should be broken into several tasks, or treated as a story.
+	
 	'p - '	planned are expected to be worked on in the current planning period.
+	
 	'x - '	completed task.
+	
 	'a - '	abandoned are tasks that have been in the backlog, but lost their relevance or 
 			value.
 
 
-Subtext is any text below an Item or Section and is considered information about the section or item.  When Subtext appears before any Section or Item it is called Preamble text and is part of an unnamed section that begins a Document. Preamble text is useful for holding information about the Document, including Document attributes.
+    Subtext is any text below an Item or Section and is considered information about the section or item.  
+        When Subtext appears before any Section or Item it is called Preamble text and is part of an unnamed section that begins a Document. Preamble text is useful for holding information about the Document, including Document attributes.
 
-For any line that matches '^word: ', 'word' is an attribute key and the rest of the line is it's value.
+    For any line that matches '^word: ', 'word' is an attribute key and the rest of the line is it's value.
+        Some attributes may have a special conventional significance in TaskLog.      
+    
+    An item attribute is an attribute under an Item. 
+    
+    A section attribute is an attribute under a Section header. (actually in an unnamed Item that is the first item in the section)
+    
+    A document attribute is an attribute in a document preamble. (actually in an unnamed Item in an unnamed Section that is the first section in the document.)
 
-Some attributes may have a special conventional significance in TaskLog. 
-An item attribute is an attribute under an Item, and a section attribute is an attribute under a Section header. (actually in an unnamed Item that is the first item in the section)
-A document attribute is an attribute in a document preamble. (actually in an unnamed Item in an unnamed Section that is the first section in the document.)
+### The Work Flow.
+#### Simple usage
+assuming tlog is installed as described in '# Installing tlog'
+run tlog to create an empty todo.md file
 
-### The Flow.
-#### Day 1
-1. Create Endeavor directories with story.md file containing tasks.
+Edit todo.md to add some tasks with the 'd -' leader as described for 'Items' above.
+A program editor such as VS Code or SublimeText is recommended, but any text editor will do.
+as you work on tasks, mark them off as 'x - ' or 'a -' when you are done with them.
+you can save todo.md and rerun tlog 
+ - the completed and abandoned tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' file for the day.
+ - you will see that your tasks will be recorded in $JOURNAL_DIR/Endeavors/FollowUpQueue/FollowUp story.md" and augmented with a storySource: attribute indicating that is the file they are recorded in.
+ - if you have too many tasks to focus on in todo.md, you can add a line to the any story under Endeavors to confine the number of tasks it will contribute to in todo.md.  For example:
+    maxTasks: 4 
+  will only allow 4 tasks to be in todo.md.  The rest wil be in the FollowUp story.md.
 
-2. Run tlog, and a daily task file will be created in the journal directory.
+#### Usage with Endeavors
+##### Day 1
+1. Create Endeavor directories with story.md files containing tasks.
+
+2. Run tlog, and a todo.md task file will be created in the journal directory.
  (obsolete: journal-2019-11-16.md is the task file)
  tasks-2019-11-16.md.  Since no journal file exists, and no task file exists 
  matching the date, they will be created. 
@@ -76,7 +105,7 @@ The completed and abandoned tasks will be updated in the source
 story, and moved out of the task file and into the to the 
 journal-yyyy-mm-dd.md file for the day (in the journal directory).
 _Should new tasks be pulled into the tasks file?  No for now 2020-04-19_
-#### Day 2
+##### Day 2
 1. Run tlog, and since no journal file exists, and no task file exists 
  matching the date, they will be created. New tasks will be pulled 
  according to 
@@ -155,6 +184,13 @@ All lines matching the "do", "in progress", or "planned" patterns will be copied
                             +----------------------------------+
 
 #TaskLog output: Journal of notes and activities
+
+# Installing tlog
+todo - elaborate on these docs.
+install software
+set JOURNAL_PATH
+run tlog to create the journal dir.
+optionally, set up endeavors too.
 
 # How it works
 The "local record" is a single directory in the local file system with a child directory for each endevor.  The "local record" is used to manage versioning and syncronization with Endevor Sources.  The "local record" is a git repository.  Both Local and Remote endevors, are copied into the "local record" represented in Endevor Directory Form.  Any file updated as shown by 'git status' are added to a comit set (git add --all).  The commit is made, and labeled with {date}-source-changes.  Next the journal dir in the "local record" is recreated by scanning the Endevor directories in the "local record". A commit is made and labeled with {date}-work-needed.  Finally, the active journal dir is processed and written  to the "local record" journal dir and committed with a label {date}-work-completed.

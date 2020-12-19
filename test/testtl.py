@@ -520,6 +520,10 @@ class testTLAttribute(unittest.TestCase):
 			str(ItemAttribute.fromline(testTLAttribute.valid_line)),
 			testTLAttribute.valid_line)
 
+class TestStoryIO(unittest.TestCase):
+	"""prove story reading and writing work flows in docs/Tlog User Documentation.md"""
+	# load_story_from_file(file_name) should have titleHash and StorySource
+	# write_back_updated_story(item: Item)
 
 if __name__ == '__main__':
 	#print(doc1_text)
