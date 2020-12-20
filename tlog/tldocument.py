@@ -439,6 +439,7 @@ class TLDocument:
         it with item
         return: the containing section that was updated or None if
         no section was updated
+        !! This does NOT insert the item if it is not found as a replacement.
         """
         index = 0
         for section in self.journal:

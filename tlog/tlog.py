@@ -281,12 +281,14 @@ def main():
     write_back_xa_story_items = journal_document.\
         get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
 
+    # todo: 2020-12-20 change from existing logic that only writes back if 'x -' or 'a -' to
+    # logiuc tha always writes back
     for xa_story_item in write_back_xa_story_items:
         write_back_updated_story(xa_story_item)
     # prevent whole previous month text from rolling to new month
     # todo might not need this after converting to daily scrum.
     if my_journal_dir != prev_journal_dir:
-        screen_log(tag, "Will drop journal because it is from a back month")
+        msgr.screen_log(tag, "Will drop journal because it is from a back month")
         journal_document.drop_journal()
 
 

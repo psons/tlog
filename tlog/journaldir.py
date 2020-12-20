@@ -2,6 +2,8 @@
 import sys
 
 # journaldir.py
+from typing import TextIO
+
 from git import Repo
 from git import IndexFile
 
@@ -145,7 +147,7 @@ def load_endeavors_deprecated(user_path_obj):
 
 def path_join(p, f):
     "wrapper helps prevent module os from being needed in calling modules."
-    return (os.path.join(p, f))
+    return os.path.join(p, f)
 
 
 def read_file_str(filepath) -> str:
@@ -156,9 +158,9 @@ def read_file_str(filepath) -> str:
     return str(data)
 
 def write_filepath(new_content, filepath):
-    sfd = open(filepath, "w")
-    sfd.write(new_content)
-    sfd.close
+    sfd: TextIO
+    with open(filepath, "w") as sfd:
+        sfd.write(new_content)
 
 def write_dir_file(new_content, dir_name, doc_name):
     filepath = os.path.join(dir_name, doc_name)

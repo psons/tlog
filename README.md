@@ -10,14 +10,14 @@ Writeback 2 story.md
 # tasks
 x - test journaldir read_file_str and write_filepath
 
-d - test reading a story
-
-d - test write back 'd-'  
+/ - test write back 'd-' (test unit functionality, separate test will deal with selection) 
  - given a 'd -' task in the journal section (or later sprint section) of the current doc file story with a storySource Attribute: 
  - when tlog is run
  - then 
     the task story is written to the StorySource File
     and reading the story from the story source file matches the task as it is in the journal section
+
+d - test reading a story
 
 d - test write back 'x-'  
  - given a 'x -' task in the journal section (or later sprint section) of the curent doc file story with a storySource Attribute: 

@@ -3,10 +3,8 @@ import re
 import unittest
 from tldocument import TLDocument
 from docsec import Item, Section, DocStructure
-from testtl import doc1_text
-from testtl import ad1
-from testtl import vd1
-from testtl import vd2
+from testdata import ad1, vd1, vd2, doc1_text
+
 
 class TestDocument(unittest.TestCase):
 	"""Tests for the Document class."""
