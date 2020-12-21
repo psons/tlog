@@ -93,18 +93,30 @@ you can save todo.md and rerun tlog
 
 #### Usage with Endeavors
 ##### Day 1
-1. Create Endeavor directories with story.md files containing tasks.
+1a. Create Endeavor subdirectories of $JOURNAL_DIR/Endeavors and list them by name in $JOURNAL_DIR/Endeavors/endeavors.md. 
 
-2. Run tlog, and a todo.md task file will be created in the journal directory.
- (obsolete: journal-2019-11-16.md is the task file)
- tasks-2019-11-16.md.  Since no journal file exists, and no task file exists 
- matching the date, they will be created. 
+1b. Create files names in $JOURNAL_DIR/Endeavors that end with the pattern story.md, and put some tasks in them as with todo.md above.
+    For example:
+        Endeavors/aGoal/goal work story.md
+      - aGoal represents an entry in the Endeavors File matching a directory name under $JOURNAL_DIR/Endeavors.
+      - goal work story.md represents a story file 
 
-3. Mark a few tasks as complete or abandoned, and run tlog again.  
-The completed and abandoned tasks will be updated in the source 
-story, and moved out of the task file and into the to the 
-journal-yyyy-mm-dd.md file for the day (in the journal directory).
+2. Run tlog, and a todo.md task file will be created in the journal directory containing the top tasks from each of your '*story.md' files created above.
+ 
+3. Mark a few tasks in todo.md as complete or abandoned, and run tlog again.  
+The completed and abandoned tasks will be removed from the source 
+stories, and moved out of the task file and into the to the journal-yyyy-mm-dd.md file for the day (in the journal directory).
+
+4. Add some tasks in todo.md. as in the *Simple Usage* section above and rerun tlog.   Tasks will be moved to 'completed-journal-yyyy-mm-dd.md' as above. 
+
+5. Temporary behavior:  new tasks up to maxTasks will flow into todo.txt
+    Later behavior: count completed tasks and only pull a number of tasks for the day equaling globalMaxTasks (first hard coded, then configurable) minus the count of completed tasks. 
+
 _Should new tasks be pulled into the tasks file?  No for now 2020-04-19_
+_see todo: 2020-12-20 write_xa_
+
+ - the completed and abandoned tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' file for the day.
+
 ##### Day 2
 1. Run tlog, and since no journal file exists, and no task file exists 
  matching the date, they will be created. New tasks will be pulled 

@@ -280,6 +280,8 @@ class TLDocument:
         "Return the in_progress section as a string."
         return str(self.in_progress)
 
+    # todo: change ti approach where ('x - ', 'a -') with storySource get removed from the original story...
+    #   and go into
     def get_xa_story_tasks(self, story_key: str):
         """
         get tasks from the scrum that have a storySource: attribute

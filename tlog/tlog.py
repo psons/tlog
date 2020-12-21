@@ -281,8 +281,12 @@ def main():
     write_back_xa_story_items = journal_document.\
         get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
 
-    # todo: 2020-12-20 change from existing logic that only writes back if 'x -' or 'a -' to
-    # logiuc tha always writes back
+    # todo: 2020-12-20 write_xa change from existing logic that only writes back if 'x -' or 'a -' to...
+    #   logic that always writes back to 'completed-journal-yyyy-mm-dd.md'...
+    #   and removes the items from the original story file.   Eventually story files become empty.
+    #   the reason to remove them is to keep consistency with the way to manage
+    #   '$JOURNAL_DIR/Endeavors/FollowUpQueue/FollowUp story.md' which must have asks cleaned out,
+    #   or it would grow forever.
     for xa_story_item in write_back_xa_story_items:
         write_back_updated_story(xa_story_item)
     # prevent whole previous month text from rolling to new month
