@@ -59,6 +59,8 @@ class UserPaths:
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
+        default_endeavor_dir = os.path.join(self.endeavor_path, "default")
+        self.new_task_story_file = os.path.join(default_endeavor_dir, "new task story.md")
         self.git_repo_obj = None
 
     def git_init_journal(self):
@@ -94,11 +96,6 @@ def get_file_names_by_pattern(dir_name, a_pattern):
     return matching_file_list
 
 
-class JournalDay:
-    def __init__(self, ):
-        pass
-
-
 class Daily:
     def __init__(self, dt: datetime.datetime = None):
         """
@@ -125,10 +122,12 @@ class Daily:
         self.debug_log_file = os.path.join(self.jroot, "tl.debug.log")
         # self.user_log_file = os.path.join(self.jroot, "tl.user.log")
         self.info_log_file = os.path.join(self.jroot, "tl.info.log")
-        self.cday_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+        self.cday_journal_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+        self.cday_todo_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+        self.cday_resolved_fname = 'resolved' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
 
     def __str__(self):
-        return f"{self.jdir} {self.cday_fname} {self.domth}"
+        return f"{self.jdir} {self.cday_journal_fname} {self.domth}"
 
 
 def load_endeavor_stories(user_path_obj):
@@ -158,6 +157,11 @@ def read_file_str(filepath) -> str:
     return str(data)
 
 def write_filepath(new_content, filepath):
+    # todo crashing: make sure the directories and file exist.
+    base_dir: str = os.path.dirname(filepath)
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+
     sfd: TextIO
     with open(filepath, "w") as sfd:
         sfd.write(new_content)
@@ -182,15 +186,6 @@ def write_dir_file(new_content, dir_name, doc_name):
         jfd = open(filepath, "w")
         jfd.write(new_content)
         jfd.close
-
-
-def write_simple(new_content, dir_name, doc_name):
-    filepath = os.path.join(dir_name, doc_name)
-    sfd = open(filepath, "w")
-    sfd.write(new_content)
-    sfd.close
-
-    print("New File: " + str(filepath))
 
 
 def make_git_repo(path):

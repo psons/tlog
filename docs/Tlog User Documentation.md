@@ -85,11 +85,13 @@ Edit todo.md to add some tasks with the 'd -' leader as described for 'Items' ab
 A program editor such as VS Code or SublimeText is recommended, but any text editor will do.
 as you work on tasks, mark them off as 'x - ' or 'a -' when you are done with them.
 you can save todo.md and rerun tlog 
- - the completed and abandoned tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' file for the day.
- - you will see that your tasks will be recorded in $JOURNAL_DIR/Endeavors/FollowUpQueue/FollowUp story.md" and augmented with a storySource: attribute indicating that is the file they are recorded in.
- - if you have too many tasks to focus on in todo.md, you can add a line to the any story under Endeavors to confine the number of tasks it will contribute to in todo.md.  For example:
+ - the completed and abandoned along with 'u -' task for any in progress tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' section heading with a heading of the form # Resolved yyyy-mm-dd' file for the day.
+ - you will see that your tasks will be recorded in "$JOURNAL_DIR/Endeavors/default/new task story.md" in a section named '#New Tasks'  and augmented with a storySource: attribute indicating that is the file they are recorded in.
+ - if you have too many tasks to focus on in todo.md, you can add a 'maxTasks: n' line to any story under Endeavors, including 'new task story.md' to confine the number of tasks it will contribute to in todo.md to 'n'.  For example:
     maxTasks: 4 
-  will only allow 4 tasks to be in todo.md.  The rest wil be in the FollowUp story.md.
+  will only allow 4 tasks to be in todo.md.  The rest wil be in the 'new task story.md'.
+
+
 
 #### Usage with Endeavors
 ##### Day 1
@@ -105,17 +107,17 @@ you can save todo.md and rerun tlog
  
 3. Mark a few tasks in todo.md as complete or abandoned, and run tlog again.  
 The completed and abandoned tasks will be removed from the source 
-stories, and moved out of the task file and into the to the journal-yyyy-mm-dd.md file for the day (in the journal directory).
+stories, and moved out of the task file and into the to the resolved-yyyy-mm-dd.md file for the day (in the current journal directory).
 
-4. Add some tasks in todo.md. as in the *Simple Usage* section above and rerun tlog.   Tasks will be moved to 'completed-journal-yyyy-mm-dd.md' as above. 
+4. Add some tasks in todo.md. as in the *Simple Usage* section above and rerun tlog.   Tasks that contains x and a items will be moved to 'resolved-yyyy-mm-dd.md'. 
 
 5. Temporary behavior:  new tasks up to maxTasks will flow into todo.txt
-    Later behavior: count completed tasks and only pull a number of tasks for the day equaling globalMaxTasks (first hard coded, then configurable) minus the count of completed tasks. 
+    Later behavior: count completed tasks and only pull a number of tasks for the day equaling globalMaxTasks (first hard coded, then configurable) minus the count of resolved tasks. 
 
 _Should new tasks be pulled into the tasks file?  No for now 2020-04-19_
 _see todo: 2020-12-20 write_xa_
 
- - the completed and abandoned tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' file for the day.
+ - the completed and abandoned tasks will be moved off to the 'resolved-yyyy-mm-dd.md' file for the day.
 
 ##### Day 2
 1. Run tlog, and since no journal file exists, and no task file exists 
@@ -124,7 +126,23 @@ _see todo: 2020-12-20 write_xa_
     1. the story level max tasks settings
     2. _after 2020-04-19_, the endeavor/prioritized.md maxTask: settings
     3. _after 2020-04-19_, the Endeavors/endeavors.md maxTasks: setting
-    
+
+##### Merging / Modifying / duplicating todo tasks and Endeavors
+Modify the content of tasks in the todo.md file and the task will be merged back into it's Endeavor story, as long as it is not resolved ('x -', or 'a -')
+Whole tasks may be moved in an endeavor story to change priority order. If it is in todo.md, the todo.md version wil override the endeavor story version.
+The title line of a task may be modified also according to the above rules 
+Task content may be updated in the endeavor Story also, as long as it is not in the todo.md file also.      
+
+Two tasks may not have the same title in the same endeavor story.
+
+If you want to duplicate a task and modify it to create a new task in the todo.md file, you can do so if you:
+ 1. change the title (not counting the status leader) 
+ 2. delete the titleHash:
+ 3. leave the storySource: unmodified.
+ 
+ The storySource: plus the titleHash: may be though of as the identity for a task.  
+ The titeleHash: is computed from the title, not counting the leader. 
+
 ### Encouragement _after after 2020-04-19 Need Endeavors maxTasks for this_
 If the top task has been completed, mild encouragement is written on stdout.
 "One down"
@@ -138,7 +156,7 @@ A journal location represents single thread of activity for an individual person
 #### The present
  - The currently in progress work, or work about to be started.
 #### The past
- - The record of completed tasks and any notes and files collected in the completion of the tasks
+ - The record of completed or abandoned tasks and any notes and files collected in the completion of the tasks
  - The record of unfinished tasks that had to roll to the next time period
 
 ##TaskLog draws tasks from competing sources.
@@ -176,9 +194,9 @@ Without any command line arguments, tlog will look for task sources listed in JO
 
 Both the endeavors location and the journal location can be changed by setting environment variables as shown in the example tlog.env files. 
 
-The journal directory is always searched for tasks, so files other than the current journal backlog file should have tasks changed from either "do" ('d - ' or 'D - ') or "in progress" ('/ - ' or '\ - ') to either "unfinished" ('u -' or 'U - ') or "completed"  ('x - ' or 'X').
+The current todo.md file is always searched for tasks. 
 
-All lines matching the "do", "in progress", or "planned" patterns will be copied  from any file in the current journal directory to the curent journal file.
+All lines matching the "do", "abandoned", "in progress", or "planned" patterns will be copied from story files to the current todo file.
 
 # Before                    # After
 

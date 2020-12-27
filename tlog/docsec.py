@@ -185,9 +185,7 @@ class Section:
         """
         search the self.body_items list for an item matching attribute_key and attribute_value
         :param new_item:
-        :param akey:
-        :param aval:
-        :return:
+        :return: the item reference if found, or None.
         """
         hash_attr_str = Item.title_hash_attr_str
         value = new_item.get_item_attrib(hash_attr_str)
@@ -196,9 +194,10 @@ class Section:
         for item in self.body_items:
             title_hash = item.get_title_hash()
             if title_hash == value:
+                found = True
                 print(f"found item matching {hash_attr_str} to replace")
                 print(f"replacing item:\n{item}")
-                print(f"replacing item:\n{new_item}")
+                print(f"with item:\n{new_item}")
                 self.body_items[index] = new_item
                 return item  # this is the old item.  is it of any use?
             index += 1
@@ -206,6 +205,9 @@ class Section:
 
     def add_merge_item(self, other_item):
         """
+        !! this doesn't replace an existing item if found.
+        !! this doesn't recognize an item match by saved _has if the title has changed.
+            (this is the whole point of implementing the hash!)
         Do this by title hash.  If the item is already included, it came from a story
         and has a title hash
         :param other_item:
@@ -219,9 +221,9 @@ class Section:
             # print("Section:add_merge_item:self.item", item.top)
             if item_sth:
                 if item_sth == other_item.get_title_hash():
-                    # todo implement an item merge to call from here
-                    # print("matching hashes found. ")
                     match_existing_found = True
+            else:
+                item_th = item.get_title_hash()
         if not match_existing_found:
             # print("adding item:\n", str(other_item) )
             self.add_item(other_item)
@@ -229,22 +231,22 @@ class Section:
     # def has_item(self, an_item):
     # 	for item in ...
 
-    def update_progress(self, in_progress_pat, unfinished_s):
+    def select_modify_item_tops_by_pattern(self, in_progress_pat: re.Pattern, unfinished_s: str):
         """
-        Make a list containing copies of the in_progress items in the section.
-        Toggle the original items to unfinished.
+        "Select" and return a list containing copies of items from this section that match in_progress_pat,
+            and modify the items tops of the originally matched items with unfinished_s
         Return the list of copies.
 
         """
         # print("in Section:" + self.header)
-        sec_in_progs = []
+        sec_in_progress_task_list = []
         for item in self.body_items:
             if in_progress_pat.match(item.top):
                 # print("\titem top:" + item.top)
-                sec_in_progs.append(item.deep_copy(self.item_top_parser_pat))
+                sec_in_progress_task_list.append(item.deep_copy(self.item_top_parser_pat))
                 item.modify_item_top(in_progress_pat, unfinished_s)
-        # print("sec_in_progs:" + ",".join(map(str, sec_in_progs) ))
-        return sec_in_progs
+        # print("sec_in_progress_task_list:" + ",".join(map(str, sec_in_progress_task_list) ))
+        return sec_in_progress_task_list
 
 
 class TLogInternalException(Exception):
@@ -455,8 +457,12 @@ class Item:
 
 class DocStructure:
     """
-    This class is designed to be a generic Document class without the semantics of tlog baked in.
+    This class is designed to be a generic Document class wit te capability to add Item objects under Section objects
+    according to associated patterns.  The semantic associations are created by the calling class when building
+    DocStructure Objects.
+
     The class TLDocument has the tlog semantics and uses this class.
+
     ----------------
     This is a partial step slightly in the direction making Section and
     Item be a generic by extracting the Section *header* and Item *header*
@@ -465,7 +471,7 @@ class DocStructure:
     named sections by item Leader type.  This is good for Journal Documents
     (see "use:" below)  Stories should keep Items under the Sections they
     appear in.  The value is to be able to load a Document as a Story, and
-    extract the specialized sections by leader type.
+    extract the specialized sections by leader type.  See the specialized methods in TLDocument that make DocStructure objects.
     The existing Document code suitable for loading stories just needs to know if
     a particular pattern means a new Section or Item grouping should be
     started as a series of lines is read.
@@ -485,6 +491,17 @@ class DocStructure:
     special_sections.add_leader_entry('# Past Tasks', ['^[aA] *-', '^[xX] *-'])
     special_sections.add_leader_entry('# Current Tasks', ['^[dD] *-'])
     place_to_put = special_sections.insert_item("")
+
+    Structure:
+    The set of Section objects can be looked up through two different dictionaries.
+     (1) The leader_instance_dict is used to classify Items by pattern into Section objects.
+     It has keys that are regular expressions compiled from pattern strings (such as '^d - ') that the user provides
+     to the add_leader_entry() method.  Each values is a reference to the Section objects that
+     Items matching the regex keys should be added to. (See the insert_item() method )
+     (2) The head_instance_dict can be used to find the Section objects by the section heading (for example '^#')
+
+     as keys that the usThis is a set of Section objects that have references indexed into two dictionaries.
+
     """
     def __init__(self, header_pattern: Pattern, item_top_parser_pat: Pattern):
         # regex that defines what a header is.  Need for validation

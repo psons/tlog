@@ -4,6 +4,10 @@ Composition: TLDocument class contains the tlog application semantics purpose
 for Section objects and the text parsing patterns for Sections and Items along
 with the semantic significance of those patterns
 
+
+See tldocument.py for pattern_strs that classify input
+lines
+
 Logic for building TLDocuments from text: (needs update)
     There is always a current Section in a Document.
     There is always a current Item in a Section.
@@ -26,10 +30,18 @@ Logic for building TLDocuments from text: (needs update)
 import re
 from typing import List
 
-from docsec import Section, DocStructure
+from docsec import Section, DocStructure, Item
 
 blank_ln_pat = re.compile("^\s*$")
 
+"""
+TLDocument
+    journal - list of Section objects created from text lines that the caller reads and writes to or from a file 
+    backlog - special section built by adding all the unresolved tasks from the journal sections.
+    scrum   - a DocStructure object with 
+                - a section for Resolved tasks. (heading '# Resolved {day of month}' ) 
+                - a Section with a limited number of tasks for current work session (heading '# To Do {day of month}')
+"""
 
 class TLDocument:
     """
@@ -51,7 +63,7 @@ class TLDocument:
     If a task line is followed by lines that are a bullet list, or free text,
     the additional lines will be kept together as part of the task Item object.
 
-    Any input text line line not that is not a Section or Item header gets added to the
+    Any input text line line that is not a Section or Item header gets added to the
     current Item.
 
     Items that begin a section, sometimes do not have a task line
@@ -87,7 +99,7 @@ class TLDocument:
 
     """
     default_maxTasks = 1 # used if not specified in a story.txt
-    default_initial_task_capacity = 5  # default number of backlog tasks to tae into a day sprint
+    default_initial_task_capacity = 5  # default number of backlog tasks to take into a day sprint
 
     defautInProgHead = "#In progress"
     dname_attr_str = "DocName"
@@ -134,12 +146,12 @@ class TLDocument:
 
         """
         domth: str = day if day else ""
-        current_task_head = f'# Current Tasks {domth}'
-        self.past_task_head = '# Past Tasks'
-        self.scrum = DocStructure(Section.head_pat, TLDocument.top_parser_pat)
-        self.scrum.add_leader_entry(self.past_task_head, [TLDocument.abandoned_pat,
-                                                          TLDocument.completed_pat, TLDocument.unfinished_pat])
-        self.scrum.add_leader_entry(current_task_head, [TLDocument.in_progress_pat, TLDocument.do_pat])
+        self.todo_section_head = f'# To Do {domth}'
+        self.resolved_section_head = f'# Resolved {domth}'
+        self.scrum = DocStructure(Section.head_pat, TLDocument.top_parser_pat) # see doc for make_scrum()
+        self.scrum.add_leader_entry(self.resolved_section_head, [TLDocument.abandoned_pat,
+                                                                 TLDocument.completed_pat, TLDocument.unfinished_pat])
+        self.scrum.add_leader_entry(self.todo_section_head, [TLDocument.in_progress_pat, TLDocument.do_pat])
 
         self._doc_name = name or ""
         self.task_capacity = initial_task_capacity
@@ -150,15 +162,13 @@ class TLDocument:
 
     def initialize_journal(self):
         """
-        Initializes the journal list of sections to make sure a section at jornal[0]
+        Initializes the journal list of sections to make sure there is a section at journal[0]
         and a current section
         """
         self.journal = []
         self.in_progress = Section(TLDocument.top_parser_pat, None)  # external logic sets to today
         self.backlog = Section(TLDocument.top_parser_pat)
-        self.current_section = Section(TLDocument.top_parser_pat, None)
-        self.journal.append(self.current_section)
-        self.last_add = self.current_section
+        self.add_section_from_line(None)
 
     def _get_doc_name(self):
         "getter for doc_name"
@@ -183,9 +193,17 @@ class TLDocument:
     max_tasks = property(_get_max_tasks, _set_max_tasks)
 
     # todo - need tests for this
+    """
+    """
     def add_lines(self, r_lines):
         """
-        make sections, which contain items
+        make sections, which contain items:
+            First, read and classify each input line as one or more of:
+             - a mark down heading for a new Section
+             - a task line to create a new Item to add to the list under the
+               current Section
+             - text to put under the current Item
+
             self
             r_lines	raw lines
         """
@@ -225,15 +243,24 @@ class TLDocument:
                 self.last_add = self.current_section
             else:
                 # New section.
-                self.current_section = Section(TLDocument.top_parser_pat, data)
-                self.journal.append(self.current_section)
-                self.last_add = self.current_section
+                self.add_section_from_line(data)
 
         elif TLDocument.not_do_pat.match(data):
             self.current_section.add_line(data)
             self.last_add = self.current_section
         else:
             self.last_add.add_line(data)
+
+    def add_section_from_line(self, data: str):
+        """
+
+        :param data: tring to create a section
+        :return:
+        """
+        self.current_section = Section(TLDocument.top_parser_pat, data)
+        self.journal.append(self.current_section)
+        self.last_add = self.current_section
+        return self.current_section
 
     @classmethod
     def fromtext(cls, text):
@@ -284,10 +311,10 @@ class TLDocument:
     #   and go into
     def get_xa_story_tasks(self, story_key: str):
         """
-        get tasks from the scrum that have a storySource: attribute
+        get tasks from the scrum that have a 'storySource:' attribute
         and are complete ('x - ') or abandoned ('a -').
         """
-        past_section: Section = self.scrum.head_instance_dict[self.past_task_head]
+        past_section: Section = self.scrum.head_instance_dict[self.resolved_section_head]
         xa_items = past_section.get_matching_items(TLDocument.done_pat)
         xa_items_w_stories  = [ i for i in xa_items if i.get_item_attrib(story_key)]
         return xa_items_w_stories
@@ -302,7 +329,7 @@ class TLDocument:
         """
         num_tasks = int(num_tasks)
         if num_tasks == -1:
-            return self.backlog
+            return self.backlog.body_items
         if len(self.backlog.body_items) >= num_tasks:
             return self.backlog.body_items[0:num_tasks]
         else:
@@ -343,20 +370,6 @@ class TLDocument:
         """
         self.backlog.body_items = self.shorten_task_list(
             self.backlog.body_items, num_tasks)
-        return self
-
-    def shorten_backlog_deprecated(self, num_tasks=None):
-        """
-        todo delete this after the replacement above is working
-        discard tasks in the backlog beyond num_tasks
-        If max_tasks is set and num_tasks is not provided,
-        use max_tasks as the number of tasks to keep.
-        If neither is provided, keep all tasks.
-        """
-        max_t = self.max_tasks or len(self.backlog.body_items)
-        num_t = num_tasks or max_t
-        num_t = int(num_t)
-        self.backlog.body_items = list(self.backlog.body_items[0:num_t])
         return self
 
     def backlog_str(self):
@@ -421,8 +434,9 @@ class TLDocument:
         else:
             self.in_progress.add_line(in_prog_head)
 
+        pat: re.Pattern = TLDocument.in_progress_pat
         for section in self.journal:
-            for item in section.update_progress(TLDocument.in_progress_pat, TLDocument.unfinished_s):
+            for item in section.select_modify_item_tops_by_pattern(pat, TLDocument.unfinished_s):
                 self.in_progress.add_item(item)
 
     def drop_journal(self):
@@ -435,21 +449,39 @@ class TLDocument:
         else:
             self.initialize_journal()
 
-    def update_journal_item(self, item, attribute_key):
+    # backlog vs journal.
+    # journal is a list of sections with items is is read from a file.
+
+    def insert_update_journal_item(self, item, default_section_heading="# New items"):
         """
-        find matching hash Item in a journal section, and replace
-        it with item
-        return: the containing section that was updated or None if
-        no section was updated
-        !! This does NOT insert the item if it is not found as a replacement.
+        Search all Sections in the Journal list for an Item with a 'titleHash:' attribute value matching item.
+            if a match is found in the journal, replace the matched Item with item.
+        !! Paul removed the update of the backlog from this method. 2020-12-24.
+        return: self
         """
         index = 0
         for section in self.journal:
             replaced_item = section.find_replace_item_by_titleHash(item)
             if replaced_item:
-                return section
-        return self.backlog.find_replace_item_by_titleHash(item)
+                break
+        if not replaced_item:
+            self.insert_new_item_into_journal_section(default_section_heading, item)
+        return self
 
+    def insert_new_item_into_journal_section(self, section_heading: str, item: Item):
+        """
+        add item into the journal section matching section_heading.
+        Create a matching the section if necessary.
+        """
+        #todo add a section to contain the new item. or use an already existing '# New' section. needed by insert_update_journal_item
+        added_item: bool = False
+        for section in self.journal:
+            if section.header == section_heading:
+                section.add_item(item)
+                added_item = True
+        if not added_item:
+            new_section: Section = self.add_section_from_line(section_heading)
+            new_section.add_item(item)
 
     def generate_backlog_title_hashes(self):
         self.backlog.save_item_title_hashes()

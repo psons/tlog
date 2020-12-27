@@ -426,7 +426,7 @@ class TestStoryIO(unittest.TestCase):
         #todo get an item with a storySource attribute
         # write the item
         # read back the item
-        # delete the file, maybe makre a file scaffolding module.
+        # delete the file, maybe make a file scaffolding module.
         myUserPathObj = journaldir.UserPaths();
         fileIOPath = journaldir.path_join(myUserPathObj.endeavor_path, "testGoal")
         fileIOPath = journaldir.path_join(fileIOPath, "testDrivenStory.md")

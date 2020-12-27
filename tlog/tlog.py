@@ -2,18 +2,6 @@
 """
 Composition: Top level application built of collections of TLDocument
 Objects.  Stories read from Endeavor files, for example.
-
-First, read and classify each input line as one or more of:
- - a mark down heading for a new Section
- - a task line to create a new Item to add to the list under the 
-   current Section
- - text to put under the current Item
- - a "do" task Item to be put in the backlog Section
-Then Print out the list of Sections in order with the 
-backlog Section at the end 
-
-See tlmodel module journal_documentation for pattern_strs that classify input
-lines
 """
 from typing import List
 
@@ -58,8 +46,42 @@ def load_story_from_file(file_name):
     story_doc.attribute_all_backlog_items(StoryGroup.story_source_attr_name, file_name)
     return story_doc
 
+# todo. x - implement this
+# todo / -  and use it instead of write_back_updated_story
+def write_story_file(item: Item, default_file=None):
+    """
+    Writes an item into either its original storySource, or the default if provided.
+    :param item: a task item to write.
+    :param default_file: file path to write item into if there is no storySource in item
+    :return: Story Document object that was written to disk
+    """
+    tag = "write_story_file():"
+    story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
+    filepath = default_file
+    if story_source:
+        filepath = story_source
+    else:
+        if default_file:
+            item.set_attrib(StoryGroup.story_source_attr_name, default_file)
+        else:
+            raise TLogInternalException(
+                f"{tag} Do not have file to write to for ({item.top}). missing {StoryGroup.story_source_attr_name}"
+                f"and no default has been provided")
+
+    # get the story contents from disk and insert / update the item.
+    story_tldoc = load_doc_from_file(filepath)
+    story_tldoc.insert_update_journal_item(item)
+    journaldir.write_filepath(str(story_tldoc), filepath)
+    return story_tldoc
+
+
 # todo test write_back_updated_story
 def write_back_updated_story(item: Item):
+    """
+
+    :param item: a task item to write to it's StorySource
+    :return: Story Document object that was written to disk
+    """
     story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
     if story_source is None:
         raise TLogInternalException(
@@ -67,7 +89,7 @@ def write_back_updated_story(item: Item):
     else:
         filepath = story_source
     story_doc = load_doc_from_file(filepath)
-    story_doc.update_journal_item(item, Item.title_hash_attr_str)
+    story_doc.insert_update_journal_item(item)
     journaldir.write_filepath(str(story_doc), filepath)
     return story_doc
 
@@ -99,7 +121,7 @@ def sj_file_list_by_dir(latest_dir, history_months):
     get group of story files and latest journal file name lists given dir
     if none are found in the latest_dir, search back up to history_months
     until at least 1 file is found.
-    :param latest_dir: current journaldir to look back in history from to fine files.
+    :param latest_dir: current journaldir to look back in history from to find files.
     :param history_months: limit on how far back to search
     :return: list of story files, list of journal files, and the dir they were found.
     """
@@ -132,7 +154,7 @@ def load_doc_from_file(file_name) -> TLDocument:
 # todo test various short_copy cases.
 def short_copy(long_story_doc):
     """copy the long_story_doc arg and shorten to only maxTasks,
-    making sure '/ -' tasks + 'd - ' tasks is less than maxTasks
+    making sure the number of '/ -' tasks + 'd - ' tasks is less than maxTasks
     """
     short_doc = TLDocument.fromtext(str(long_story_doc))
     doc_max_tasks: int
@@ -196,7 +218,23 @@ jdir - treat the next argument to tlog as the journal_dir.
 """
 
 
+
 def main():
+    """
+    Requires no command line arguments, but may use them to interpret the user environment differently.
+    User environment includes directories of story files with tasks, which will be read into lists of stories.
+        See Tlog User Documentation.md
+
+    The lists of stories will be loaded into a special section of a TLDocument object called the 'backlog'
+    (as in 'Scrum' vernacular).  in each Story, the 'maxTasks:' attribute constrains what is read into the backlog,
+    making it really represent a set of 'sprint candidate' tasks. todo refactor to rename 'backlog' to 'sprint'
+
+    Tasks are to be kept in priority order in a stories, and hence when endeavors are also in priority order,
+    the sprint will be in priority order. todo implement a story that prioritizes endeavors.
+
+
+    """
+    # initialize everything
     tag = "tlog main:"
     daily_o = journaldir.Daily()
     msgr = Messaging('user', daily_o.info_log_file, daily_o.debug_log_file)
@@ -207,29 +245,40 @@ def main():
     user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
     journal_document = TLDocument(day=daily_o.domth)
-    story_task_document = TLDocument()
+    story_task_document = TLDocument() # this becomes the to-do.md file
     story_task_document.doc_name = "Endeavor story tasks based on" + user_path_o.endeavor_file
     look_back_months = 24
     cmd_line_story_docs = []
     journal_story_docs = []
+
+    # ############################
+    # Gather input state from Disk and command line
+    # ============================
+    ## look at cmd line args and find the todo doc
     if len(sys.argv) < 2:
         journaldir.init(my_journal_dir)
+        # look back in history to find past journal dir will not be necessary with 'to-do' replaces journal, and
+        # FollowUpQueue/FollowUp story.md replaces past journals from prior months or years.
         prev_journal_dir = find_prev_journal_dir(my_journal_dir, look_back_months)
         story_dir_o = journaldir.StoryDir(prev_journal_dir)
         journal_story_docs = StoryGroup(story_dir_o).get_short_stories()
         j_file_list = journaldir.get_file_names_by_pattern(
             story_dir_o.path, journaldir.journal_pat)
         msg = "no argument sfile_list: " + ",".join(story_dir_o.story_list)
+        # section above will be eliminated in favor of the FollowUpQueue/FollowUp story.md to be read farther down in code.
+
         msgr.screen_log(tag, msg)
         msgr.screen_log(tag, "no argument jfile_list:" + ",".join(j_file_list))
+        # todo: rename this should be the to-do file.  do all the write back to stories processing.
     else:
         # usage: tlog jdir some_path_to_a_dir
         if sys.argv[1] in supported_commands:
             tlog_command = sys.argv[1]
             if tlog_command == "jdir":
-                # This feature needs work to support endeavors.
+                # This feature should be enhanced to support endeavors.
                 #  Should I change from default user_path_o?
                 my_journal_dir = sys.argv[2] # the actual dated jdir the user wants to use
+                # todo should just get to-do file from the alternate dir
                 journal_story_docs = StoryGroup(journaldir.StoryDir(
                                 my_journal_dir)).get_short_stories()
                 j_file_list = journaldir.get_file_names_by_pattern(
@@ -247,8 +296,14 @@ def main():
             j_file_list = []
             msgr.screen_log(tag, "(re) initializing Journal from stories:" + ",".join(s_file_list))
 
-    # get the trimmed story docs from endeavors
+    # get the story docs from endeavors
     story_dir_objects = journaldir.load_endeavor_stories(user_path_o)
+
+    # ############################
+    # Manipulate the collection of objects read from disk
+    # ============================
+
+    # trim the story lists to maxTasks
     endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
                                              for story_doc in StoryGroup(sdo).get_short_stories()]
 
@@ -261,35 +316,42 @@ def main():
     short_s_doc_list = cmd_line_story_docs + journal_story_docs + endeavor_story_docs
     msgr.ulog.info("trimmed story docs: " + str_o_list(short_s_doc_list, delimiter="\nStory:\n", prefix_delim=True))
 
+    # todo then stop adding tasks in the merge if capacity will be exceeded.(already added support for a task capacity in TLDocument.)
     # load merge all the story tasks into one document
     for short_story_doc in short_s_doc_list:
-        # added support for a task capacity in TLDocument.
-        # todo then stop adding tasks in the merge if capacity will be exceeded.
         story_task_document.merge_backlog(short_story_doc.backlog)
 
-    # set the title hashes on tasks for change detection
-    story_task_document.generate_backlog_title_hashes()
+    story_task_document.generate_backlog_title_hashes()  # set the title hashes on tasks for change detection
 
     # load the latest journal into the journal for today
     last_journal = j_file_list[-1] if j_file_list else None
     journal_document.add_lines(fileinput.input(last_journal))
-    # for in_document_file in j_file_list:
-    #     journal_document.add_lines(fileinput.input(in_document_file))
     journal_document.make_in_progress("## " + daily_o.domth)
     journal_document.merge_backlog(story_task_document.backlog)
     journal_document.make_scrum()
-    write_back_xa_story_items = journal_document.\
+    xa_story_items = journal_document.\
         get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
 
-    # todo: 2020-12-20 write_xa change from existing logic that only writes back if 'x -' or 'a -' to...
-    #   logic that always writes back to 'completed-journal-yyyy-mm-dd.md'...
-    #   and removes the items from the original story file.   Eventually story files become empty.
-    #   the reason to remove them is to keep consistency with the way to manage
-    #   '$JOURNAL_DIR/Endeavors/FollowUpQueue/FollowUp story.md' which must have asks cleaned out,
-    #   or it would grow forever.
-    for xa_story_item in write_back_xa_story_items:
-        write_back_updated_story(xa_story_item)
-    # prevent whole previous month text from rolling to new month
+    # ############################
+    # Write to disk:
+    # (1.a) Tasks from Stories under endeavors they came from,
+    # (1.b) FollowUpQueue/FollowUp story.md
+    # (2.a) 'completed-journal-yyyy-mm-dd.md'
+    # (2.b) 'Todo.md'
+    # ============================
+
+    # todo: write all the tasks from the journal ( tasks from journal_story_docs ) using write_story_file()
+    #   write_story_file will pt them
+    #   the journal evolves to become the to do.md file in a next step.
+    for story_item in journal_document.get_backlog_list():
+        write_story_file(story_item, user_path_o.new_task_story_file)
+
+    # todo: 2020-12-20 write_xa
+    # for xa_story_item in xa_story_items:
+    #     write_story_file(xa_story_item, default_file=user_path_o.new_task_story_file)
+    #     # replacing with above write_back_updated_story(xa_story_item)
+    # # prevent whole previous month text from rolling to new month
+
     # todo might not need this after converting to daily scrum.
     if my_journal_dir != prev_journal_dir:
         msgr.screen_log(tag, "Will drop journal because it is from a back month")
@@ -298,11 +360,15 @@ def main():
 
     user_path_o.git_add_all()
 
-    journal_document.doc_name = daily_o.cday_fname
     # write the daily journal doc
+    journal_document.doc_name = daily_o.cday_journal_fname
     journaldir.write_dir_file(str(journal_document.scrum) + '\n',
                               daily_o.jdir, journal_document.doc_name)
 
+    resolved_data = str(journal_document.scrum.head_instance_dict[journal_document.resolved_section_head])
+    todo_data = str(journal_document.scrum.head_instance_dict[journal_document.todo_section_head])
+    journaldir.write_dir_file(resolved_data + '\n', daily_o.jdir, daily_o.cday_resolved_fname)
+    journaldir.write_dir_file(todo_data + '\n', daily_o.jdir, daily_o.cday_todo_fname)
 
 if __name__ == "__main__":
     main()
