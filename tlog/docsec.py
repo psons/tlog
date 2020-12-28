@@ -157,6 +157,15 @@ class Section:
             if not item.is_attrib_only():
                 item.save_title_hash()
 
+    def add_all_missing_item_title_hash(self):
+        """
+        calls item.add_missing_title_hash() on all non attribute sections.
+        :return: None
+        """
+        for item in self.body_items:
+            if not item.is_attrib_only():
+                item.add_missing_title_hash()
+
     def get_matching_items(self, pattern: Pattern[str]):
         """
         used by get_xa_...
@@ -205,8 +214,8 @@ class Section:
 
     def add_merge_item(self, other_item):
         """
-        !! this doesn't replace an existing item if found.
-        !! this doesn't recognize an item match by saved _has if the title has changed.
+        !! todo this doesn't replace an existing item if found.
+        !! todo this doesn't recognize an item match by saved _has if the title has changed.
             (this is the whole point of implementing the hash!)
         Do this by title hash.  If the item is already included, it came from a story
         and has a title hash
@@ -334,7 +343,7 @@ class Item:
         """Set Item attributes given akey and aval"""
         self.attribs[akey] = ItemAttribute(akey, aval)
 
-    def get_item_attrib_holder(self, akey):
+    def get_item_attrib_holder(self, akey) -> ItemAttribute:
         """Get Item attrib for key, returning TLAttribute object that has both key and val"""
         if akey in self.attribs:
             return self.attribs[akey]
@@ -377,9 +386,17 @@ class Item:
 
     # todo make saved title hash available as a read only property to
     #  be consistent with notes in  Module and Object strategy.md
-    def get_saved_title_hash(self):
+    def get_saved_title_hash(self) -> ItemAttribute:
         """gets the saved attribute title hash, which can differ from the get_title_hash() """
         return self.get_item_attrib(Item.title_hash_attr_str)
+
+    def add_missing_title_hash(self) -> None :
+        """
+        computes and sets a value for the 'titleHash:' attribute if it is not already set.
+        :return: None
+        """
+        if not self.get_saved_title_hash():
+            self.save_title_hash()
 
     def title_matches_hash(self):
         """returns True if the title and saved hash both exist and the hash of the

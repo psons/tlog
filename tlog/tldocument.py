@@ -77,8 +77,8 @@ class TLDocument:
 
     Some attributes are supported as properties in the Document class and
     implemented as Attributes on a special first section:
-        doc_name DocName: ((read / write)
-        max_tasks maxTasks: todo someday implement max_tasks property
+        doc_name DocName: (read / write)
+        max_tasks maxTasks: (read / write)
 
     The Section and Item classes can be injected with attributes, but
     they should be optional in most or all cases.
@@ -254,7 +254,7 @@ class TLDocument:
     def add_section_from_line(self, data: str):
         """
 
-        :param data: tring to create a section
+        :param data: string to create a section
         :return:
         """
         self.current_section = Section(TLDocument.top_parser_pat, data)
@@ -264,7 +264,7 @@ class TLDocument:
 
     @classmethod
     def fromtext(cls, text):
-        "create a Document from multiline text paramater"
+        """create a Document from multiline text parameter"""
         new_document = TLDocument()
         if not text:
             return new_document
@@ -338,11 +338,19 @@ class TLDocument:
     def attribute_all_backlog_items(self, key, val):
         """creates attribute on every item in the backlog section.
         Useful for putting the storySource attribute on all the items read out of a story.
-        :key the name of the attribute to set.
-        :val the value to set for the attribute.
+        :param :key the name of the attribute to set.
+        param :val the value to set for the attribute.
         """
         for item in self.backlog.body_items:
             item.set_attrib(key, val)
+
+    def for_journal_sections_add_all_missing_item_title_hash(self):
+        """
+        See Section method add_all_missing_item_title_hash(self) and Item method add_missing_title_hash(self)
+        :return: None
+        """
+        for section in self.journal:
+            section.add_all_missing_item_title_hash()
 
 
     def shorten_task_list(self, task_list: List, num_tasks=None):
@@ -487,7 +495,14 @@ class TLDocument:
         self.backlog.save_item_title_hashes()
 
     def merge_backlog(self, other_backlog_section: Section):
-        # todo: enforce a configurable max of how many tasks go into backlog.
+        """
+        items from self have priority when there are differences
+        :param other_backlog_section:
+        :return:
+        """
+        # must merge in all tasks to assure that journal / to do changes converge with items read
+        # from story files.
+
         if other_backlog_section:
             for item in other_backlog_section.body_items:
                 self.backlog.add_merge_item(item)

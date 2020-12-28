@@ -11,7 +11,7 @@ from docsec import Section, TLogInternalException, ItemAttribute, Item
 from testdata import dtask_line, dtask_item_text, \
     as1, vs1, as2, vs2, ai1, vi1, item_attrib_line1, ai2, vi2, item_attrib_line2, item_2attr_str, \
     dtask_item_text_w_saved_hash, dtask_item_text_w_saved_hash_modified_title, sec_two_items, sec_attrib_wrong, \
-    sec_w_attrib, sec_head, is_attrib_section_casaes
+    sec_w_attrib, sec_head, is_attrib_section_cases
 from tldocument import TLDocument
 
 
@@ -160,6 +160,43 @@ free text\
         # print("itest:\n", itest)
         # print("dtask_item_text_w_saved_hash (unmodified) :\n" + dtask_item_text_w_saved_hash)
         self.assertEqual(True, itest.title_matches_hash())
+
+    def testAddMissingTitleHashAddsHash(self):
+        """
+        given an Item with a top line and no saved titleHash
+        when add_missing_title_hash() is called
+        then a title hash will be present.
+        """
+        itest = Item.fromtext(TLDocument.top_parser_pat, dtask_line)
+        pre_condition = itest.get_saved_title_hash()
+        # print(f"pre_condition: {pre_condition}")
+        self.assertEqual(pre_condition, None)
+        itest.add_missing_title_hash()
+        post_condition = itest.get_saved_title_hash()
+        # print(f"post_condition: {post_condition}")
+        self.assertEqual('9b35f4f8b4', post_condition)
+
+    def testAddMissingTitleHashIgnoreSavedHash(self):
+        """
+        given an Item with a top line and a saved titleHash that does not match the actual top line hash
+        when add_missing_title_hash() is called
+        then the original saved titleHash non-matching title hash will still be present.
+
+        This test is required so that add_missing_title_hash() can be called on any item read from the to do  / journal
+        and both cases are handled correctly:
+            (1) new item gets a title hash.
+            (2) an item with a changed title still has its old hash so it can be matched to update it's original story item
+        """
+        itest = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text_w_saved_hash)
+        # print(f'itest: {itest}')
+        itest.add_line('d - a new topline') # force top line to mismatch the titleHash
+        # print(f'itest: {itest}')
+        pre_condition = itest.get_saved_title_hash()
+        # print(f"pre_condition: {pre_condition}")
+        itest.add_missing_title_hash()
+        post_condition = itest.get_saved_title_hash()
+        # print(f"post_condition: {post_condition}")
+        self.assertEqual(pre_condition, post_condition)
 
     def testItemNoSub(self):
         out = "d - item with no sub lines!"
@@ -373,12 +410,14 @@ AnAttributeName: the Attribute Value\
 
     def test_is_attrib_section(self):
         "Does the is_empty() return false for section with an item with a sub text?"
-        for case in is_attrib_section_casaes:
+        for case in is_attrib_section_cases:
             input_val = case[0]
             expected = case[1]
             actual = Section.fromtext(TLDocument.top_parser_pat, input_val).is_attrib_section()
             # print("input: {} expected: {}, actual: {}".format(input_val, expected, actual))
             self.assertEqual(expected, actual)
+
+    #def test_add_all_missing_item_titleHash(self):
 
 
 class testTLAttribute(unittest.TestCase):
@@ -430,7 +469,7 @@ class TestStoryIO(unittest.TestCase):
         myUserPathObj = journaldir.UserPaths();
         fileIOPath = journaldir.path_join(myUserPathObj.endeavor_path, "testGoal")
         fileIOPath = journaldir.path_join(fileIOPath, "testDrivenStory.md")
-        print(dtask_item_text)
+        print( f"test_write_back_updated_story dtask_item_text: {dtask_item_text}" )
         storyItem = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text)
         storyItem.set_attrib("storySource", fileIOPath)
         print(storyItem)

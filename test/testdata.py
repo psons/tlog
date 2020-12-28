@@ -84,7 +84,7 @@ sec_empty = """\
 
 \
 """
-is_attrib_section_casaes = [
+is_attrib_section_cases = [
     (sec_head, False),
     (sec_item, False),
     (sec_head_item, False),

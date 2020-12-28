@@ -42,8 +42,10 @@ class StoryGroup:
 
 def load_story_from_file(file_name):
     """adds story attribution around a Doc from file"""
-    story_doc = load_doc_from_file(file_name)
+    story_doc: TLDocument = load_doc_from_file(file_name)
     story_doc.attribute_all_backlog_items(StoryGroup.story_source_attr_name, file_name)
+    story_doc.for_journal_sections_add_all_missing_item_title_hash()
+    # todo write back story with titleHashes and storySources
     return story_doc
 
 # todo. x - implement this
@@ -78,7 +80,7 @@ def write_story_file(item: Item, default_file=None):
 # todo test write_back_updated_story
 def write_back_updated_story(item: Item):
     """
-
+    todo: this only has a test call, and one that is commented out in main()
     :param item: a task item to write to it's StorySource
     :return: Story Document object that was written to disk
     """
@@ -299,9 +301,12 @@ def main():
     # get the story docs from endeavors
     story_dir_objects = journaldir.load_endeavor_stories(user_path_o)
 
-    # ############################
-    # Manipulate the collection of objects read from disk
-    # ============================
+    #### UPDATE JOURNAL TO DO BACK TO STORIES FROM DISK.
+    #### beginning of new sprint creation. this has to be after the journal updates have been injected into the FULL BACKLOG and pushed back to source story objects.
+    ####        either (yes) write to disk and re-read it, or (no) find the original TLDocs in memory some how. an Item could have a ref to the parent story
+    #### only after the updates are done and written to disk, can we go through and shorten stories to 'maxTasks' to build the sprint candidate list.
+
+    #### THEN RE-READ ALLTHE STORIES AND SHORTEN THEM AND GENERATE A NEW SPRINT.
 
     # trim the story lists to maxTasks
     endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
@@ -331,14 +336,6 @@ def main():
     journal_document.make_scrum()
     xa_story_items = journal_document.\
         get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
-
-    # ############################
-    # Write to disk:
-    # (1.a) Tasks from Stories under endeavors they came from,
-    # (1.b) FollowUpQueue/FollowUp story.md
-    # (2.a) 'completed-journal-yyyy-mm-dd.md'
-    # (2.b) 'Todo.md'
-    # ============================
 
     # todo: write all the tasks from the journal ( tasks from journal_story_docs ) using write_story_file()
     #   write_story_file will pt them
