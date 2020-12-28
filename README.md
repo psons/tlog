@@ -20,7 +20,7 @@ x - test journaldir read_file_str and write_filepath
        x - (use the scrum DocStructure to sort this to a section, but then the section has to be built into something stringable to write.)
                See docs/Tlog User Documentation.md for file and section heading info:
                    - the completed and abandoned tasks along with a 'u -' task for any in progress tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' section heading with a heading of the form  # Resolved yyyy-mm-dd' file for the day.
-       x - create write_story_file() to update any item back to it's original story, or add it to a default task list
+       x - create write_item_to_story_file() to update any item back to it's original story, or add it to a default task list
        d - fix bug where titleHash isn't created for new tasks in default/new task story.md
             - any file read that might have been updated by the user should have the titleHash set if it isn't already present.
                 x - add Item method to add_missing_titleHash

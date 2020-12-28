@@ -45,19 +45,17 @@ def load_story_from_file(file_name):
     story_doc: TLDocument = load_doc_from_file(file_name)
     story_doc.attribute_all_backlog_items(StoryGroup.story_source_attr_name, file_name)
     story_doc.for_journal_sections_add_all_missing_item_title_hash()
-    # todo write back story with titleHashes and storySources
     return story_doc
 
-# todo. x - implement this
-# todo / -  and use it instead of write_back_updated_story
-def write_story_file(item: Item, default_file=None):
+# todo test write_item_to_story_file()
+def write_item_to_story_file(item: Item, default_file=None):
     """
     Writes an item into either its original storySource, or the default if provided.
     :param item: a task item to write.
     :param default_file: file path to write item into if there is no storySource in item
     :return: Story Document object that was written to disk
     """
-    tag = "write_story_file():"
+    tag = "write_item_to_story_file():"
     story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
     filepath = default_file
     if story_source:
@@ -77,10 +75,9 @@ def write_story_file(item: Item, default_file=None):
     return story_tldoc
 
 
-# todo test write_back_updated_story
 def write_back_updated_story(item: Item):
     """
-    todo: this only has a test call, and one that is commented out in main()
+    todo: this only has a test call, and one that is commented out in main() get rid of it in foavor of write_item_to_story_file()
     :param item: a task item to write to it's StorySource
     :return: Story Document object that was written to disk
     """
@@ -117,43 +114,42 @@ def find_prev_journal_dir(latest_dir, history_months):
     return search_dir
 
 
-# todo break this into 3 calls (1) return the dir with files, (2) load it as a StoryGroup, and (3) load journal docs
-def sj_file_list_by_dir(latest_dir, history_months):
-    """
-    get group of story files and latest journal file name lists given dir
-    if none are found in the latest_dir, search back up to history_months
-    until at least 1 file is found.
-    :param latest_dir: current journaldir to look back in history from to find files.
-    :param history_months: limit on how far back to search
-    :return: list of story files, list of journal files, and the dir they were found.
-    """
-    file_count = 0
-    dirs_to_search = history_months
-    next_search_dir = latest_dir
-    while file_count == 0 and dirs_to_search > 0:
-        search_dir = next_search_dir
-        sfl = journaldir.get_file_names_by_pattern(
-            search_dir, journaldir.story_pat)
-        jfl = journaldir.get_file_names_by_pattern(
-            search_dir, journaldir.journal_pat)
-        file_count = len(sfl) + len(jfl)
-        print("{} stories and {} journals in {}".
-              format(len(sfl), len(jfl), search_dir))
-        next_search_dir = journaldir.get_prior_dir(search_dir)  # can return None
-        if not next_search_dir:
-            dirs_to_search = 0  # loop to end if no sensible search_dir
-        else:
-            dirs_to_search -= 1
-
-    jfl = jfl[-1:]  # just the last journal file in the list
-    return sfl, jfl, search_dir
+# def sj_file_list_by_dir(latest_dir, history_months):
+#     """
+#     get group of story files and latest journal file name lists given dir
+#     if none are found in the latest_dir, search back up to history_months
+#     until at least 1 file is found.
+#     :param latest_dir: current journaldir to look back in history from to find files.
+#     :param history_months: limit on how far back to search
+#     :return: list of story files, list of journal files, and the dir they were found.
+#     """
+#     file_count = 0
+#     dirs_to_search = history_months
+#     next_search_dir = latest_dir
+#     while file_count == 0 and dirs_to_search > 0:
+#         search_dir = next_search_dir
+#         sfl = journaldir.get_file_names_by_pattern(
+#             search_dir, journaldir.story_pat)
+#         jfl = journaldir.get_file_names_by_pattern(
+#             search_dir, journaldir.journal_pat)
+#         file_count = len(sfl) + len(jfl)
+#         print("{} stories and {} journals in {}".
+#               format(len(sfl), len(jfl), search_dir))
+#         next_search_dir = journaldir.get_prior_dir(search_dir)  # can return None
+#         if not next_search_dir:
+#             dirs_to_search = 0  # loop to end if no sensible search_dir
+#         else:
+#             dirs_to_search -= 1
+#
+#     jfl = jfl[-1:]  # just the last journal file in the list
+#     return sfl, jfl, search_dir
 
 
 def load_doc_from_file(file_name) -> TLDocument:
     file_text = journaldir.read_file_str(file_name)
     return TLDocument.fromtext(file_text)
 
-# todo test various short_copy cases.
+# todo test various short_copy cases. -->  need for short copy may be changing.
 def short_copy(long_story_doc):
     """copy the long_story_doc arg and shorten to only maxTasks,
     making sure the number of '/ -' tasks + 'd - ' tasks is less than maxTasks
@@ -227,15 +223,27 @@ def main():
     User environment includes directories of story files with tasks, which will be read into lists of stories.
         See Tlog User Documentation.md
 
-    The lists of stories will be loaded into a special section of a TLDocument object called the 'backlog'
-    (as in 'Scrum' vernacular).  in each Story, the 'maxTasks:' attribute constrains what is read into the backlog,
-    making it really represent a set of 'sprint candidate' tasks. todo refactor to rename 'backlog' to 'sprint'
+    1. build the "old" journal / to do (j/td) file.
+    2. make_scrum_resolved() as:
+        a. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum object as resolved.
+        b. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
+    3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
+        - must preserve data if the file for the day exists,
+        perhaps use write_item_to_story_file() / insert_update_journal_item(item)
+    4. Write everything in old j/td back to disk, merging according to the write_item_to_story_file() call to
+        insert_update_journal_item(item) merge the backlog into the journal.
+    5. Git commit the updates, which will include tasks updated to 'x -'
+    6. Remove 'x -' from stories using rm_item_from_story_file()
 
-    Tasks are to be kept in priority order in a stories, and hence when endeavors are also in priority order,
-    the sprint will be in priority order. todo implement a story that prioritizes endeavors.
-
-
+    7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now included the old j/td tasks)
+        - eventually the stores in the endeavors will be prioritized.  There is a story for that.
+    8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
+        of task items from the stories.
+    9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as todo.
+    10. Persist the scrum todo_data
+    11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories.
     """
+    
     # initialize everything
     tag = "tlog main:"
     daily_o = journaldir.Daily()
@@ -256,7 +264,7 @@ def main():
     # ############################
     # Gather input state from Disk and command line
     # ============================
-    ## look at cmd line args and find the todo doc
+    ## look at cmd line args and find the to do doc
     if len(sys.argv) < 2:
         journaldir.init(my_journal_dir)
         # look back in history to find past journal dir will not be necessary with 'to-do' replaces journal, and
@@ -271,7 +279,6 @@ def main():
 
         msgr.screen_log(tag, msg)
         msgr.screen_log(tag, "no argument jfile_list:" + ",".join(j_file_list))
-        # todo: rename this should be the to-do file.  do all the write back to stories processing.
     else:
         # usage: tlog jdir some_path_to_a_dir
         if sys.argv[1] in supported_commands:
@@ -331,21 +338,23 @@ def main():
     # load the latest journal into the journal for today
     last_journal = j_file_list[-1] if j_file_list else None
     journal_document.add_lines(fileinput.input(last_journal))
+
+    # todo review these next few lines to make sure scrum gets created correctly.
     journal_document.make_in_progress("## " + daily_o.domth)
     journal_document.merge_backlog(story_task_document.backlog)
     journal_document.make_scrum()
-    xa_story_items = journal_document.\
-        get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
 
-    # todo: write all the tasks from the journal ( tasks from journal_story_docs ) using write_story_file()
-    #   write_story_file will pt them
-    #   the journal evolves to become the to do.md file in a next step.
+    # don't need this if I make_scrum() correctly and write it later. see resolved_data adf todo_data below.
+    # xa_story_items = journal_document.\
+    #     get_xa_story_tasks(StoryGroup.story_source_attr_name) # uses the scrum
+
+    # todo: write all the tasks from the journal ( tasks from journal_story_docs ) using write_item_to_story_file() move this above creation of the scrum.
     for story_item in journal_document.get_backlog_list():
-        write_story_file(story_item, user_path_o.new_task_story_file)
+        write_item_to_story_file(story_item, user_path_o.new_task_story_file)
 
-    # todo: 2020-12-20 write_xa
+    # dont need if make_scrum per above
     # for xa_story_item in xa_story_items:
-    #     write_story_file(xa_story_item, default_file=user_path_o.new_task_story_file)
+    #     write_item_to_story_file(xa_story_item, default_file=user_path_o.new_task_story_file)
     #     # replacing with above write_back_updated_story(xa_story_item)
     # # prevent whole previous month text from rolling to new month
 
