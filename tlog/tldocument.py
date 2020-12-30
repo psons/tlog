@@ -332,17 +332,6 @@ class TLDocument:
         "Return the in_progress section as a string."
         return str(self.in_progress)
 
-    # def get_xa_story_tasks(self, story_key: str):
-    #     """
-    #     get tasks from the scrum that have a 'storySource:' attribute
-    #     and are complete ('x - ') or abandoned ('a -').
-    #     """
-    #     past_section: Section = self.scrum.head_instance_dict[self.resolved_section_head]
-    #     xa_items = past_section.get_matching_items(TLDocument.resolved_pat)
-    #     xa_items_w_stories  = [ i for i in xa_items if i.get_item_attrib(story_key)]
-    #     return xa_items_w_stories
-    #
-    #     # get_matching_items(pattern: Pattern[str])
 
     def get_limited_tasks_from_unresolved_list(self)-> List[Item]:
         mt: int = int(self.max_tasks)
@@ -399,18 +388,6 @@ class TLDocument:
             self.in_progress.body_items, num_tasks)
         return self
 
-    # def shorten_backlog(self, num_tasks=None):
-    #     """
-    #     discard extra tasks in the backlog section
-    #     """
-    #     self.backlog.body_items = self.shorten_task_list(
-    #         self.backlog.body_items, num_tasks)
-    #     return self
-
-    # / - no longer support backlog as a special section.  Will get it as a list if needed
-    # def backlog_str(self):
-    #     """Return the backlog section as a string"""
-    #     return str(self.backlog)
 
     def __str__(self):
         s = self.journal_str() # + "\n"
@@ -418,23 +395,6 @@ class TLDocument:
         # s += self.backlog_str()
         return s
 
-    # def make_scrum(self):
-    #     """
-    #     return a DocumentStructure with two sections representing part of
-    #     what a scrum team member should report at the standup:
-    #      - what did I accomplish yesterday: '# Past Tasks'
-    #      - what will I work on today: '# Current Tasks'
-    #
-    #      This method assumes make_in_progress() has already been called to make and
-    #      'u - ' unfinished copy of any '/ - ' in progress items.
-    #      """
-    #     self.add_section_items_to_scrum(self.in_progress)  # / tasks from in_progress
-    #     self.add_section_items_to_scrum(self.backlog)  # d tasks from backlog
-    #     for section in self.journal:        # u, a, and x tasks from journal
-    #         # todo do this also for the special backlog section.  (extract a method)
-    #         self.add_section_items_to_scrum(section)
-    #
-    #     return self.scrum
 
     def add_section_list_items_to_scrum(self, section_list: List[Section]):
         """Given list of Section objects, add all it's Items to the scrum"""
@@ -456,49 +416,6 @@ class TLDocument:
             all_items += section.get_matching_items(pattern)
         return all_items
 
-    # # / - removing tests and need for make_in_progress().  use scrum resolved section instead.
-    # def make_in_progress(self, in_prog_head=defautInProgHead):
-    #     """
-    #     If in_prog_head exists in the self.journal,
-    #         take it out of the journal and make it the in_progress section in self TLDocument
-    #
-    #     loop through Sections in the Document
-    #         loop through Items in the Sections,
-    #         if data is a in_progress item
-    #             make a copy of it.
-    #             add the copy to the in_progress section.
-    #             modify the original to 'unfinished'
-    #     Elsewhere, set the header on the in_progress section.
-    #     """
-    #     existing_in_prog = False
-    #     for journal_section in self.journal:
-    #         if journal_section.header == in_prog_head:
-    #             self.in_progress = journal_section
-    #             existing_in_prog = True
-    #             break
-    #     if existing_in_prog:
-    #         # this Section might have 'x - ', and other Items
-    #         # that need to be preserved, as  for runs when user
-    #         # has already completed some work for the day.
-    #         #self.in_progress = journal_section
-    #         self.journal.remove(journal_section)
-    #     else:
-    #         self.in_progress.add_section_line(in_prog_head)
-    #
-    #     pat: re.Pattern = TLDocument.in_progress_pat
-    #     for section in self.journal:
-    #         for item in section.select_modify_item_tops_by_pattern(pat, TLDocument.unfinished_s):
-    #             self.in_progress.add_item(item)
-
-    # def drop_journal(self):
-    #     if len(self.journal) > 1:
-    #         firstSection = self.journal[0]
-    #         if firstSection.is_attrib_section():
-    #             self.journal = [firstSection]
-    #         else:
-    #             self.initialize_journal()
-    #     else:
-    #         self.initialize_journal()
 
     def remove_document_item(self, item: Item):
         """
@@ -530,10 +447,6 @@ class TLDocument:
                 break
         if matching_item:
             matching_item.merge_parts(item) # item reference in the current section iteration from above loop.
-        # else:
-        #     backlog_matching_item = self.backlog.find_item(item)
-        #     if backlog_matching_item:
-        #         backlog_matching_item.merge_parts(item) # item reference in the backlog
         else:
             self.insert_new_item_into_journal_section(default_section_heading, item)
         return self
@@ -552,25 +465,6 @@ class TLDocument:
         if not added_item:
             new_section: Section = self.add_section_from_line(section_heading)
             new_section.add_item(item)
-
-    # def generate_backlog_title_hashes(self):
-    #     self.backlog.save_item_title_hashes()
-
-    # probably don't need this if use somthing to add to scrum
-    # / - eliminate references to the backlog section.
-    # def merge_backlog(self, other_backlog_section: Section):
-    #     """
-    #     :param other_backlog_section:
-    #     :return:
-    #     """
-    #     # must merge in all tasks to assure that journal / to do changes converge with items read
-    #     # from story files.
-    #
-    #     if other_backlog_section:
-    #         for item in other_backlog_section.body_items:
-    #             self.backlog.add_item_merge_enhanced(item)
-    #     else:
-    #         print("DEBUG warning: other_backlog_section is None merging into " + self.doc_name)
 
 
 def debExit(message=""):

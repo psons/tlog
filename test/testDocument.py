@@ -110,60 +110,12 @@ d - finish the small story!\
 	d - refine the small story work\
 	"""
 
-	# / - no longer support backlog as a special section.  Will get it as a list if needed
-	# no longer need this test since the joiurnal now is the whole document, incl backlog.
-	# def testDocumentJournal(self):
-	# 	text_lines = TestDocument.docIn.split("\n")
-	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
-	# 	#print("str(dtest):" + str(dtest))
-	# 	self.assertEqual(dtest.journal_str(), TestDocument.journalOut)
-
-	# / - no longer support backlog as a special section.  Will get it as a list if needed
-	# def testDocumentBacklog(self):
-	# 	text_lines = TestDocument.docIn.split("\n")
-	# 	dtest = TLDocument(TestDocument.docTitle, text_lines)
-	# 	self.assertEqual(TestDocument.backlogOut, dtest.backlog_str())
-
 	def testDocumentWhole(self):
 		"Lines from docIn should match str() of Document made from them."
 		text_lines = TestDocument.docIn.split("\n")
 		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		self.assertEqual(str(dtest), TestDocument.docOut)
 
-	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
-	# def testDocumentJournalProgress(self):
-	# 	"Journal after make_in_progress() called.  Has items marked unfinished"
-	# 	text_lines = TestDocument.docIn.split("\n")
-	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
-	# 	dtest.make_in_progress()
-	# 	self.assertEqual(dtest.journal_str(), TestDocument.journalProgressOut)
-
-	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
-	# def testDocumentInProgress(self):
-	# 	"In progress section after make_in_progress() called"
-	# 	text_lines = TestDocument.docIn.split("\n")
-	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
-	# 	dtest.make_in_progress()
-	# 	self.assertEqual(TestDocument.inProgressOut, dtest.in_progress_str())
-
-# add test for scenarios where the in progress section is existing,
-# especially with some completed tasks, that must not get lost!
-
-	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
-	# def testDocumentExistingProgressSection(self):
-	# 	"Re use In progress section for make_in_progress()"
-	# 	text_lines = TestDocument.docIn2.split("\n")
-	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
-	# 	dtest.make_in_progress("# Mon 22nd")
-	# 	self.assertEqual(str(dtest), TestDocument.docOut2)
-
-	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
-	# def testDocumentWholeInProgres(self):
-	# 	"Whole document after make_in_progress() called"
-	# 	text_lines = TestDocument.docIn.split("\n")
-	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
-	# 	dtest.make_in_progress()
-	# 	self.assertEqual(str(dtest), TestDocument.docInProgressOut)
 
 	def testDocumentWhole2(self):
 		""" This test now shows that text in is the same as text out!"""

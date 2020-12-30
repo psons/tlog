@@ -251,33 +251,6 @@ class Section:
             self.add_item(other_item)
         return self
 
-    def add_item_merge(self, other_item):
-        """
-        !! todo this doesn't replace an existing item if found.
-        !! todo this doesn't recognize an item match by saved _has if the title has changed.
-            (this is the whole point of implementing the hash!)
-        Do this by title hash.  If the item is already included, it came from a story
-        and has a title hash
-        :param other_item:
-        :return:
-        """
-        # print("Checking to see if item is in Section ", self.header)
-        # print("Item is:", other_item.top)
-        match_existing_found = False
-        for item in self.body_items:
-            item_sth = item.get_saved_title_hash()
-            # print("Section:add_item_merge:self.item", item.top)
-            if item_sth:
-                if item_sth == other_item.get_title_hash():
-                    match_existing_found = True
-            else:
-                item_th = item.get_title_hash()
-        if not match_existing_found:
-            # print("adding item:\n", str(other_item) )
-            self.add_item(other_item)
-
-    # def has_item(self, an_item):
-    # 	for item in ...
 
     def select_modify_item_tops_by_pattern(self, in_progress_pat: re.Pattern, unfinished_s: str):
         """
@@ -332,7 +305,7 @@ class ItemAttribute:
 
 class Item:
     """
-    See documentation for the Document class
+    See documentation for the TLDocument class
     """
 
     title_hash_attr_str = "titleHash"
