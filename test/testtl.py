@@ -469,14 +469,15 @@ class TestStoryIO(unittest.TestCase):
         myUserPathObj = journaldir.UserPaths();
         fileIOPath = journaldir.path_join(myUserPathObj.endeavor_path, "testGoal")
         fileIOPath = journaldir.path_join(fileIOPath, "testDrivenStory.md")
+        new_item_section_heading = "# test_write_item_to_story_file\n"
         journaldir.remove_filepath(fileIOPath)
         print( f"test_write_back_updated_story dtask_item_text: {dtask_item_text}" )
         storyItem = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text)
         storyItem.set_attrib("storySource", fileIOPath)
         print(f"storyItem:\n{storyItem}")
-        tlog.write_item_to_story_file(storyItem)
+        tlog.write_item_to_story_file(storyItem, new_item_section_head=new_item_section_heading)
         reloadStory: TLDocument = tlog.load_doc_from_file(fileIOPath)
-        self.assertEqual(str(storyItem), str(reloadStory))
+        self.assertEqual(new_item_section_heading + str(storyItem), str(reloadStory))
         # todo create a scaffolding that deletes the fileIOPath
 
 

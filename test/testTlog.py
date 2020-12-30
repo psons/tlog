@@ -11,13 +11,16 @@ expected_story_text= """\
 maxTasks: 3
 d - start on the small story
 storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+titleHash:5e874c75f0
 d - some more work on the small story
 storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+titleHash:4db4f19abf
 d - refine the small story work
 storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+titleHash:961443447d
 d - finish the small story!
-storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md\
-"""
+storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+titleHash:6ae341e0a3"""
 sd = journaldir.StoryDir(test_storydir_str)
 
 class TestTlog(unittest.TestCase):

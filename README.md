@@ -21,8 +21,15 @@ x - test journaldir read_file_str and write_filepath
                See docs/Tlog User Documentation.md for file and section heading info:
                    - the completed and abandoned tasks along with a 'u -' task for any in progress tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' section heading with a heading of the form  # Resolved yyyy-mm-dd' file for the day.
        x - create write_item_to_story_file() to update any item back to it's original story, or add it to a default task list
-       / - re working main() to fix some flow problems.
-            / - changing TLDocument to load sections and items as is from disk.  backlog must be buult later. 
+       x - re working main() to fix some flow problems.
+            x - changing TLDocument to load sections and items as is from disk.  backlog must be built later.
+            x - no longer support backlog as a special section.  Will get it as a list if needed
+            x - removing tests and need for make_in_progress().  use scrum resolved section instead.
+            x - eliminate tlog short_copy() in favor of a TLDocument. get_backlog_list() method with an optional max_tasks arg defaulting to maxTasks
+            x - in tlog.py main() makes sure to only process maxTasks items from each story. ::are they shortened? At this point the short_stories have the short list of tasks in the 'backlog' section of each Doc.
+            x - eliminate references to the backlog section.
+       
+       d - eliminate the TLDocument special section "in_progress" it isn't needed any more.  Some tests will break.
        d - fix bug where titleHash isn't created for new tasks in default/new task story.md
             - any file read that might have been updated by the user should have the titleHash set if it isn't already present.
                 x - add Item method to add_missing_titleHash

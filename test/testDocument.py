@@ -110,16 +110,19 @@ d - finish the small story!\
 	d - refine the small story work\
 	"""
 
-	def testDocumentJournal(self):
-		text_lines = TestDocument.docIn.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
-		#print("str(dtest):" + str(dtest))
-		self.assertEqual(dtest.journal_str(), TestDocument.journalOut)
+	# / - no longer support backlog as a special section.  Will get it as a list if needed
+	# no longer need this test since the joiurnal now is the whole document, incl backlog.
+	# def testDocumentJournal(self):
+	# 	text_lines = TestDocument.docIn.split("\n")
+	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
+	# 	#print("str(dtest):" + str(dtest))
+	# 	self.assertEqual(dtest.journal_str(), TestDocument.journalOut)
 
-	def testDocumentBacklog(self):
-		text_lines = TestDocument.docIn.split("\n")
-		dtest = TLDocument(TestDocument.docTitle, text_lines)
-		self.assertEqual(TestDocument.backlogOut, dtest.backlog_str())
+	# / - no longer support backlog as a special section.  Will get it as a list if needed
+	# def testDocumentBacklog(self):
+	# 	text_lines = TestDocument.docIn.split("\n")
+	# 	dtest = TLDocument(TestDocument.docTitle, text_lines)
+	# 	self.assertEqual(TestDocument.backlogOut, dtest.backlog_str())
 
 	def testDocumentWhole(self):
 		"Lines from docIn should match str() of Document made from them."
@@ -127,38 +130,43 @@ d - finish the small story!\
 		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		self.assertEqual(str(dtest), TestDocument.docOut)
 
-	def testDocumentJournalProgress(self):
-		"Journal after make_in_progress() called.  Has items marked unfinished"
-		text_lines = TestDocument.docIn.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
-		dtest.make_in_progress()
-		self.assertEqual(dtest.journal_str(), TestDocument.journalProgressOut)
+	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
+	# def testDocumentJournalProgress(self):
+	# 	"Journal after make_in_progress() called.  Has items marked unfinished"
+	# 	text_lines = TestDocument.docIn.split("\n")
+	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
+	# 	dtest.make_in_progress()
+	# 	self.assertEqual(dtest.journal_str(), TestDocument.journalProgressOut)
 
-	def testDocumentInProgress(self):
-		"In progress section after make_in_progress() called"
-		text_lines = TestDocument.docIn.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
-		dtest.make_in_progress()
-		self.assertEqual(TestDocument.inProgressOut, dtest.in_progress_str())
+	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
+	# def testDocumentInProgress(self):
+	# 	"In progress section after make_in_progress() called"
+	# 	text_lines = TestDocument.docIn.split("\n")
+	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
+	# 	dtest.make_in_progress()
+	# 	self.assertEqual(TestDocument.inProgressOut, dtest.in_progress_str())
 
 # add test for scenarios where the in progress section is existing,
 # especially with some completed tasks, that must not get lost!
 
-	def testDocumentExistingProgressSection(self):
-		"Re use In progress section for make_in_progress()"
-		text_lines = TestDocument.docIn2.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
-		dtest.make_in_progress("# Mon 22nd")
-		self.assertEqual(str(dtest), TestDocument.docOut2)
+	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
+	# def testDocumentExistingProgressSection(self):
+	# 	"Re use In progress section for make_in_progress()"
+	# 	text_lines = TestDocument.docIn2.split("\n")
+	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
+	# 	dtest.make_in_progress("# Mon 22nd")
+	# 	self.assertEqual(str(dtest), TestDocument.docOut2)
 
-	def testDocumentWholeInProgres(self):
-		"Whole document after make_in_progress() called"
-		text_lines = TestDocument.docIn.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
-		dtest.make_in_progress()
-		self.assertEqual(str(dtest), TestDocument.docInProgressOut)
+	# / - removing tests and need for make_in_progress().  use scrun resolved section instead.
+	# def testDocumentWholeInProgres(self):
+	# 	"Whole document after make_in_progress() called"
+	# 	text_lines = TestDocument.docIn.split("\n")
+	# 	dtest  = TLDocument(TestDocument.docTitle, text_lines)
+	# 	dtest.make_in_progress()
+	# 	self.assertEqual(str(dtest), TestDocument.docInProgressOut)
 
 	def testDocumentWhole2(self):
+		""" This test now shows that text in is the same as text out!"""
 		inDoc2  = """\
 journal-2016-05-08.txt
 
@@ -167,18 +175,11 @@ x - save taxes as encrypted 7zip to fireproof box
 d - put way misc paper tax files
 / - do the roll day story in tlog/backlog/Roll Day story.txt\
 """
-		outDoc2 =  """\
-journal-2016-05-08.txt
-
-x - save taxes to windows PC
-x - save taxes as encrypted 7zip to fireproof box
-/ - do the roll day story in tlog/backlog/Roll Day story.txt
-d - put way misc paper tax files\
-"""
 		text_lines = inDoc2.split("\n")
 		dtest  = TLDocument(TestDocument.docTitle, text_lines)
 		#print("testDocumentWhole2 str(dtest):" + str(dtest))
-		self.assertEqual(str(dtest), outDoc2)
+		#self.assertEqual(str(dtest), outDoc2)
+		self.assertEqual(str(dtest), inDoc2)
 
 	#@unittest.skip("Document attribute screwing this up. ")
 	def testDocumentWhole3(self):
@@ -235,7 +236,7 @@ d - put way misc paper tax files\
 	def testDocumentMaxTasks(self):
 		small_story_doc = TLDocument.fromtext(TestDocument.small_story)
 		mt = small_story_doc.max_tasks
-		task_list = small_story_doc.get_backlog_list(mt)
+		task_list = small_story_doc.get_limited_tasks_from_unresolved_list()
 		self.assertEqual(int(mt), len(task_list))
 
 class special_sections:
