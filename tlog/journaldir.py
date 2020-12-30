@@ -67,10 +67,10 @@ class UserPaths:
         print(self.journal_path)
         self.git_repo_obj = make_git_repo(self.journal_path)
 
-    def git_add_all(self):
+    def git_add_all(self, daily_o, message):
         untracked = self.git_repo_obj.untracked_files
-        commit_message = ",".join(untracked)[0:50]
-        commit_message = "tlog commit"
+        # commit_message = ",".join(untracked)[0:50]
+        commit_message = f"tlog commit: {message} " + daily_o.jdir
         journal_index: IndexFile = self.git_repo_obj.index
         self.git_repo_obj.git.add('--all')
         journal_index.commit(commit_message)
@@ -145,11 +145,12 @@ def load_endeavors_deprecated(user_path_obj):
     return [Endeavor_deprecated(e_str, user_path_obj) for e_str in endeavor_text.split()]
 
 def path_join(p, f):
-    "wrapper helps prevent module os from being needed in calling modules."
+    """wrapper helps prevent module os from being needed in calling modules."""
     return os.path.join(p, f)
 
 
 def read_file_str(filepath) -> str:
+    """Read the file contents as a string if the file exists"""
     data = ""
     if os.path.isfile(filepath):
         with open(filepath, 'r') as data_file:
@@ -165,6 +166,10 @@ def write_filepath(new_content, filepath):
     sfd: TextIO
     with open(filepath, "w") as sfd:
         sfd.write(new_content)
+
+def remove_filepath(filepath: str):
+    if os.path.exists(filepath):
+        os.remove(filepath)
 
 def write_dir_file(new_content, dir_name, doc_name):
     filepath = os.path.join(dir_name, doc_name)

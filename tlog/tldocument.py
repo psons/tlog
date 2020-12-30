@@ -37,7 +37,9 @@ blank_ln_pat = re.compile("^\s*$")
 """
 TLDocument
     journal - list of Section objects created from text lines that the caller reads and writes to or from a file 
-    backlog - special section built by adding all the unresolved tasks from the journal sections.
+                - currently (2020-12) 'd -' items are not included in the journal,
+    backlog - special section intended to represent 'sprint candidate' work that may go into the scrum 'todo'.
+                - currently (2020-12) 'd -' items are added to the backlog section, not the journal sections
     scrum   - a DocStructure object with 
                 - a section for Resolved tasks. (heading '# Resolved {day of month}' ) 
                 - a Section with a limited number of tasks for current work session (heading '# To Do {day of month}')
@@ -109,8 +111,8 @@ class TLDocument:
     abandoned_pat = re.compile(abandoned_str)
     completed_str = "^[xX] *-"
     completed_pat = re.compile(completed_str)
-    done_str = "|".join([completed_str, abandoned_str])
-    done_pat = re.compile(done_str)  # Used externally in in TLDocument get_xa ..
+    resolved_str = "|".join([completed_str, abandoned_str])
+    resolved_pat = re.compile(resolved_str)  # Used externally in in TLDocument get_xa ..
 
     in_progress_str = r'^[/\\] *-' # used here in head_str and not_do_str
     in_progress_pat = re.compile(in_progress_str) # used in Item in modify_item_top() that i am refactoring
@@ -122,10 +124,10 @@ class TLDocument:
     do_str = "^[dD] *-"  # used here as part of head_str
     do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
 
-    head_str = "|".join([done_str, in_progress_str, do_str, unfinished_str])  # used here in head_pat and leader_group_str
+    head_str = "|".join([resolved_str, in_progress_str, do_str, unfinished_str])  # used here in head_pat and leader_group_str
     head_pat = re.compile(head_str)
 
-    not_do_str = "|".join([done_str, in_progress_str, unfinished_str])  # just used here
+    not_do_str = "|".join([resolved_str, in_progress_str, unfinished_str])  # just used here
     not_do_pat = re.compile(not_do_str)  # only used in Document
 
     leader_group_str = "(" + head_str + ")" # only used here
@@ -220,38 +222,68 @@ class TLDocument:
             else:
                 prev_line_blank = False
 
-            data = line.rstrip("\n")  # todo: fix: stripping newline off blank line makes it not get in body_items.
+            data = line.rstrip("\n")
             # print("add_lines data:" + data)
-            self.add_line(data)
+            # self.add_document_line(data)
+            self.add_line_deprecated(data)
 
-    def add_line(self, data):
+    def add_document_line(self, data):
+        """
+        Add a single data line into the document according to
+        pattern_strs in the Item and Section classes.
+        The TLDocument journal will be structured with Sections and Items matching the input text
+        (This is a change from a deprecated approach, which separated out 'd -' items to a backlog.
+        The backlog will be built when needed as a simple sequenced list of items.)
+        """
+        if data is None:
+            return
+        if Section.head_pat.match(data):
+            if self.current_section.is_empty():
+                # Putting a header on initial section
+                self.current_section.add_section_line(data)
+                self.last_add = self.current_section
+            else:
+                # New section.
+                self.add_section_from_line(data)
+
+        elif TLDocument.top_parser_pat.match(data):
+            self.current_section.add_section_line(data)
+            self.last_add = self.current_section
+        else:
+            self.last_add.add_section_line(data)
+
+
+    def add_line_deprecated(self, data):
         """
         Add a single data line into the document according to
         pattern_strs in the Item and Section classes.
         """
         if data is None:
             return
+        # todo
+        #  do items are going into the backlog section, not the latest journal section.
+        #  change that to put them into journal sections ny line, and can extract a backlog later by whole items.
         if TLDocument.do_pat.match(data):
-            self.backlog.add_line(data)
+            self.backlog.add_section_line(data)
             self.last_add = self.backlog
 
 
         elif Section.head_pat.match(data):
             if self.current_section.is_empty():
                 # Putting a header on initial section
-                self.current_section.add_line(data)
+                self.current_section.add_section_line(data)
                 self.last_add = self.current_section
             else:
                 # New section.
                 self.add_section_from_line(data)
 
         elif TLDocument.not_do_pat.match(data):
-            self.current_section.add_line(data)
+            self.current_section.add_section_line(data)
             self.last_add = self.current_section
         else:
-            self.last_add.add_line(data)
+            self.last_add.add_section_line(data)
 
-    def add_section_from_line(self, data: str):
+    def add_section_from_line(self, data: object) -> object:
         """
 
         :param data: string to create a section
@@ -307,19 +339,17 @@ class TLDocument:
         "Return the in_progress section as a string."
         return str(self.in_progress)
 
-    # todo: change ti approach where ('x - ', 'a -') with storySource get removed from the original story...
-    #   and go into
-    def get_xa_story_tasks(self, story_key: str):
-        """
-        get tasks from the scrum that have a 'storySource:' attribute
-        and are complete ('x - ') or abandoned ('a -').
-        """
-        past_section: Section = self.scrum.head_instance_dict[self.resolved_section_head]
-        xa_items = past_section.get_matching_items(TLDocument.done_pat)
-        xa_items_w_stories  = [ i for i in xa_items if i.get_item_attrib(story_key)]
-        return xa_items_w_stories
-
-        # get_matching_items(pattern: Pattern[str])
+    # def get_xa_story_tasks(self, story_key: str):
+    #     """
+    #     get tasks from the scrum that have a 'storySource:' attribute
+    #     and are complete ('x - ') or abandoned ('a -').
+    #     """
+    #     past_section: Section = self.scrum.head_instance_dict[self.resolved_section_head]
+    #     xa_items = past_section.get_matching_items(TLDocument.resolved_pat)
+    #     xa_items_w_stories  = [ i for i in xa_items if i.get_item_attrib(story_key)]
+    #     return xa_items_w_stories
+    #
+    #     # get_matching_items(pattern: Pattern[str])
 
     #  This is only only used in a test, and could be moved.
     def get_backlog_list(self, num_tasks=-1):
@@ -390,29 +420,43 @@ class TLDocument:
         s += self.backlog_str()
         return s
 
-    def make_scrum(self):
-        """
-        return a DocumentStructure with two sections representing part of
-        what a scrum team member should report at the standup:
-         - what did I accomplish yesterday: '# Past Tasks'
-         - what will I work on today: '# Current Tasks'
+    # def make_scrum(self):
+    #     """
+    #     return a DocumentStructure with two sections representing part of
+    #     what a scrum team member should report at the standup:
+    #      - what did I accomplish yesterday: '# Past Tasks'
+    #      - what will I work on today: '# Current Tasks'
+    #
+    #      This method assumes make_in_progress() has already been called to make and
+    #      'u - ' unfinished copy of any '/ - ' in progress items.
+    #      """
+    #     self.add_section_items_to_scrum(self.in_progress)  # / tasks from in_progress
+    #     self.add_section_items_to_scrum(self.backlog)  # d tasks from backlog
+    #     for section in self.journal:        # u, a, and x tasks from journal
+    #         # todo do this also for the special backlog section.  (extract a method)
+    #         self.add_section_items_to_scrum(section)
+    #
+    #     return self.scrum
 
-         This method assumes make_in_progress() has already been called to make and
-         'u - ' unfinished copy of any '/ - ' in progress items.
-         """
-        self.add_scrum_items(self.in_progress)  # / tasks from in_progress
-        self.add_scrum_items(self.backlog)  # d tasks from backlog
-        for section in self.journal:        # u, a, and x tasks from journal
-            # todo do this also for the special backlog section.  (extract a method)
-            self.add_scrum_items(section)
+    def add_section_list_items_to_scrum(self, section_list: List[Section]):
+        """Given list of Section objects, add all it's Items to the scrum"""
+        for section in section_list:
+            self.add_section_items_to_scrum(section)
 
-        return self.scrum
+    def add_section_items_to_scrum(self, section: Section):
+        """Given a single Section object, add all it's Items to the scrum"""
+        self.add_list_items_to_scrum(section.body_items)
 
-    def add_scrum_items(self, section):
-        for item in section.body_items:
-            category_section: Section = self.scrum.insert_item(item)
-            # if category_section is None:
-            #     print(f"tmpdebug for Section head '{section.header}', uncategorized - item", item)
+    def add_list_items_to_scrum(self, item_list: List[Item]):
+        """Given a list of Item objects, add them all to the scrum"""
+        for item in item_list:
+            self.scrum.insert_item(item)
+
+    def select_all_section_items_by_pattern(self, pattern) -> List[Item]:
+        all_items: List[Item] = list()
+        for section in self.journal:
+            all_items += section.get_matching_items(pattern)
+        return all_items
 
     def make_in_progress(self, in_prog_head=defautInProgHead):
         """
@@ -440,7 +484,7 @@ class TLDocument:
             #self.in_progress = journal_section
             self.journal.remove(journal_section)
         else:
-            self.in_progress.add_line(in_prog_head)
+            self.in_progress.add_section_line(in_prog_head)
 
         pat: re.Pattern = TLDocument.in_progress_pat
         for section in self.journal:
@@ -457,23 +501,43 @@ class TLDocument:
         else:
             self.initialize_journal()
 
-    # backlog vs journal.
-    # journal is a list of sections with items is is read from a file.
-
-    def insert_update_journal_item(self, item, default_section_heading="# New items"):
+    def remove_document_item(self, item: Item):
         """
-        Search all Sections in the Journal list for an Item with a 'titleHash:' attribute value matching item.
-            if a match is found in the journal, replace the matched Item with item.
-        !! Paul removed the update of the backlog from this method. 2020-12-24.
+        Search all Sections in the Journal list and the backlog Section for an Item according
+        to the Section.find_item() criteria.
+            if a match is found, remove it
+        assume only 1 removal is required because items should not be duplicated in a TLDocument
         return: self
         """
-        index = 0
+        matching_item = None
+        section: Section
         for section in self.journal:
-            replaced_item = section.find_replace_item_by_titleHash(item)
-            if replaced_item:
+            section.remove_item(item)
+        self.backlog.remove_item(item)
+        return self
+
+
+    def insert_update_document_item(self, item, default_section_heading="# New items"):
+        """
+        Search all Sections in the Journal list and the backlog Section for an Item according
+        to the Section.find_item() criteria.
+            if a match is found, replace the matched Item with item.
+        return: self
+        """
+        matching_item = None
+        section: Section
+        for section in self.journal:
+            matching_item = section.find_item(item) #.find_replace_item_by_titleHash(item)
+            if matching_item:
                 break
-        if not replaced_item:
-            self.insert_new_item_into_journal_section(default_section_heading, item)
+        if matching_item:
+            matching_item.merge_parts(item) # item reference in the current section iteration from above loop.
+        else:
+            backlog_matching_item = self.backlog.find_item(item)
+            if backlog_matching_item:
+                backlog_matching_item.merge_parts(item) # item reference in the backlog
+            else:
+                self.insert_new_item_into_journal_section(default_section_heading, item)
         return self
 
     def insert_new_item_into_journal_section(self, section_heading: str, item: Item):
@@ -481,7 +545,7 @@ class TLDocument:
         add item into the journal section matching section_heading.
         Create a matching the section if necessary.
         """
-        #todo add a section to contain the new item. or use an already existing '# New' section. needed by insert_update_journal_item
+        #todo add a section to contain the new item. or use an already existing '# New' section. needed by insert_update_document_item
         added_item: bool = False
         for section in self.journal:
             if section.header == section_heading:
@@ -496,7 +560,6 @@ class TLDocument:
 
     def merge_backlog(self, other_backlog_section: Section):
         """
-        items from self have priority when there are differences
         :param other_backlog_section:
         :return:
         """
@@ -505,7 +568,7 @@ class TLDocument:
 
         if other_backlog_section:
             for item in other_backlog_section.body_items:
-                self.backlog.add_merge_item(item)
+                self.backlog.add_item_merge_enhanced(item)
         else:
             print("DEBUG warning: other_backlog_section is None merging into " + self.doc_name)
 

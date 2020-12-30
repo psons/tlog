@@ -21,6 +21,8 @@ x - test journaldir read_file_str and write_filepath
                See docs/Tlog User Documentation.md for file and section heading info:
                    - the completed and abandoned tasks along with a 'u -' task for any in progress tasks will be moved off to the 'completed-journal-yyyy-mm-dd.md' section heading with a heading of the form  # Resolved yyyy-mm-dd' file for the day.
        x - create write_item_to_story_file() to update any item back to it's original story, or add it to a default task list
+       / - re working main() to fix some flow problems.
+            / - changing TLDocument to load sections and items as is from disk.  backlog must be buult later. 
        d - fix bug where titleHash isn't created for new tasks in default/new task story.md
             - any file read that might have been updated by the user should have the titleHash set if it isn't already present.
                 x - add Item method to add_missing_titleHash

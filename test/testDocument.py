@@ -191,14 +191,14 @@ d - put way misc paper tax files\
 
 	def testDocumentAddLinesNone(self):
 		"""TLDocument.add_lines handles None"""
-		adoc = TLDocument()
+		adoc: TLDocument = TLDocument()
 		adoc.add_lines(None)
 		self.assertEqual(str(adoc), str(TLDocument()))
 
 	def testDocumentAddLineNone(self):
 		"""TLDocument.add_line handles None"""
-		adoc = TLDocument()
-		adoc.add_line(None)
+		adoc: TLDocument = TLDocument()
+		adoc.add_line_deprecated(None)
 		self.assertEqual(str(adoc), str(TLDocument()))
 
 
@@ -248,7 +248,7 @@ class special_sections:
 		self.ds.add_leader_entry('# Past Tasks', [self.a_pat, self.x_pat])
 		self.ds.add_leader_entry('# Current Tasks', ['^[dD] *-'])
 		self.test_line = 'x - is a completed task'
-		self.test_item = Item(TLDocument.top_parser_pat).fromtext(TLDocument.top_parser_pat, self.test_line) # todo canthis just call the class method fromText on Item?
+		self.test_item: Item = Item(TLDocument.top_parser_pat).fromtext(TLDocument.top_parser_pat, self.test_line) # todo canthis just call the class method fromText on Item?
 		# print(str(self.ds) + "\n")
 		# place_to_put = special_sections.insert_item("")
 

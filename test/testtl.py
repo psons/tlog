@@ -35,7 +35,7 @@ class TestItem(unittest.TestCase):
     def testSubItem(self):
         "Item with just sub text look ok?"
         txt = "free text"
-        itest = Item(TLDocument.top_parser_pat, txt)
+        itest: Item = Item(TLDocument.top_parser_pat, txt)
         self.assertEqual(str(itest), txt)
 
     def testItemWithList(self):
@@ -45,10 +45,10 @@ d - do somthing
  - sub item list item 2
 free text\
 """
-        itest = Item(TLDocument.top_parser_pat, "d - do somthing")
-        itest.add_line(" - sub item list item 1")
-        itest.add_line(" - sub item list item 2")
-        itest.add_line("free text")
+        itest: Item = Item(TLDocument.top_parser_pat, "d - do somthing")
+        itest.add_item_line(" - sub item list item 1")
+        itest.add_item_line(" - sub item list item 2")
+        itest.add_item_line("free text")
         self.assertEqual(str(itest), out)
 
     def testFullBlownItem(self):
@@ -58,7 +58,7 @@ free text\
 
     def testItemDeepCopyDifferentObject(self):
         "Does item.deep_copy() return an item with a different id?"
-        itest = Item(TLDocument.top_parser_pat, "d - do somthing")
+        itest: Item = Item(TLDocument.top_parser_pat, "d - do somthing")
         itest1 = itest.deep_copy(TLDocument.top_parser_pat)
         self.assertNotEqual(id(itest), id(itest1))
 
@@ -72,7 +72,7 @@ free text\
         """get_title() base case with leader and title"""
         leader = "d -"
         title_in = "item with no sub lines!"
-        itest = Item(TLDocument.top_parser_pat, "{}{}".format(leader, title_in))
+        itest: Item = Item(TLDocument.top_parser_pat, "{}{}".format(leader, title_in))
         title_out = itest.get_title()
         # print("x{}x".format(itest.top))
         # print("title_in:{} title_out:{}".format(title_in, title_out))
@@ -82,7 +82,7 @@ free text\
         """get_title() with trailing whitespace to ignore in title"""
         leader = "d -"
         title_in = "item with no sub lines!"
-        itest = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # trailing white space
+        itest: Item = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # trailing white space
         title_out = itest.get_title()
         # print("x{}x".format(itest.top))
         # print("title_in:{} title_out:{}".format(title_in, title_out))
@@ -92,7 +92,7 @@ free text\
         """get_title() with leading white space to ignore in title"""
         leader = "d -"
         title_in = "item with no sub lines!"
-        itest = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # leading white space
+        itest: Item = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # leading white space
         title_out = itest.get_title()
         # print("x{}x".format(itest.top))
         # print("title_in:{} title_out:{}".format(title_in, title_out))
@@ -103,7 +103,7 @@ free text\
         leader = "d -"
         title_in = ""
         expected = None
-        itest = Item(TLDocument.top_parser_pat, "{}{} ".format(leader, title_in))
+        itest: Item = Item(TLDocument.top_parser_pat, "{}{} ".format(leader, title_in))
         title_out = itest.get_title()
         # print("x{}x".format(itest.top))
         # print("title_in:{} title_out:{} expected:{}".format(
@@ -114,7 +114,7 @@ free text\
         """Base case"""
         leader = "d -"
         title_in = "item with no sub lines!"
-        itest = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # leading white space
+        itest: Item = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # leading white space
         t_hash = itest.get_title_hash()
         self.assertEqual(t_hash, 'f3ebd9014f')
 
@@ -122,7 +122,7 @@ free text\
         """empty title should return empty string for hash"""
         leader = "d -"
         title_in = ""
-        itest = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # leading white space
+        itest: Item = Item(TLDocument.top_parser_pat, "{} {} ".format(leader, title_in))  # leading white space
         t_hash = itest.get_title_hash()
         self.assertEqual('', t_hash)
 
@@ -187,9 +187,9 @@ free text\
             (1) new item gets a title hash.
             (2) an item with a changed title still has its old hash so it can be matched to update it's original story item
         """
-        itest = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text_w_saved_hash)
+        itest: Item = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text_w_saved_hash)
         # print(f'itest: {itest}')
-        itest.add_line('d - a new topline') # force top line to mismatch the titleHash
+        itest.add_item_line('d - a new topline') # force top line to mismatch the titleHash
         # print(f'itest: {itest}')
         pre_condition = itest.get_saved_title_hash()
         # print(f"pre_condition: {pre_condition}")
@@ -200,12 +200,12 @@ free text\
 
     def testItemNoSub(self):
         out = "d - item with no sub lines!"
-        itest = Item(TLDocument.top_parser_pat, out)
+        itest: Item = Item(TLDocument.top_parser_pat, out)
         self.assertEqual(str(itest), out)
 
     def testItemNoHeader(self):
         out = " - subitem with no item header"
-        itest = Item(TLDocument.top_parser_pat, None)
+        itest: Item = Item(TLDocument.top_parser_pat, None)
         itest.subs.append(out)
         self.assertEqual(str(itest), out)
 
@@ -221,48 +221,48 @@ free text\
 
     def testChange_in_prog_2_unfin(self):
         data = "\ - doing somthing else"
-        itest = Item(TLDocument.top_parser_pat, data)
+        itest: Item = Item(TLDocument.top_parser_pat, data)
         itest.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s)
         self.assertTrue(TLDocument.unfinished_pat.match(itest.top))
 
     def testSecHeadTiIremRaisesE(self):
         with self.assertRaises(TLogInternalException) as tle:
-            an_item = Item(TLDocument.top_parser_pat)
-            an_item.add_line(sec_head)
+            an_item: Item = Item(TLDocument.top_parser_pat)
+            an_item.add_item_line(sec_head)
         part_of_e_val = tle.exception.value[:62]
         # print("part_of_e_val:", part_of_e_val)
         self.assertEqual("Putting a Section.head_pat line inside a Item is not allowed: ", part_of_e_val)
 
     def testItemSetAttribGetAttribSymmetry(self):
         """Item get_item_attrib / set_doc_attrib symmetry"""
-        itest = Item(TLDocument.top_parser_pat)
+        itest: Item = Item(TLDocument.top_parser_pat)
         itest.set_attrib(ai1, vi1)
         self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
 
     def testItemGetAttribNone1(self):
         """Item get_item_attrib should return None of the key is not present"""
-        itest = Item(TLDocument.top_parser_pat)
+        itest: Item = Item(TLDocument.top_parser_pat)
         self.assertEqual(itest.get_item_attrib(ai1), None)
 
     def testItemGetAttribNone2(self):
         """Item get_item_attrib should return None of the key is not present"""
-        itest = Item(TLDocument.top_parser_pat, dtask_line)
+        itest: Item = Item(TLDocument.top_parser_pat, dtask_line)
         self.assertEqual(itest.get_item_attrib(ai1), None)
 
     def testItemAttrib(self):
-        itest = Item(TLDocument.top_parser_pat, item_attrib_line1)
+        itest: Item = Item(TLDocument.top_parser_pat, item_attrib_line1)
         self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
 
     def testItem2Attribs(self):
-        itest = Item(TLDocument.top_parser_pat, item_attrib_line1)
-        itest.add_line(item_attrib_line2)
+        itest: Item = Item(TLDocument.top_parser_pat, item_attrib_line1)
+        itest.add_item_line(item_attrib_line2)
         self.assertEqual(str(itest.get_item_attrib(ai1)), vi1)
         self.assertEqual(str(itest.get_item_attrib(ai2)), vi2)
 
     def testItem2AttribsStr(self):
         "Does attribs_str work for a 2 attribute Item?"
-        itest = Item(TLDocument.top_parser_pat, item_attrib_line1)
-        itest.add_line(item_attrib_line2)
+        itest: Item = Item(TLDocument.top_parser_pat, item_attrib_line1)
+        itest.add_item_line(item_attrib_line2)
         # print(itest.attribs_str())
         self.assertEqual(item_2attr_str, itest.attribs_str())
 
@@ -275,7 +275,7 @@ class testSection(unittest.TestCase):
 
     def testEmptySectionHeaderFalse(self):
         "Does the is_empty() return false for section with a heading?"
-        s = Section(TLDocument.top_parser_pat, "# header")
+        s: Section = Section(TLDocument.top_parser_pat, "# header")
         ie = s.is_empty()
         self.assertFalse(ie)
 
@@ -295,11 +295,11 @@ d - do somthing
  - sub item list item 2
 free text\
 """
-        stest = Section(TLDocument.top_parser_pat, "#Section")
-        stest.add_line("d - do somthing")
-        stest.add_line(" - sub item list item 1")
-        stest.add_line(" - sub item list item 2")
-        stest.add_line("free text")
+        stest: Section = Section(TLDocument.top_parser_pat, "#Section")
+        stest.add_section_line("d - do somthing")
+        stest.add_section_line(" - sub item list item 1")
+        stest.add_section_line(" - sub item list item 2")
+        stest.add_section_line("free text")
         self.assertEqual(out, str(stest))
 
     def testStrItemsList(self):
@@ -308,16 +308,16 @@ d - do 1
 d - do 2
 d - do 3\
 """
-        stest = Section(TLDocument.top_parser_pat, "d - do 1")
-        stest.add_line("d - do 2")
-        stest.add_line("d - do 3")
+        stest: Section = Section(TLDocument.top_parser_pat, "d - do 1")
+        stest.add_section_line("d - do 2")
+        stest.add_section_line("d - do 3")
         self.assertEqual(out, stest.str_body())
 
     def testStrItemsHead(self):
         out = """\
 #  a Header\
 """
-        stest = Section(TLDocument.top_parser_pat, "#  a Header")
+        stest: Section = Section(TLDocument.top_parser_pat, "#  a Header")
         self.assertEqual(stest.str_body(), "")
 
     def testStrItemsAttribute(self):
@@ -325,8 +325,8 @@ d - do 3\
 #  a Header
 AnAttributeName: the Attribute Value\
 """
-        stest = Section(TLDocument.top_parser_pat, "#  a Header")
-        stest.add_line("AnAttributeName: the Attribute Value")
+        stest: Section = Section(TLDocument.top_parser_pat, "#  a Header")
+        stest.add_section_line("AnAttributeName: the Attribute Value")
         self.assertEqual(str(stest), out)
 
     # @unittest.skip("Reworking  testing with a better way to initialize multi line things.")
@@ -342,7 +342,7 @@ AnAttributeName: the Attribute Value\
 
     def testSectionSetAttributeNew(self):
         "Does set_attribute add a new attribute"
-        stest = Section(TLDocument.top_parser_pat)
+        stest: Section = Section(TLDocument.top_parser_pat)
         stest.set_sec_attrib(as1, vs1)
         self.assertEqual(vs1, stest.get_section_attrib(as1))
 
@@ -382,21 +382,21 @@ AnAttributeName: the Attribute Value\
         out = """\
 #Section with no body_items\
 """
-        stest = Section(TLDocument.top_parser_pat, "#Section with no body_items")
+        stest: Section = Section(TLDocument.top_parser_pat, "#Section with no body_items")
         self.assertEqual(str(stest), out)
 
     def testSectionInProgItem(self):
         out = """\
 \ - doing somthing else\
 """
-        stest = Section(TLDocument.top_parser_pat, "\ - doing somthing else")
+        stest: Section = Section(TLDocument.top_parser_pat, "\ - doing somthing else")
         self.assertEqual(str(stest), out)
 
     def testUpdateProgress1(self):
         "test marking in progress as unfinished for \ - "
         data = "\ - one thing going on"
         out = "u - one thing going on"
-        itest = Item(TLDocument.top_parser_pat, data)
+        itest: Item = Item(TLDocument.top_parser_pat, data)
         itest.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s)
         self.assertEqual(str(itest), out)
 
@@ -404,7 +404,7 @@ AnAttributeName: the Attribute Value\
         "test marking in progress as unfinished for / - "
         data = "/ - another thing going on"
         out = "u - another thing going on"
-        itest = Item(TLDocument.top_parser_pat, data)
+        itest: Item = Item(TLDocument.top_parser_pat, data)
         itest.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s)
         self.assertEqual(str(itest), out)
 
@@ -461,7 +461,7 @@ class TestStoryIO(unittest.TestCase):
 # write_back_updated_story(item: Item)
 
 
-    def test_write_back_updated_story(self):
+    def test_write_item_to_story_file(self):
         #todo get an item with a storySource attribute
         # write the item
         # read back the item
@@ -469,13 +469,15 @@ class TestStoryIO(unittest.TestCase):
         myUserPathObj = journaldir.UserPaths();
         fileIOPath = journaldir.path_join(myUserPathObj.endeavor_path, "testGoal")
         fileIOPath = journaldir.path_join(fileIOPath, "testDrivenStory.md")
+        journaldir.remove_filepath(fileIOPath)
         print( f"test_write_back_updated_story dtask_item_text: {dtask_item_text}" )
         storyItem = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text)
         storyItem.set_attrib("storySource", fileIOPath)
-        print(storyItem)
-        tlog.write_back_updated_story(storyItem)
-
-        self.assertTrue(False);
+        print(f"storyItem:\n{storyItem}")
+        tlog.write_item_to_story_file(storyItem)
+        reloadStory: TLDocument = tlog.load_doc_from_file(fileIOPath)
+        self.assertEqual(str(storyItem), str(reloadStory))
+        # todo create a scaffolding that deletes the fileIOPath
 
 
 

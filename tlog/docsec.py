@@ -5,6 +5,7 @@ and Item objects are instantiated.
 """
 
 import hashlib
+import logging
 import re
 from typing import Pattern, Dict, List
 
@@ -21,7 +22,7 @@ class Section:
         self.header = ""
         self.body_items = [self.current_item]
         if data:
-            self.add_line(data)
+            self.add_section_line(data)
 
     def deep_copy(self):
         """
@@ -58,10 +59,10 @@ class Section:
         new_section = Section(item_top_parser_pat)
         lines = text.split("\n")
         for line in lines:
-            new_section.add_line(line)
+            new_section.add_section_line(line)
         return new_section
 
-    def add_line(self, data):
+    def add_section_line(self, data):
         """See doc under TLDocument.add_line()"""
         if Section.head_pat.match(data):
             # print("trying to add a section header data:", data)
@@ -69,14 +70,14 @@ class Section:
         else:
             if self.current_item.is_empty():
                 # print("adding data to item that was empty:", data)
-                self.current_item.add_line(data)
+                self.current_item.add_item_line(data)
             else:
                 if self.item_top_parser_pat.match(data):
                     self.current_item = Item(self.item_top_parser_pat, data)  # new Item
                     self.body_items.append(self.current_item)  # add to section body_items
                 else:
                     # print("gotta add the data to current item in section")
-                    self.current_item.add_line(data)
+                    self.current_item.add_item_line(data)
         return self.current_item
 
     def add_item(self, arg_item):
@@ -168,7 +169,6 @@ class Section:
 
     def get_matching_items(self, pattern: Pattern[str]):
         """
-        used by get_xa_...
         :param pattern: compiled re to use to select matching items
         :return: list of matching Items
         """
@@ -189,6 +189,7 @@ class Section:
                 if item_attribute.value == aval:
                     return item_attribute
         return None
+
 
     def find_replace_item_by_titleHash(self, new_item):
         """
@@ -212,7 +213,45 @@ class Section:
             index += 1
         return None
 
-    def add_merge_item(self, other_item):
+    def remove_item(self, item):
+        """ remove item, from body_items using find_item(item) matching rules"""
+        tag = "remove_item()"
+        body_item = self.find_item(item)
+        logging.debug(f"{tag}: try to remove find_item({id(item)}) return of self.find_item(item): {id(body_item)}")
+        self.body_items.remove(body_item)
+
+    def find_item(self, other_item):
+        """Return a reference to the an item with a saved 'titleHash:' attribute or title matching item."""
+        for item in self.body_items:
+            item_sth = item.get_saved_title_hash()
+            if item_sth:
+                if item_sth == other_item.get_saved_title_hash():
+                    return item
+            else:
+                if item.get_title() == other_item.get_title():
+                    return item
+        return None
+
+    def add_item_merge_enhanced(self, other_item):
+        """match on titleHash if found, but use title if the target object does not have a saved title hash"""
+        match_existing_found = False
+        for item in self.body_items:
+            item_sth = item.get_saved_title_hash()
+            # print("Section:add_item_merge:self.item", item.top)
+            if item_sth:
+                if item_sth == other_item.get_saved_title_hash():
+                    match_existing_found = True
+                    item.merge_parts(other_item)
+            else:
+                # item has no sth, so compare the part of the title without the leader.
+                if item.get_title() == other_item.get_title():
+                    item.merge_parts(other_item)
+        if not match_existing_found:
+            # print("adding item:\n", str(other_item) )
+            self.add_item(other_item)
+        return self
+
+    def add_item_merge(self, other_item):
         """
         !! todo this doesn't replace an existing item if found.
         !! todo this doesn't recognize an item match by saved _has if the title has changed.
@@ -227,7 +266,7 @@ class Section:
         match_existing_found = False
         for item in self.body_items:
             item_sth = item.get_saved_title_hash()
-            # print("Section:add_merge_item:self.item", item.top)
+            # print("Section:add_item_merge:self.item", item.top)
             if item_sth:
                 if item_sth == other_item.get_title_hash():
                     match_existing_found = True
@@ -304,7 +343,7 @@ class Item:
         self.attribs = attrs or dict()
         self.top_parser_pat = top_parser_pat
         if data:
-            self.add_line(data)
+            self.add_item_line(data)
 
     @classmethod
     def fromtext(cls, top_parser_pat, text):
@@ -312,7 +351,7 @@ class Item:
         new_item = Item(top_parser_pat)
         lines = text.split("\n")
         for line in lines:
-            new_item.add_line(line)
+            new_item.add_item_line(line)
         return new_item
 
     def attrib_by_line(self, data):
@@ -410,7 +449,7 @@ class Item:
         th = self.get_title_hash()
         return th == sth
 
-    def add_line(self, data):
+    def add_item_line(self, data):
         """Add a line as either the top task, an attribute, or sub text"""
         if Section.head_pat.match(data):
             raise TLogInternalException(
@@ -422,6 +461,16 @@ class Item:
         else:
             if not self.attrib_by_line(data):
                 self.subs.append(data)
+
+    def merge_parts(self, other_item):
+        """
+        updates self to match other_item (kind of the inverse of deep_copy)
+        references to the original 'self' object will be unaffected.
+        """
+        self.top = other_item.top
+        self.subs = list(other_item.subs)
+        self.attrs = dict(other_item.attribs)
+
 
     def deep_copy(self, top_parser_pat):
         """
@@ -562,6 +611,7 @@ class DocStructure:
         for key_pat in self.leader_instance_dict.keys():
             if key_pat.match(item.top):
                 section_match: Section = self.leader_instance_dict[key_pat]
-                section_match.add_item(item)
+                # section_match.add_item(item)
+                section_match.add_item_merge_enhanced(item)
                 return section_match
         return None

@@ -12,6 +12,8 @@ Those tasks are the right tasks to work on because they reflect your highest pri
 on your goals and plans.  (You still have to decide what those priorities are, but not every day, because 
 they do not change every day!)
 
+The flow and terminology of tlog is that of a single day single person Scrum Sprint.
+
 [link to a finalized document summarizing features and Philosophy ] 
 
 TaskLog is especially well suited to analytical work where your effort is to document and communicate resolutions to issues, or build software systems.
