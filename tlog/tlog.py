@@ -28,18 +28,22 @@ class StoryGroup:
 
     def __init__(self, story_dir: StoryDir):
         self.story_dir = story_dir
-        self.story_docs: List[TLDocument] = [load_story_from_file(s_file)
-                           for s_file in self.story_dir.story_list]
+        self.story_docs: List[TLDocument] = [load_and_resave_story_file_with_attribs(s_file)
+                                             for s_file in self.story_dir.story_list]
 
     def __str__(self):
         return "\n".join([str(d) for d in self.story_docs])
 
 
-def load_story_from_file(file_name) -> TLDocument:
-    """adds story attribution around a Doc from file"""
+def load_and_resave_story_file_with_attribs(file_name) -> TLDocument:
+    """
+    adds 'storySource:' and 'titleHash:' to each item in a doc from file and saves it back to disk.
+    These attributes enable items tro be re titled and still update the original story item.
+    """
     story_doc: TLDocument = load_doc_from_file(file_name)
     story_doc.attribute_all_unresolved_items(StoryGroup.story_source_attr_name, file_name)
     story_doc.for_journal_sections_add_all_missing_item_title_hash()
+    journaldir.write_filepath(str(story_doc), file_name)
     return story_doc
 
 def remove_item_from_story_file(item: Item) -> Item:
@@ -207,10 +211,12 @@ def main():
     # ############################
     # Gather input state from Disk and command line
     # ============================
-    ## look at cmd line args and find the to do doc
+
+    # --- might be influenced by command line at some point.
+    #     1. build the "old" journal / to do (j/td) file.
     journaldir.init(my_journal_dir)
-    # look back in history to find past journal dir will not be necessary with 'to-do' replaces journal, and
-    # FollowUpQueue/FollowUp story.md replaces past journals from prior months or years.
+    journaldir.init(journaldir.join(user_path_o.endeavor_path, journaldir.default_endeavor_name))
+    # look back in history to find past journal dir
     prev_journal_dir = find_prev_journal_dir(my_journal_dir, look_back_months)
     story_dir_o = StoryDir(prev_journal_dir)
 
@@ -218,15 +224,25 @@ def main():
     j_file_list = journaldir.get_file_names_by_pattern(
         story_dir_o.path, journaldir.journal_pat) # journal {date].md files
     msg = "no argument sfile_list: " + ",".join(story_dir_o.story_list)
+    # ---
 
     msgr.screen_log(tag, msg)
     msgr.screen_log(tag, "no argument jfile_list:" + ",".join(j_file_list))
     # I don't want to support any command line features now other
     #     if sys.argv[1] in supported_commands:
 
+    #
     # load the latest journal into the journal for today
-    last_journal = j_file_list[-1] if j_file_list else None
-    old_jtd_doc.add_lines(fileinput.input(last_journal))
+    last_journal = "no_journal_yet"
+    if len(j_file_list) > 0:
+        last_journal = j_file_list[-1]
+        # old_jtd_doc = load_and_resave_story_file_with_attribs(last_journal)
+        old_jtd_doc.add_lines(fileinput.input(last_journal))
+
+    #     2. make_scrum_resolved() as:
+    #         a. start with the existing resolved file add to new j/td scrum object as resolved.
+    #         b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum object as resolved.
+    #         c. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
 
     resolved_doc: TLDocument = load_doc_from_file( journaldir.path_join(daily_o.jdir, daily_o.cday_resolved_fname))
     new_jtd_doc: TLDocument =  TLDocument()
@@ -240,13 +256,17 @@ def main():
     resolved_items = old_jtd_doc.select_all_section_items_by_pattern(TLDocument.resolved_pat) # items in jtd that are resolved (xa)
     new_jtd_doc.add_list_items_to_scrum(resolved_items)
 
+    #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
     resolved_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.resolved_section_head])
     journaldir.write_dir_file(resolved_data + '\n', daily_o.jdir, daily_o.cday_resolved_fname)
 
+    #     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to
+    #         insert_update_document_item(item) merge the backlog into the journal.
     # write all the tasks from the old jtd
     for story_item in old_jtd_doc.get_document_unresolved_list():
         write_item_to_story_file(story_item, user_path_o.new_task_story_file)
 
+    #     5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.
     user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal}")
 
     # 6. Remove resolved items from stories using remove_item_from_story_file(r_item).
@@ -279,8 +299,6 @@ def main():
     sprint_task_items = sprint_candidate_tasks[0:sprint_size]
     new_jtd_doc.add_list_items_to_scrum(sprint_task_items)
 
-    # todo is this happening? story_task_document.generate_backlog_title_hashes()  # set the title hashes on tasks for change detection
-
     # 10. Persist the scrum todo_data
     todo_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.todo_section_head])
     journaldir.write_dir_file(todo_data + '\n', daily_o.jdir, daily_o.cday_todo_fname)
@@ -288,7 +306,7 @@ def main():
     # 11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
 
-    print(f"Current scrum for daily sprint:\n{new_jtd_doc}")
+    print(f"Current scrum for daily sprint:\n{new_jtd_doc.scrum}")
 
 
 if __name__ == "__main__":

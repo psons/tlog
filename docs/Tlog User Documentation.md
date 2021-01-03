@@ -126,8 +126,8 @@ _see todo: 2020-12-20 write_xa_
  matching the date, they will be created. New tasks will be pulled 
  according to 
     1. the story level max tasks settings
-    2. _after 2020-04-19_, the endeavor/prioritized.md maxTask: settings
-    3. _after 2020-04-19_, the Endeavors/endeavors.md maxTasks: setting
+    2. _after 2020-12-31_, the endeavor/prioritized.md maxTask: settings
+    3. _after 2020-12-31_, the Endeavors/endeavors.md maxTasks: setting
 
 ##### Merging / Modifying / duplicating todo tasks and Endeavors
 Modify the content of tasks in the todo.md file and the task will be merged back into it's Endeavor story, as long as it is not resolved ('x -', or 'a -')
@@ -218,9 +218,117 @@ All lines matching the "do", "abandoned", "in progress", or "planned" patterns w
 #TaskLog output: Journal of notes and activities
 
 # Installing tlog
-todo - elaborate on these docs.
-install software
-set JOURNAL_PATH
+
+## set a shell environment based on tlog.env.sample:
+    #tl2.env.sample
+    JOURNAL_PATH="$HOME/Documents/journal"
+    export JOURNAL_PATH
+    
+    PYTHONPATH=${HOME}/bin:$PYTHONPATH
+    export PYTHONPATH
+    
+    PATH=${HOME}/bin::$PATH
+    export PATH
+    
+    alias cdj='cd $(journaldir.py);pwd'
+    alias tlog='python -m tlog' # shold run ${HOME}/bin/tlog.py
+
+## install Python and the git module.
+## install git.  make sure git init works
+un tar tl2_dist.tar into ${HOME}/bin based on PYTHONPATH from the environment is step 1.
+
+## Install a program editor
+Install vscode.
+Add the extension 'Run On Save'
+ - https://code.visualstudio.com/docs/editor/extension-gallery
+ - https://medium.com/better-programming/automatically-execute-bash-commands-on-save-in-vs-code-7a3100449f63#:~:text=If%20you%20don't%20already,Run%20On%20Save%20settings%20page.
+ Go to Code->Preferences->Setting then select Extensions on the side bar in the window.
+{
+    "window.zoomLevel": 1,
+    "emeraldwalk.runonsave": {
+        "commands": [
+            {
+                // "match": "[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md'",
+                "match": "*.md",
+                "cmd": "python -m tlog'"
+            }
+        ]
+    
+    }
+}
+
+                Run On Save for Visual Studio Code
+                This extension allows configuring commands that get run whenever a file is saved in vscode.
+                
+                NOTE: Commands only get run when saving an existing file. Creating new files, and Save as... don't trigger the commands.
+                
+                Features
+                Configure multiple commands that run when a file is saved
+                Regex pattern matching for files that trigger commands running
+                Sync and async support
+                Configuration
+                Add "emeraldwalk.runonsave" configuration to user or workspace settings.
+                
+                "shell" - (optional) shell path to be used with child_process.exec options that runs commands.
+                "autoClearConsole" - (optional) clear VSCode output console every time commands run. Defaults to false.
+                "commands" - array of commands that will be run whenever a file is saved.
+                "match" - a regex for matching which files to run commands on
+                NOTE Since this is a Regex, and also in a JSON string backslashes have to be double escaped such as when targetting folders. e.g. "match": "some\\\\folder\\\\.*"
+                
+                "cmd" - command to run. Can include parameters that will be replaced at runtime (see Placeholder Tokens section below).
+                "isAsync" (optional) - defaults to false. If true, next command will be run before this one finishes.
+                Sample Config
+                This sample configuration will run echo statements including the saved file path. In this sample, the first command is async, so the second command will get executed immediately even if first hasn't completed. Since the second isn't async, the third command won't execute until the second is complete.
+                
+                "emeraldwalk.runonsave": {
+                    "commands": [
+                        {
+                            "match": ".*",
+                            "isAsync": true,
+                            "cmd": "echo 'I run for all files.'"
+                        },
+                        {
+                            "match": "\\.txt$",
+                            "cmd": "echo 'I am a .txt file ${file}.'"
+                        },
+                        {
+                            "match": "\\.js$",
+                            "cmd": "echo 'I am a .js file ${file}.'"
+                        },
+                        {
+                            "match": ".*",
+                            "cmd": "echo 'I am ${env.USERNAME}.'"
+                        }
+                    ]
+                }
+                Commands
+                The following commands are exposed in the command palette:
+                
+                On Save: Enable
+                On Save: Disable
+                Placeholder Tokens
+                Commands support placeholders similar to tasks.json.
+                
+                ${workspaceRoot}: DEPRECATED use ${workspaceFolder} instead
+                ${workspaceFolder}: the path of the workspace folder of the saved file
+                ${file}: path of saved file
+                ${fileBasename}: saved file's basename
+                ${fileDirname}: directory name of saved file
+                ${fileExtname}: extension (including .) of saved file
+                ${fileBasenameNoExt}: saved file's basename without extension
+                ${relativeFile} - the current opened file relative to ${workspaceFolder}
+                ${cwd}: current working directory (this is the working directory that vscode is running in not the project directory)
+                Environment Variable Tokens
+                ${env.Name}
+                Links
+                Marketplace
+                Source Code
+                License
+                Apache
+
+## Start making task stories.
+make sure you set JOURNAL_PATH to a value that makes sense for your pwersnonal mamagemet strategy.
+Yo will want to make a shortcut in Explorer (Windows) or Finder (Mac)
 run tlog to create the journal dir.
 optionally, set up endeavors too.
 

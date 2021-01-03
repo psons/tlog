@@ -442,7 +442,7 @@ class Item:
         """
         self.top = other_item.top
         self.subs = list(other_item.subs)
-        self.attrs = dict(other_item.attribs)
+        self.attribs = dict(other_item.attribs)
 
 
     def deep_copy(self, top_parser_pat):

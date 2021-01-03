@@ -333,8 +333,11 @@ class TLDocument:
         return str(self.in_progress)
 
 
-    def get_limited_tasks_from_unresolved_list(self)-> List[Item]:
-        mt: int = int(self.max_tasks)
+    def get_limited_tasks_from_unresolved_list(self, )-> List[Item]:
+        mt = TLDocument.default_maxTasks
+        if self.max_tasks:
+            mt: int = int(self.max_tasks)
+
         limited_list: List[Item] = self.get_document_unresolved_list()[0:mt]
         return limited_list
 
@@ -427,7 +430,8 @@ class TLDocument:
         """
         section: Section
         for section in self.journal:
-            section.remove_item(item)
+            if section.find_item(item):
+                section.remove_item(item)
         # self.backlog.remove_item(item)
         return self
 

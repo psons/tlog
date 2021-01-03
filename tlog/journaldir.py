@@ -2,7 +2,7 @@
 import sys
 
 # journaldir.py
-from typing import TextIO
+from typing import TextIO, List
 
 from git import Repo
 from git import IndexFile
@@ -31,6 +31,7 @@ class TaskSourceException(Exception):
 
 
 default_path = os.path.expanduser('~') + '/journal'
+default_endeavor_name = "default"
 
 convention_journal_root = os.getenv('JOURNAL_PATH', default_path)
 endeavor_dir = convention_journal_root + "/Endeavors"
@@ -59,7 +60,7 @@ class UserPaths:
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
-        default_endeavor_dir = os.path.join(self.endeavor_path, "default")
+        default_endeavor_dir = os.path.join(self.endeavor_path, default_endeavor_name)
         self.new_task_story_file = os.path.join(default_endeavor_dir, "new task story.md")
         self.git_repo_obj = None
 
@@ -80,17 +81,17 @@ class UserPaths:
                           "EndeavorFilePath: " + self.endeavor_file])
 
 
-def get_file_names_by_pattern(dir_name, a_pattern):
+def get_file_names_by_pattern(dir_name, a_pattern) -> List[str]:
     """
 	Get the file names in a directory that match a compiled regex 
 	pattern that are not themselves directories.
 	"""
-    matching_file_list = []
+    matching_file_list: List[str] = []
     if not os.path.isdir(dir_name):
         return matching_file_list
 
     for f in sorted(listdir(dir_name)):
-        fqp = join(dir_name, f)
+        fqp = os.path.join(dir_name, f)
         if isfile(fqp) and a_pattern.match(f):
             matching_file_list.append(fqp)
     return matching_file_list
@@ -133,7 +134,8 @@ class Daily:
 def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
     # More advanced versions of endeavor file format later.
-    endeavor_text = read_file_str(user_path_obj.endeavor_file)
+    endeavor_text = default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
+
     # print("endeavor_text:", endeavor_text)
     return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
             for e_str in endeavor_text.split()]
@@ -274,7 +276,7 @@ class StoryDir:
         if os.path.isdir(sdir):
             self.story_list = get_file_names_by_pattern(sdir, story_pat)
         else:
-            raise TaskSourceException("{} is not a directory, so can not be a StoryDir".format(sdir))
+            raise TaskSourceException(f"{sdir} is not a directory, so can not be a StoryDir")
 
     def __str__(self):
         return "StoryDir:({}):".format(self.path) + ",".join(self.story_list)
