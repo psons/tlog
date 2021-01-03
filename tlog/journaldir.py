@@ -18,6 +18,7 @@ import os
 import re
 from os import listdir
 from os.path import isfile, join
+import logging
 
 
 class TaskSourceException(Exception):
@@ -92,8 +93,9 @@ def get_file_names_by_pattern(dir_name, a_pattern) -> List[str]:
 
     for f in sorted(listdir(dir_name)):
         fqp = os.path.join(dir_name, f)
-        if isfile(fqp) and a_pattern.match(f):
-            matching_file_list.append(fqp)
+        if isfile(fqp):
+                if a_pattern.match(f):
+                    matching_file_list.append(fqp)
     return matching_file_list
 
 
@@ -178,14 +180,14 @@ def write_dir_file(new_content, dir_name, doc_name):
     if os.path.isfile(filepath):
         previous_content = read_file_str(filepath)
         if previous_content == new_content:
-            print("new content same as old. Nothing written.")
+            print(f"new content same as old. Nothing written. {doc_name}")
         else:
-            print("new content is different than content from old file. renaming")
+            # print("new content is different than content from old file. renaming")
             # if writing, do this:
-            olddir = os.path.join(dir_name, "old")
-            if not os.path.isdir(olddir):
-                os.makedirs(olddir)
-            os.rename(filepath, os.path.join(olddir, doc_name))
+            # olddir = os.path.join(dir_name, "old")
+            # if not os.path.isdir(olddir):
+            #     os.makedirs(olddir)
+            # os.rename(filepath, os.path.join(olddir, doc_name))
             jfd = open(filepath, "w")
             jfd.write(new_content)
             jfd.close
@@ -273,8 +275,27 @@ class StoryDir:
         :param sdir: directory path
         """
         self.path = sdir
+        self.story_list = []
         if os.path.isdir(sdir):
-            self.story_list = get_file_names_by_pattern(sdir, story_pat)
+            dir_story_list = get_file_names_by_pattern(sdir, story_pat)
+            # todo read [pP]roioritized.[mM][Dd]
+            priority_pat = re.compile('[pP]rioritized.[mM][Dd]')
+            prioritized_file_list: str = get_file_names_by_pattern(sdir, priority_pat)
+            if prioritized_file_list:
+                pri_file = prioritized_file_list[0]
+                pri_order_text = read_file_str(pri_file) # take first if more than 1 pri file.
+                pri_order_stories = pri_order_text.split("\n")
+                for story_file in pri_order_stories: # add story files with listed priorities
+                    story_file.strip()
+                    if story_file != '':
+                        full_story_path: str = os.path.join(sdir, story_file)
+                        if os.path.isfile(full_story_path):
+                            self.story_list.append(full_story_path)
+                        else:
+                            logging.warning(f"{story_file} is in {pri_file}, but not found in {sdir}")
+            for story_file in dir_story_list: # add the dir stories not in pri_file
+                if story_file not in self.story_list:
+                    self.story_list.append(story_file)
         else:
             raise TaskSourceException(f"{sdir} is not a directory, so can not be a StoryDir")
 

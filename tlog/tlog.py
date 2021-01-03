@@ -54,7 +54,7 @@ def remove_item_from_story_file(item: Item) -> Item:
     tag = "write_item_to_story_file():"
     story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
     if not story_source:
-        logging.error(f"{tag} item to remove does not have a 'storySource:' attribute.")
+        logging.warning(f"{tag} item to remove does not have a 'storySource:' attribute.")
         return None
     filepath = story_source
     story_tldoc: TLDocument= load_doc_from_file(filepath)
@@ -306,7 +306,7 @@ def main():
     # 11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
 
-    print(f"Current scrum for daily sprint:\n{new_jtd_doc.scrum}")
+    # print(f"Current scrum for daily sprint:\n{new_jtd_doc.scrum}")
 
 
 if __name__ == "__main__":
