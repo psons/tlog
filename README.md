@@ -11,10 +11,9 @@ A Prioritized.md file is used to sequence the names of files in an endeavor dir.
 # tasks
 
 All tasks from files without an entry in Prioritized.md come after prioritized ones.
-d - check dirs to be scanned for [pP]roioritized.[mM][Dd]
-d - build file_list from prioritized
-d - append any files with tasks that are not in prioritized.md
-
+x - check dirs to be scanned for [pP]roioritized.[mM][Dd]
+x - build file_list from prioritized
+x - append any files with tasks that are not in prioritized.md
 
 
 d - eliminate the TLDocument special section "in_progress" it isn't needed any more.  Some tests will break.

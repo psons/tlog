@@ -235,6 +235,8 @@ All lines matching the "do", "abandoned", "in progress", or "planned" patterns w
 
 ## install Python and the git module.
 ## install git.  make sure git init works
+
+pip install GitPython
 un tar tl2_dist.tar into ${HOME}/bin based on PYTHONPATH from the environment is step 1.
 
 ## Install a program editor

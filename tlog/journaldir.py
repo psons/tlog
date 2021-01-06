@@ -219,7 +219,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "init":
         init(journal_dir)
 
-    print(journal_dir)
+    user_path_o: UserPaths = UserPaths()
+    print(user_path_o.journal_path)
 
 
 # print(dom + dayth_dict[dom])

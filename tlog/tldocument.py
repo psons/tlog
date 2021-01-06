@@ -460,15 +460,14 @@ class TLDocument:
         add item into the journal section matching section_heading.
         Create a matching the section if necessary.
         """
-        #todo add a section to contain the new item. or use an already existing '# New' section. needed by insert_update_document_item
         added_item: bool = False
         for section in self.journal:
             if section.header == section_heading:
-                section.add_item(item)
+                section.add_item(item, head_insert=True) # # todo, make head_insert behavior part of te Section creation
                 added_item = True
         if not added_item:
             new_section: Section = self.add_section_from_line(section_heading)
-            new_section.add_item(item)
+            new_section.add_item(item, head_insert=True) # todo, make head_insert behavior part of te Section creationan pass in head_insert=true
 
 
 def debExit(message=""):

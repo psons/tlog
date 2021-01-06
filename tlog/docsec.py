@@ -63,7 +63,10 @@ class Section:
         return new_section
 
     def add_section_line(self, data):
-        """See doc under TLDocument.add_line()"""
+        """
+        Used for building up sections ant items line by line from text strings.
+        See doc under TLDocument.add_line()
+        """
         if Section.head_pat.match(data):
             # print("trying to add a section header data:", data)
             self.header = data
@@ -80,7 +83,10 @@ class Section:
                     self.current_item.add_item_line(data)
         return self.current_item
 
-    def add_item(self, arg_item):
+    def add_item(self, arg_item, head_insert: bool = False):
+        """
+        Adds a Whole item to Section self.
+        """
         if type(arg_item) is Item:
             need_append = True
             for body_item in self.body_items:
@@ -89,7 +95,7 @@ class Section:
                     need_append = False
 
             if need_append:
-                self.body_items.append(arg_item)
+                self.body_items.insert(0, arg_item)
         else:
             raise TLogInternalException("Section.add_item was given a non-Item")
 
@@ -562,7 +568,7 @@ class DocStructure:
         if heading in self.head_instance_dict:
             raise TLogInternalException(f"update of existing heading ({heading}) not supported")
         self.head_leaders_dict[heading] = pattern_strs
-        self.head_instance_dict[heading] = Section(self.item_top_parser_pat, heading)
+        self.head_instance_dict[heading] = Section(self.item_top_parser_pat, heading) # todo set item insert prefrence at head or tail as a new attribute of a section.
         for leader in pattern_strs:
             self.leader_instance_dict[re.compile(leader)] = self.head_instance_dict[heading]
             #print("compile re for {} is {}".format(leader, str(re.compile(leader))))
