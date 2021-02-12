@@ -137,7 +137,8 @@ def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
     # More advanced versions of endeavor file format later.
     endeavor_text = default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
-
+    logging.getLogger('user')
+    logging.debug(f"endeavor_text: \n {endeavor_text}" )
     # print("endeavor_text:", endeavor_text)
     return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
             for e_str in endeavor_text.split()]
@@ -162,7 +163,6 @@ def read_file_str(filepath) -> str:
     return str(data)
 
 def write_filepath(new_content, filepath):
-    # todo crashing: make sure the directories and file exist.
     base_dir: str = os.path.dirname(filepath)
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
@@ -279,7 +279,6 @@ class StoryDir:
         self.story_list = []
         if os.path.isdir(sdir):
             dir_story_list = get_file_names_by_pattern(sdir, story_pat)
-            # todo read [pP]roioritized.[mM][Dd]
             priority_pat = re.compile('[pP]rioritized.[mM][Dd]')
             prioritized_file_list: str = get_file_names_by_pattern(sdir, priority_pat)
             if prioritized_file_list:
@@ -299,6 +298,7 @@ class StoryDir:
                     self.story_list.append(story_file)
         else:
             raise TaskSourceException(f"{sdir} is not a directory, so can not be a StoryDir")
+        logging.getLogger('user').debug(self)
 
     def __str__(self):
         return "StoryDir:({}):".format(self.path) + ",".join(self.story_list)

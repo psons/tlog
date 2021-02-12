@@ -10,6 +10,9 @@ A Prioritized.md file is used to sequence the names of files in an endeavor dir.
 
 # tasks
 
+d - provide logging for each update / insert case when adding an item to a document and section.
+d - section support to do head or tail insert of new items.
+
 All tasks from files without an entry in Prioritized.md come after prioritized ones.
 x - check dirs to be scanned for [pP]roioritized.[mM][Dd]
 x - build file_list from prioritized

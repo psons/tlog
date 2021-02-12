@@ -86,6 +86,11 @@ class Section:
     def add_item(self, arg_item, head_insert: bool = False):
         """
         Adds a Whole item to Section self.
+        head_insert_true is used when building the default endeavor new task story.md from taskes added by the user
+        in the j/td file with th reasoning that short term tasks captured are top priority immediate follow up,
+        so they stay high priority until explicitly moved to a lower priority in the story file.
+
+        otherwise, task adding is done in conventional head to tail order.
         """
         if type(arg_item) is Item:
             need_append = True
@@ -95,7 +100,10 @@ class Section:
                     need_append = False
 
             if need_append:
-                self.body_items.insert(0, arg_item)
+                if head_insert:
+                    self.body_items.insert(0, arg_item)
+                else:
+                    self.body_items.append(arg_item)
         else:
             raise TLogInternalException("Section.add_item was given a non-Item")
 
@@ -254,7 +262,7 @@ class Section:
                     item.merge_parts(other_item)
         if not match_existing_found:
             # print("adding item:\n", str(other_item) )
-            self.add_item(other_item)
+            self.add_item(other_item) # why does this put other_item at the beginning of the body_items list
         return self
 
 
