@@ -234,14 +234,29 @@ All lines matching the "do", "abandoned", "in progress", or "planned" patterns w
     alias tlog='python -m tlog' # shold run ${HOME}/bin/tlog.py
 
 ## install Python and the git module.
-## install git.  make sure git init works
 
+### Install python
+As of 2021-08-30 the testing python is 3.7 or later.
+Ensure that python interpreter is in the path either by updating an environment file based om tl2.env.sample above
+or setting your .profile or .bash_profile or whatever profile matches your shell.
+
+### Tweak for windows.   
+At this point (2021-08-30) the shebang line in the .py scripts uses unix / linux syntax, and will need to be modified for 
+Windows.
+
+
+### install git.  make sure git init works
+optionally set PYTHONUSERBASE per https://pip.pypa.io/en/latest/user_guide/#user-installs
+- need to update these docs to include making the dir and setting the environment
+- include infor on where the module actually goes.
 pip install GitPython
+   or
+pip install -user GitPython  
 un tar tl2_dist.tar into ${HOME}/bin based on PYTHONPATH from the environment is step 1.
 
 ## Install a program editor
 Install vscode.
-Add the extension 'Run On Save'
+Add the extension 'Run On Save' 9update.  Different name working: possibly 'save and run'
  - https://code.visualstudio.com/docs/editor/extension-gallery
  - https://medium.com/better-programming/automatically-execute-bash-commands-on-save-in-vs-code-7a3100449f63#:~:text=If%20you%20don't%20already,Run%20On%20Save%20settings%20page.
  Go to Code->Preferences->Setting then select Extensions on the side bar in the window.
@@ -281,7 +296,28 @@ Add the extension 'Run On Save'
                 "isAsync" (optional) - defaults to false. If true, next command will be run before this one finishes.
                 Sample Config
                 This sample configuration will run echo statements including the saved file path. In this sample, the first command is async, so the second command will get executed immediately even if first hasn't completed. Since the second isn't async, the third command won't execute until the second is complete.
+                # This is from a different extension:  Save andRun Ext from padjon
+                {
+                    "saveAndRunExt": {
+                   
+                 
                 
+                              "commands": [
+                                  {
+                                    "match": "\\.txt$",
+                                    "cmd": "echo 'Executed in the terminal: I am a .txt file ${file}. '"
+                                  },
+                                  {
+                                    "match": "\\.md$",
+                                    "cmd": "$HOME/bin/tlog.sh"
+                                  }
+                              ]
+                            }
+                 
+                }
+ 
+
+
                 "emeraldwalk.runonsave": {
                     "commands": [
                         {

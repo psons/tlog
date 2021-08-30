@@ -1,3 +1,4 @@
+#!/usr/bin/env python -d
 #!/usr/local/bin/python3 -d
 import sys
 
@@ -137,9 +138,8 @@ def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
     # More advanced versions of endeavor file format later.
     endeavor_text = default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
-    logging.getLogger('user')
-    logging.debug(f"endeavor_text: \n {endeavor_text}" )
-    # print("endeavor_text:", endeavor_text)
+    debuglog = logging.getLogger('debuglog')
+    debuglog.debug(f"endeavor_text: \n{endeavor_text}" )
     return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
             for e_str in endeavor_text.split()]
 
@@ -215,15 +215,6 @@ def init(aDir):
         os.makedirs(aDir)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 2 and sys.argv[1] == "init":
-        init(journal_dir)
-
-    user_path_o: UserPaths = UserPaths()
-    print(user_path_o.journal_path)
-
-
-# print(dom + dayth_dict[dom])
 
 def get_prior_dir(search_dir):
     """search_dir ends with a path like somthing/yyyy/mm
@@ -275,6 +266,7 @@ class StoryDir:
         Given a directory path, loads list of stories
         :param sdir: directory path
         """
+        debuglog = logging.getLogger('debuglog')
         self.path = sdir
         self.story_list = []
         if os.path.isdir(sdir):
@@ -292,13 +284,24 @@ class StoryDir:
                         if os.path.isfile(full_story_path):
                             self.story_list.append(full_story_path)
                         else:
-                            logging.warning(f"{story_file} is in {pri_file}, but not found in {sdir}")
+                            debuglog.warning(f"{story_file} is in {pri_file}, but not found in {sdir}")
             for story_file in dir_story_list: # add the dir stories not in pri_file
                 if story_file not in self.story_list:
                     self.story_list.append(story_file)
         else:
             raise TaskSourceException(f"{sdir} is not a directory, so can not be a StoryDir")
-        logging.getLogger('user').debug(self)
+
 
     def __str__(self):
         return "StoryDir:({}):".format(self.path) + ",".join(self.story_list)
+
+if __name__ == "__main__":
+    user_path_o: UserPaths = UserPaths()
+    print(user_path_o.journal_path)
+
+    if len(sys.argv) == 2 and sys.argv[1] == "init":
+        init(user_path_o.journal_path)
+
+
+
+# print(dom + dayth_dict[dom])

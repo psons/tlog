@@ -1,8 +1,10 @@
+#!/usr/bin/env python -d
 #!/usr/local/bin/python3
 """
 Composition: Top level application built of collections of TLDocument
 Objects.  Stories read from Endeavor files, for example.
 """
+import os
 from typing import List
 
 from tldocument import TLDocument  # import re
@@ -38,7 +40,7 @@ class StoryGroup:
 def load_and_resave_story_file_with_attribs(file_name) -> TLDocument:
     """
     adds 'storySource:' and 'titleHash:' to each item in a doc from file and saves it back to disk.
-    These attributes enable items tro be re titled and still update the original story item.
+    These attributes enable items to be re titled and still update the original story item.
     """
     story_doc: TLDocument = load_doc_from_file(file_name)
     story_doc.attribute_all_unresolved_items(StoryGroup.story_source_attr_name, file_name)
@@ -51,10 +53,11 @@ def remove_item_from_story_file(item: Item) -> Item:
     Remove item from it's file indicated by it's 'storySource:' attribute
     always log the item being removed.
     """
+    debuglog = logging.getLogger('debuglog')
     tag = "write_item_to_story_file():"
     story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
     if not story_source:
-        logging.warning(f"{tag} item to remove does not have a 'storySource:' attribute.")
+        debuglog.warning(f"{tag} item to remove does not have a 'storySource:' attribute.")
         return None
     filepath = story_source
     story_tldoc: TLDocument= load_doc_from_file(filepath)
@@ -119,26 +122,26 @@ def load_doc_from_file(file_name) -> TLDocument:
 # todo redo extend logging.Logger to add the specifics, and the screen log method.
 #  alternately, add a custom level that is for just writing user prompts to the
 #  screen.
-class Messaging:
-    def __init__(self, lname, info_file, debug_file):
-        self.ulog = logging.getLogger(lname)
-        self.ulog.setLevel(logging.DEBUG) # should support command line option tro set, and default to INFO
-        formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+# class Messaging:
+#     def __init__(self, lname, info_file, debug_file):
+#         self.ulog = logging.getLogger(lname)
+#         self.ulog.setLevel(logging.WARN) # should support command line option tro set, and default to INFO
+#         formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+#
+#         terminal_handler = logging.StreamHandler()
+#         terminal_handler.setLevel(logging.WARN)
+#         terminal_handler.setFormatter(formatter)
+#         self.ulog.addHandler(terminal_handler)
+#
+#         programmer_handler = logging.FileHandler(debug_file)
+#         programmer_handler.setLevel(logging.DEBUG)
+#         programmer_handler.setFormatter(formatter)
+#         self.ulog.addHandler(programmer_handler)
 
-        user_handler = logging.FileHandler(info_file)
-        user_handler.setLevel(logging.INFO)
-        user_handler.setFormatter(formatter)
-        self.ulog.addHandler(user_handler)
 
-        programmer_handler = logging.FileHandler(debug_file)
-        programmer_handler.setLevel(logging.DEBUG)
-        programmer_handler.setFormatter(formatter)
-        self.ulog.addHandler(programmer_handler)
-
-
-    def screen_log(self, tag, msg):
-        print(msg)
-        self.ulog.info(tag + msg)
+    # def screen_log(self, tag, msg):
+    #     print(msg)
+    #     self.ulog.info(tag + msg)
 
 
 def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
@@ -198,10 +201,23 @@ def main():
     # initialize everything
     tag = "tlog main:"
     daily_o = journaldir.Daily()
-    msgr = Messaging('user', daily_o.info_log_file, daily_o.debug_log_file)
-    msgr.screen_log(tag, f"logging to: {daily_o.info_log_file}")
-    msgr.ulog.info(f"run start: {daily_o.dt}")
-    msgr.ulog.debug(tag + str(daily_o))
+
+    print(os.getcwd())
+    debuglog = logging.getLogger('debuglog')
+    debuglog.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    debug_handler = logging.FileHandler(daily_o.debug_log_file)
+    debug_handler.setLevel(logging.DEBUG)
+    debug_handler.setFormatter(formatter)
+    debuglog.addHandler(debug_handler)
+
+    info_handler = logging.StreamHandler()
+    info_handler.setLevel(logging.INFO)
+    debuglog.addHandler(info_handler)
+
+    # debuglog.info('some info')
+    # debuglog.debug('some debug')
+
     my_journal_dir = daily_o.jdir
     user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
@@ -226,8 +242,8 @@ def main():
     msg = "no argument sfile_list: " + ",".join(story_dir_o.story_list)
     # ---
 
-    msgr.screen_log(tag, msg)
-    msgr.screen_log(tag, "no argument jfile_list:" + ",".join(j_file_list))
+    print(tag + msg)
+    print(tag + "no argument jfile_list:" + ",".join(j_file_list))
     # I don't want to support any command line features now other
     #     if sys.argv[1] in supported_commands:
 
@@ -257,36 +273,37 @@ def main():
     new_jtd_doc.add_list_items_to_scrum(resolved_items)
 
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
-    msgr.ulog.info("3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)")
+    debuglog.debug("3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)")
     resolved_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.resolved_section_head])
     journaldir.write_dir_file(resolved_data + '\n', daily_o.jdir, daily_o.cday_resolved_fname)
 
     #     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to
-    msgr.ulog.info("4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to")
+    debuglog.debug("4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to")
     #         insert_update_document_item(item) merge the backlog into the journal.
     # write all the tasks from the old jtd
     for story_item in old_jtd_doc.get_document_unresolved_list():
         write_item_to_story_file(story_item, user_path_o.new_task_story_file)
 
     #     5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.
-    msgr.ulog.info("5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.")
+    debuglog.debug("5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.")
     user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal}")
 
     # 6. Remove resolved items from stories using remove_item_from_story_file(r_item).
-    msgr.ulog.info("6. Remove resolved items from stories using remove_item_from_story_file(r_item).")
+    debuglog.debug("6. Remove resolved items from stories using remove_item_from_story_file(r_item).")
     [remove_item_from_story_file(r_item) for r_item in resolved_items]
 
     # 7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)
-    msgr.ulog.info("7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)")
+    debuglog.debug("7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)")
     story_dir_objects: List[StoryDir] = journaldir.load_endeavor_stories(user_path_o)
+    debuglog.debug("a")
 
     endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
                                              for story_doc in StoryGroup(sdo).story_docs ] #  .get_short_stories()]
-    msgr.ulog.info("Load endeavor StoryDirs:...")
+    debuglog.debug("Load endeavor StoryDirs:...")
 
     # 8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
     #    of task items from the stories.
-    msgr.ulog.info("8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)")
+    debuglog.debug("8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)")
     sprint_candidate_tasks: List[TLDocument] = list()
     for journal_story_doc in journal_story_docs:
         sprint_candidate_tasks += journal_story_doc.get_limited_tasks_from_unresolved_list() # tasks from stories in journaldir.
@@ -294,8 +311,8 @@ def main():
     for endeavor_story_doc in endeavor_story_docs:
         sprint_candidate_tasks += endeavor_story_doc.get_limited_tasks_from_unresolved_list()
 
-    info_message = "sprint_candidate_tasks: \n" + "\n".join([str(sct) for sct in sprint_candidate_tasks])
-    msgr.ulog.info(info_message)
+    debug_message = "sprint_candidate_tasks: \n" + "\n".join([str(sct) for sct in sprint_candidate_tasks])
+    debuglog.debug(debug_message)
     # 'sprint candidates': the top tasks in each story that may get into the day sprint.
     # Picking off the top 3 stories will always take from the top endeavor
     #       (if they are written in priority order)
@@ -303,10 +320,10 @@ def main():
     # (see tlog story 'Prioritized Backlog story.txt'
     # as a work around, users can make sure only 1 story filer in each endeavor has a non zero 'maxTasks:' value.
 
-    # msgr.ulog.info("Sprint Candidate Tasks: " + str_o_list(sprint_candidate_tasks, delimiter="\nTask::\n", prefix_delim=True))
+    # debuglog.debug("Sprint Candidate Tasks: " + str_o_list(sprint_candidate_tasks, delimiter="\nTask::\n", prefix_delim=True))
 
     # 9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.
-    msgr.ulog.info("9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.")
+    debuglog.debug("9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.")
     sprint_size = TLDocument.default_scrum_to_do_task_capacity
     num_sprint_canidates = len(sprint_candidate_tasks);
     sprint_task_items = sprint_candidate_tasks[0:sprint_size]
@@ -314,25 +331,25 @@ def main():
     new_jtd_doc.add_list_items_to_scrum(sprint_task_items)
 
     # 10. Persist the scrum todo_data
-    msgr.ulog.info("10. Persist the scrum todo_data")
+    debuglog.debug("10. Persist the scrum todo_data")
     todo_tasks = new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.todo_section_head]
     todo_data = str(todo_tasks)
     journaldir.write_dir_file(todo_data + '\n', daily_o.jdir, daily_o.cday_todo_fname)
-    info_msg = "Sprint Items: \n"
+    debug_msg = "Sprint Items: \n"
     index = 1
     for sprint_item in todo_tasks.body_items:
-        info_msg += f"{index}. {sprint_item}\n"
+        debug_msg += f"{index}. {sprint_item}\n"
         index += 1
-    msgr.ulog.info(info_msg)
+    debuglog.debug(debug_msg)
 
     # 11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
-    msgr.ulog.info("11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with")
+    debuglog.debug("11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with")
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
 
 
     msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.body_items)}"
-    msgr.screen_log(tag, msg)
-    msgr.ulog.info(tag + msg)
+    debuglog.debug(tag + msg)
+    print(tag + msg)
 
     # print(f"Current scrum for daily sprint:\n{new_jtd_doc.scrum}")
 
