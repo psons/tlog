@@ -202,6 +202,8 @@ def main():
     tag = "tlog main:"
     daily_o = journaldir.Daily()
     journaldir.init(daily_o.tmproot)
+    journaldir.init(daily_o.jrdir)
+
 
     print("Tlog Working Directory: ", os.getcwd())
     print("Tlog Temporary Directory: ", daily_o.tmproot)
@@ -262,7 +264,7 @@ def main():
     #         b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum object as resolved.
     #         c. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
 
-    resolved_doc: TLDocument = load_doc_from_file( journaldir.path_join(daily_o.jdir, daily_o.cday_resolved_fname))
+    resolved_doc: TLDocument = load_doc_from_file( journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
     new_jtd_doc: TLDocument =  TLDocument()
     new_jtd_doc.add_section_list_items_to_scrum(resolved_doc.journal) # items in resolved file from earlier today run of tlog
 
@@ -276,8 +278,10 @@ def main():
 
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
     debuglog.debug("3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)")
+
     resolved_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.resolved_section_head])
-    journaldir.write_dir_file(resolved_data + '\n', daily_o.jdir, daily_o.cday_resolved_fname)
+    print("resolved_data:", resolved_data)
+    journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
 
     #     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to
     debuglog.debug("4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to")

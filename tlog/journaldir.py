@@ -126,7 +126,8 @@ class Daily:
                       '29': "th", '30': "th", '31': "expected_story_text"}
 
         self.domth = dow + ' ' + dom + dayth_dict[dom]
-        self.jdir = os.path.join(self.jroot, yyyy, mm)
+        self.jdir = os.path.join(self.jroot, yyyy, mm)  # where j/td files go this month.
+        self.jrdir = os.path.join(self.jdir,  "resolved")  # subdir for resolved files.
         self.debug_log_file = os.path.join(self.tmproot, "tl.debug.log")
         # self.user_log_file = os.path.join(self.tmproot, "tl.user.log")
         self.info_log_file = os.path.join(self.tmproot, "tl.info.log")
@@ -186,12 +187,6 @@ def write_dir_file(new_content, dir_name, doc_name):
         if previous_content == new_content:
             print(f"new content same as old. Nothing written. {doc_name}")
         else:
-            # print("new content is different than content from old file. renaming")
-            # if writing, do this:
-            # olddir = os.path.join(dir_name, "old")
-            # if not os.path.isdir(olddir):
-            #     os.makedirs(olddir)
-            # os.rename(filepath, os.path.join(olddir, doc_name))
             jfd = open(filepath, "w")
             jfd.write(new_content)
             jfd.close
