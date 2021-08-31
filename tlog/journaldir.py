@@ -32,10 +32,13 @@ class TaskSourceException(Exception):
         return repr(self.value)
 
 
-default_path = os.path.expanduser('~') + '/journal'
+default_journal_path = os.path.expanduser('~') + '/journal'
+default_log_path = os.path.expanduser('~') + '/tmp/tlog'
 default_endeavor_name = "default"
 
-convention_journal_root = os.getenv('JOURNAL_PATH', default_path)
+convention_log_location = os.getenv('TLOG_TMP', default_log_path)
+
+convention_journal_root = os.getenv('JOURNAL_PATH', default_journal_path)
 endeavor_dir = convention_journal_root + "/Endeavors"
 journal_pat = re.compile(
     '[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
@@ -107,6 +110,7 @@ class Daily:
         :param dt: type: datetime.datetime
         """
         self.jroot = convention_journal_root
+        self.tmproot = convention_log_location
         self.dt = dt or datetime.datetime.now()
         # see http://strftime.org/
         yyyy = self.dt.strftime('%Y')
@@ -123,9 +127,9 @@ class Daily:
 
         self.domth = dow + ' ' + dom + dayth_dict[dom]
         self.jdir = os.path.join(self.jroot, yyyy, mm)
-        self.debug_log_file = os.path.join(self.jroot, "tl.debug.log")
-        # self.user_log_file = os.path.join(self.jroot, "tl.user.log")
-        self.info_log_file = os.path.join(self.jroot, "tl.info.log")
+        self.debug_log_file = os.path.join(self.tmproot, "tl.debug.log")
+        # self.user_log_file = os.path.join(self.tmproot, "tl.user.log")
+        self.info_log_file = os.path.join(self.tmproot, "tl.info.log")
         self.cday_journal_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
         self.cday_todo_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
         self.cday_resolved_fname = 'resolved' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
@@ -208,7 +212,9 @@ def make_git_repo(path):
 
 def init(aDir):
     """
-	create new journal dir
+	create new dir.
+	Just a wrapper around os module and a place where other app specific
+	dir creation logic might go in the future.
 	:param aDir: a directory to be created if it does not exist.
 	"""
     if not os.path.exists(aDir):

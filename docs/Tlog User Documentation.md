@@ -224,6 +224,9 @@ All lines matching the "do", "abandoned", "in progress", or "planned" patterns w
     JOURNAL_PATH="$HOME/Documents/journal"
     export JOURNAL_PATH
     
+    TLOG_TMP = "$HOME/tmp/tlog"  # this is the default for logs, even if unset
+    export TLOG_TMP
+
     PYTHONPATH=${HOME}/bin:$PYTHONPATH
     export PYTHONPATH
     
@@ -365,8 +368,8 @@ Add the extension 'Run On Save' 9update.  Different name working: possibly 'save
                 Apache
 
 ## Start making task stories.
-make sure you set JOURNAL_PATH to a value that makes sense for your pwersnonal mamagemet strategy.
-Yo will want to make a shortcut in Explorer (Windows) or Finder (Mac)
+make sure you set JOURNAL_PATH to a value that makes sense for your persnonal mamagement strategy.
+You will want to make a shortcut in Explorer (Windows) or Finder (Mac)
 run tlog to create the journal dir.
 optionally, set up endeavors too.
 

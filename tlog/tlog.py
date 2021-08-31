@@ -201,8 +201,10 @@ def main():
     # initialize everything
     tag = "tlog main:"
     daily_o = journaldir.Daily()
+    journaldir.init(daily_o.tmproot)
 
-    print(os.getcwd())
+    print("Tlog Working Directory: ", os.getcwd())
+    print("Tlog Temporary Directory: ", daily_o.tmproot)
     debuglog = logging.getLogger('debuglog')
     debuglog.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
