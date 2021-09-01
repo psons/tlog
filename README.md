@@ -11,7 +11,12 @@ A Prioritized.md file is used to sequence the names of files in an endeavor dir.
 # tasks
 d - single journal file in the month directory
  - when writing a jtd story, move any old jtd to an 'old' subdir of the temp location. 
-
+ d - write method in journaldir.py to get listing of files matching a pattern given as an arg
+ d - write method in journaldir.py to move list of files to target dir
+ d - write method in tlog.py to 
+   - call journal dir method to get listing per above.
+   - remove current jtd file from list
+   - call journal dir method to move files. 
 
 
 

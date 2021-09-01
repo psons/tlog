@@ -119,30 +119,6 @@ def load_doc_from_file(file_name) -> TLDocument:
     file_text = journaldir.read_file_str(file_name)
     return TLDocument.fromtext(file_text)
 
-# todo redo extend logging.Logger to add the specifics, and the screen log method.
-#  alternately, add a custom level that is for just writing user prompts to the
-#  screen.
-# class Messaging:
-#     def __init__(self, lname, info_file, debug_file):
-#         self.ulog = logging.getLogger(lname)
-#         self.ulog.setLevel(logging.WARN) # should support command line option tro set, and default to INFO
-#         formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-#
-#         terminal_handler = logging.StreamHandler()
-#         terminal_handler.setLevel(logging.WARN)
-#         terminal_handler.setFormatter(formatter)
-#         self.ulog.addHandler(terminal_handler)
-#
-#         programmer_handler = logging.FileHandler(debug_file)
-#         programmer_handler.setLevel(logging.DEBUG)
-#         programmer_handler.setFormatter(formatter)
-#         self.ulog.addHandler(programmer_handler)
-
-
-    # def screen_log(self, tag, msg):
-    #     print(msg)
-    #     self.ulog.info(tag + msg)
-
 
 def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
     """
@@ -162,12 +138,6 @@ supported_commands = ["jdir"]
 """
 jdir - treat the next argument to tlog as the journal_dir.
 """
-
-def early_debug_exit(message: str) -> None:
-    print(f'EARLY DEBUG EXIT {message}')
-    exit(99)
-
-
 
 def main():
     """
@@ -219,9 +189,6 @@ def main():
     info_handler.setLevel(logging.INFO)
     debuglog.addHandler(info_handler)
 
-    # debuglog.info('some info')
-    # debuglog.debug('some debug')
-
     my_journal_dir = daily_o.jdir
     user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
@@ -248,8 +215,6 @@ def main():
 
     print(tag + msg)
     print(tag + "no argument jfile_list:" + ",".join(j_file_list))
-    # I don't want to support any command line features now other
-    #     if sys.argv[1] in supported_commands:
 
     #
     # load the latest journal into the journal for today
