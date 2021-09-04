@@ -31,15 +31,18 @@ class TaskSourceException(Exception):
     def __str__(self):
         return repr(self.value)
 
+journal_path_stub = '/journal'
+tmp_path_stub = '/tmp/tlog'
+endeavor_path_stub = "/Endeavors"
 
-default_journal_path = os.path.expanduser('~') + '/journal'
-default_log_path = os.path.expanduser('~') + '/tmp/tlog'
+default_journal_path = os.path.expanduser('~') + journal_path_stub
+default_tmp_path = os.path.expanduser('~') + tmp_path_stub
 default_endeavor_name = "default"
 
-convention_log_location = os.getenv('TLOG_TMP', default_log_path)
+convention_log_location = os.getenv('TLOG_TMP', default_tmp_path)
 
 convention_journal_root = os.getenv('JOURNAL_PATH', default_journal_path)
-endeavor_dir = convention_journal_root + "/Endeavors"
+endeavor_dir = convention_journal_root + endeavor_path_stub
 journal_pat = re.compile(
     '[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
 story_pat = re.compile('.*story.md')
@@ -47,7 +50,8 @@ story_pat = re.compile('.*story.md')
 
 class UserPaths:
     """
-    Builds the useful data paths based on the documented structure:
+    Verifies that journal_root exists as a directory.
+    Builds the useful data paths strings based on the documented structure, but does not create the paths.:
         journal_dir:
         << various year subdirectories >>
                 << various month subdirectories >>
@@ -57,17 +61,22 @@ class UserPaths:
             << various endeavor subdirectories >>
                 << various *story.txt files containing task items >>
     """
-    def __init__(self, user_journal_path=convention_journal_root, user_endeavor_dir=endeavor_dir):
-        if os.path.isdir(user_journal_path):
-            self.journal_path = user_journal_path
+    def __init__(self, journal_root=convention_journal_root,
+                 tmp_root=convention_log_location, user_endeavor_dir=endeavor_dir):
+        if os.path.isdir(journal_root):
+            self.journal_path = journal_root
         else:
-            raise TaskSourceException(user_journal_path + " for journals is not a directory")
+            raise TaskSourceException(journal_root + " for journals is not a directory")
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
         default_endeavor_dir = os.path.join(self.endeavor_path, default_endeavor_name)
         self.new_task_story_file = os.path.join(default_endeavor_dir, "new task story.md")
         self.git_repo_obj = None
+        self.tmp_root = tmp_root
+        self.old_journal_dir = os.path.join(self.tmp_root, "old")
+        self.debug_log_file = os.path.join(self.tmp_root, "tl.debug.log")
+
 
     def git_init_journal(self):
         print(self.journal_path)
@@ -76,7 +85,7 @@ class UserPaths:
     def git_add_all(self, daily_o, message):
         untracked = self.git_repo_obj.untracked_files
         # commit_message = ",".join(untracked)[0:50]
-        commit_message = f"tlog commit: {message} " + daily_o.jdir
+        commit_message = f"tlog commit: {message} " + daily_o.j_month_dir
         journal_index: IndexFile = self.git_repo_obj.index
         self.git_repo_obj.git.add('--all')
         journal_index.commit(commit_message)
@@ -86,31 +95,51 @@ class UserPaths:
                           "EndeavorFilePath: " + self.endeavor_file])
 
 
-def get_file_names_by_pattern(dir_name, a_pattern) -> List[str]:
+# todo add a test perhaps via a higher level function in tlog
+def get_file_names_by_pattern(source_dir_name, a_pattern: re.Pattern) -> List[str]:
+    # todo make a default for a_pattern that is a compiled re that matches everything.
     """
 	Get the file names in a directory that match a compiled regex 
 	pattern that are not themselves directories.
 	"""
     matching_file_list: List[str] = []
-    if not os.path.isdir(dir_name):
+    if not os.path.isdir(source_dir_name):
         return matching_file_list
 
-    for f in sorted(listdir(dir_name)):
-        fqp = os.path.join(dir_name, f)
-        if isfile(fqp):
+    for f in sorted(listdir(source_dir_name)):
+        fqp = os.path.join(source_dir_name, f)
+        if os.path.isfile(fqp):
                 if a_pattern.match(f):
                     matching_file_list.append(fqp)
     return matching_file_list
 
 
+# todo add a test
+def move_files(target_dir_path, file_paths: List[str]):
+    """
+    move each file in a list to a target directory
+    :param target_dir_path:
+    :param file_paths:
+    :return: None
+    """
+    if not os.path.isdir(target_dir_path):
+        print(f"{target_dir_path} is not a directory")
+        raise NotADirectoryError
+
+    for file_path in file_paths:
+        dest_file_path = os.path.join(target_dir_path, os.path.basename(file_path))
+        os.replace(file_path, dest_file_path)
+
+
+
+
 class Daily:
-    def __init__(self, dt: datetime.datetime = None):
+    def __init__(self, jroot: str, dt: datetime.datetime = None):
         """
         Set some daily values needed in some names and labels
         :param dt: type: datetime.datetime
         """
-        self.jroot = convention_journal_root
-        self.tmproot = convention_log_location
+        self.jroot = jroot
         self.dt = dt or datetime.datetime.now()
         # see http://strftime.org/
         yyyy = self.dt.strftime('%Y')
@@ -126,17 +155,14 @@ class Daily:
                       '29': "th", '30': "th", '31': "expected_story_text"}
 
         self.domth = dow + ' ' + dom + dayth_dict[dom]
-        self.jdir = os.path.join(self.jroot, yyyy, mm)  # where j/td files go this month.
-        self.jrdir = os.path.join(self.jdir,  "resolved")  # subdir for resolved files.
-        self.debug_log_file = os.path.join(self.tmproot, "tl.debug.log")
-        # self.user_log_file = os.path.join(self.tmproot, "tl.user.log")
-        self.info_log_file = os.path.join(self.tmproot, "tl.info.log")
+        self.j_month_dir = os.path.join(self.jroot, yyyy, mm)  # where j/td files go this month.
+        self.jrdir = os.path.join(self.j_month_dir, "resolved")  # subdir for resolved files.
         self.cday_journal_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
         self.cday_todo_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
         self.cday_resolved_fname = 'resolved' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
 
     def __str__(self):
-        return f"{self.jdir} {self.cday_journal_fname} {self.domth}"
+        return f"{self.j_month_dir} {self.cday_journal_fname} {self.domth}"
 
 
 def load_endeavor_stories(user_path_obj):
@@ -158,6 +184,17 @@ def path_join(p, f):
     """wrapper helps prevent module os from being needed in calling modules."""
     return os.path.join(p, f)
 
+def mv_files_to_dir(fileList: List[str], dir: str)-> None:
+    """
+    verify that dir is actually a directory, and then move the list of files there,
+    :param fileList:
+    :param dir:
+    :return:
+    """
+    if os.path.isdir(dir):
+        pass
+    else:
+        raise NotADirectoryError
 
 def read_file_str(filepath) -> str:
     """Read the file contents as a string if the file exists"""

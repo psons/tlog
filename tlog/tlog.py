@@ -134,9 +134,9 @@ def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
         r_str = delimiter + r_str
     return r_str
 
-supported_commands = ["jdir"]
+supported_commands = ["j_month_dir"]
 """
-jdir - treat the next argument to tlog as the journal_dir.
+j_month_dir - treat the next argument to tlog as the journal_dir.
 """
 
 def main():
@@ -163,24 +163,26 @@ def main():
     8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
         of task items from the stories.
     9. Pop the global sprint size number of stories off the backlogs of list. Add them to new j/td scrum object as to do.
-    10. Persist the scrum todo_data
-    11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
+    10. Move existing j/td files out of the journaldir
+    11. Persist the scrum todo_data
+    12. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
         resolved items now removed. ( they are flagged as resolved in stories in the previous commit)
     """
 
     # initialize everything
     tag = "tlog main:"
-    daily_o = journaldir.Daily()
-    journaldir.init(daily_o.tmproot)
+    user_path_o = journaldir.UserPaths()
+    daily_o = journaldir.Daily(journaldir.convention_journal_root)
+    journaldir.init(user_path_o.tmp_root)
     journaldir.init(daily_o.jrdir)
 
 
     print("Tlog Working Directory: ", os.getcwd())
-    print("Tlog Temporary Directory: ", daily_o.tmproot)
+    print("Tlog Temporary Directory: ", user_path_o.tmp_root)
     debuglog = logging.getLogger('debuglog')
     debuglog.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    debug_handler = logging.FileHandler(daily_o.debug_log_file)
+    debug_handler = logging.FileHandler(user_path_o.debug_log_file)
     debug_handler.setLevel(logging.DEBUG)
     debug_handler.setFormatter(formatter)
     debuglog.addHandler(debug_handler)
@@ -189,8 +191,6 @@ def main():
     info_handler.setLevel(logging.INFO)
     debuglog.addHandler(info_handler)
 
-    my_journal_dir = daily_o.jdir
-    user_path_o = journaldir.UserPaths()
     user_path_o.git_init_journal()
     old_jtd_doc = TLDocument(day=daily_o.domth)
     look_back_months = 24
@@ -201,10 +201,11 @@ def main():
 
     # --- might be influenced by command line at some point.
     #     1. build the "old" journal / to do (j/td) file.
-    journaldir.init(my_journal_dir)
+    journaldir.init(daily_o.j_month_dir)
+    journaldir.init(user_path_o.old_journal_dir)
     journaldir.init(journaldir.join(user_path_o.endeavor_path, journaldir.default_endeavor_name))
     # look back in history to find past journal dir
-    prev_journal_dir = find_prev_journal_dir(my_journal_dir, look_back_months)
+    prev_journal_dir = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
     story_dir_o = StoryDir(prev_journal_dir)
 
     journal_story_docs = StoryGroup(story_dir_o).story_docs # * story.md docs.
@@ -301,11 +302,16 @@ def main():
 
     new_jtd_doc.add_list_items_to_scrum(sprint_task_items)
 
-    # 10. Persist the scrum todo_data
-    debuglog.debug("10. Persist the scrum todo_data")
+    # 10. Move existing j/td files out of the journaldir
+    journal_file_list = journaldir.get_file_names_by_pattern(daily_o.j_month_dir, journaldir.journal_pat)
+    if len(journal_file_list) > 0:
+        journaldir.move_files(user_path_o.old_journal_dir, journal_file_list)
+
+    # 11. Persist the scrum todo_data
+    debuglog.debug("11. Persist the scrum todo_data")
     todo_tasks = new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.todo_section_head]
     todo_data = str(todo_tasks)
-    journaldir.write_dir_file(todo_data + '\n', daily_o.jdir, daily_o.cday_todo_fname)
+    journaldir.write_dir_file(todo_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
     debug_msg = "Sprint Items: \n"
     index = 1
     for sprint_item in todo_tasks.body_items:
@@ -313,7 +319,7 @@ def main():
         index += 1
     debuglog.debug(debug_msg)
 
-    # 11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
+    # 12. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
     debuglog.debug("11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with")
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
 

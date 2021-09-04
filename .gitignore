@@ -1,4 +1,5 @@
 .DS_Store
+unit-test-tmp-dir
 __pycache__
 *.pyc
 tlog_dist.tar

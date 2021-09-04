@@ -1,25 +1,26 @@
 import unittest
 from tldocument import TLDocument
 import journaldir
-from tlog.tlog import StoryGroup
+from tlog import StoryGroup
 
 
 from test_journaldir import test_storydir_str
-
+from testdata import getUnitTestUserPathObject
 # from Endeavors/aGoal/small story.md
-expected_story_text= """\
+upo = getUnitTestUserPathObject()
+expected_story_text= f"""\
 maxTasks: 3
 d - start on the small story
-storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+storySource:{upo.endeavor_path}/aGoal/small story.md
 titleHash:5e874c75f0
 d - some more work on the small story
-storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+storySource:{upo.endeavor_path}/aGoal/small story.md
 titleHash:4db4f19abf
 d - refine the small story work
-storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+storySource:{upo.endeavor_path}/aGoal/small story.md
 titleHash:961443447d
 d - finish the small story!
-storySource:/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md
+storySource:{upo.endeavor_path}/aGoal/small story.md
 titleHash:6ae341e0a3"""
 sd = journaldir.StoryDir(test_storydir_str)
 

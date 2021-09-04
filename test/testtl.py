@@ -1,10 +1,13 @@
 #!/usr/local/bin/python3
-
-
+import os
 import unittest
 
+import testdata
+import unit_test_tmp_dir
+
 import journaldir
-from tlog import tlog
+import tlog
+
 #.tlog import write_back_updated_story
 
 from docsec import Section, TLogInternalException, ItemAttribute, Item
@@ -460,14 +463,20 @@ class TestStoryIO(unittest.TestCase):
 # load_story_from_file(file_name) should have titleHash and StorySource
 # write_back_updated_story(item: Item)
 
+    userPathObject = None
+
+
+    @classmethod
+    def setUpClass(cls):
+        cls.userPathObject = testdata.getUnitTestUserPathObject()
+        #journaldir.UserPaths(ut_journal_root, ut_tmp_root, ut_endeavor_dir)
 
     def test_write_item_to_story_file(self):
-        #todo get an item with a storySource attribute
+        # get an item with a storySource attribute
         # write the item
         # read back the item
         # delete the file, maybe make a file scaffolding module.
-        myUserPathObj = journaldir.UserPaths();
-        fileIOPath = journaldir.path_join(myUserPathObj.endeavor_path, "testGoal")
+        fileIOPath = journaldir.path_join(TestStoryIO.userPathObject.endeavor_path, "testGoal")
         fileIOPath = journaldir.path_join(fileIOPath, "testDrivenStory.md")
         new_item_section_heading = "# test_write_item_to_story_file\n"
         journaldir.remove_filepath(fileIOPath)

@@ -1,6 +1,9 @@
 #testdata.py
 import os
 
+import journaldir
+import unit_test_tmp_dir
+
 ad1 = "aDocAttribute"
 vd1 = " TheDocValue"
 vd2 = " TheChangedDocValue"
@@ -93,3 +96,27 @@ is_attrib_section_cases = [
     (sec_attr2, False),
     (sec_empty, False)
 ]
+
+
+def getUnitTestUserPathObject():
+    """
+    gets a UserPath object that is rooted at unit_test_tmp_dir.uttd instead of using the environment
+    variables of default locations.
+    This is useful to allow 3 separate runn environments on a laptop:
+     1 - a separate environment were unit tests can set up and tear down.
+     2 - a development and user acceptance test environment that uses alternate environment locations
+     to quickly mock up and reload test data.
+     3 - an actual real tlog environment
+    :return:
+    """
+    ut_journal_root = unit_test_tmp_dir.uttd + journaldir.journal_path_stub
+    ut_tmp_root = unit_test_tmp_dir.uttd + journaldir.tmp_path_stub
+    ut_endeavor_dir = unit_test_tmp_dir.uttd + journaldir.endeavor_path_stub
+    if unit_test_tmp_dir.uttd_exists:
+        os.makedirs(ut_journal_root, exist_ok=True)
+    else:
+        message = f"Create {unit_test_tmp_dir.uttd} to run unit tests that write to files."
+        print(message)
+        raise NotADirectoryError(message)
+    userPathObject = journaldir.UserPaths(ut_journal_root, ut_tmp_root, ut_endeavor_dir)
+    return userPathObject

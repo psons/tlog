@@ -155,11 +155,17 @@ written on stdout.  "Killed it for today! (run tlog again to work ahead)"
 A journal location represents single thread of activity for an individual person.  It has 3 logical sets of information: the future, the present, and the past.
 #### The Future
  - The singular unified backlog of doable in a day tasks in priority order that the individual person intends to work on: The task Backlog
+        - you create Endeavor directories as collections of '* story.md' files thas are squenced lists of tasks to complete.
 #### The present
  - The currently in progress work, or work about to be started.
+        - keeps only a single (representing today) journal file in the jounaldir/yyyy/mm directory
 #### The past
  - The record of completed or abandoned tasks and any notes and files collected in the completion of the tasks
  - The record of unfinished tasks that had to roll to the next time period
+        - keeps resolved files into a subdirectoy of jounaldir/yyyy/mm named resolved
+
+
+
 
 ##TaskLog draws tasks from competing sources.
 TaskLog users must make decisions about how many tasks should be pulled from various Endeavors into the present day's work, as well as about the order in which those tasks will be listed.
@@ -180,7 +186,7 @@ After the journal directory, stories and tasks are ordered according to their se
 
 ###Your Personal Journal directory
 The personal journal directory is a backlog directory, as could be specified in the endeavors file, but it has additional significance:
-	- The working backlog and current day task file will be written there.
+	- The current day task file will be written there.
 	- Its path will be deduced from the date and the JOURNAL_PATH environment setting. 
 
 ###Development projects
@@ -189,7 +195,6 @@ The personal journal directory is a backlog directory, as could be specified in 
 
 ##Tasklog manages a Merged backlog
 The backlog is stored in a file in the journal directory
-
 
 #Functional Description
 Without any command line arguments, tlog will look for task sources listed in JOURNAL_PATH/endeavors or ~/journal under the users home location native to the operating system distribution and write a task list to a journal directory.

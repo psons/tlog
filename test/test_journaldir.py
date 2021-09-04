@@ -1,10 +1,12 @@
 #!/usr/local/bin/python3
-
+import os
 import unittest
 
 # tlog stuff
+from pathlib import Path
+from typing import List
 from unittest import TestCase
-
+import unit_test_tmp_dir
 import testdata
 import journaldir
 
@@ -77,10 +79,9 @@ class TestUserPaths(TestCase):
 
 
 # todo when I have a story writer, make test scaffolding that writes a story dir
-#  and reads it back
-upo = journaldir.UserPaths() # defaults based on environment
+#  and reads it back.   This could now use the unit_test_temp_dir module.
+upo = testdata.getUnitTestUserPathObject()   #journaldir.UserPaths() # defaults based on environment
 test_storydir_str = journaldir.path_join(upo.endeavor_path, "aGoal")
-expected_storydir_str = "StoryDir:(/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal):/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/small story.md,/Users/paulsons/dev/tl2/testuser/testjournal/Endeavors/aGoal/the rest of the work story.md"
 
 class TestStoryDir(TestCase):
     """
@@ -93,6 +94,10 @@ class TestStoryDir(TestCase):
         constructor creates an object with a list of files.
         This test depends on a particular directory with some stories
         """
+        # todo this is dependant on an Endeavor dir and story dir in the file system.
+        #  The unit test suite should create all that.
+        expected_storydir_str = f"StoryDir:({test_storydir_str}):{test_storydir_str}/small story.md,{test_storydir_str}/the rest of the work story.md,{test_storydir_str}/an unprioritized story.md"
+
         sd = journaldir.StoryDir(test_storydir_str)
         # print("sd", sd)
         self.assertEqual(expected_storydir_str, str(sd))
@@ -112,3 +117,64 @@ class TestFileIO(TestCase):
         journaldir.write_filepath(testdata.dtask_line, fileIOPath)
         expected_str = journaldir.read_file_str(fileIOPath)
         self.assertEqual(expected_str, testdata.dtask_line)
+
+    def createDirWithFiles(self, dir: str, files: List[str]):
+        """
+
+        :param dir: expected to be a creatable path to a directory
+        :param files: list of files with no leading path
+        :return: dir
+        """
+        os.makedirs(dir)
+        for file in files:
+            baseName = os.path.basename(file)
+            filePath = os.path.join(dir, baseName)
+            Path(filePath).touch()
+        return dir
+
+    def cleanUpDirWithFiles(self, dirToRemove: str):
+        if os.path.isdir(dirToRemove):
+            files = os.listdir(dirToRemove)
+            for file in files:
+                os.remove(os.path.join(dirToRemove, file))
+
+            os.rmdir(dirToRemove)
+
+
+    def testMoveFilesAndGetFileNamesByPattern(self):
+        """
+        Tests move_files() and get_file_names_by_pattern
+        Generates some files in a dir, and then moves them by pattern to another dir.
+        Test passes if the files in he target dir are the files that matched the original pattern.
+        :return:
+        """
+        tag = "testMoveFilesAndGetFileNamesByPattern"
+        try:
+            # --- Setup a dir with some file
+
+            fileList = ['SomeFile.txt', 'journal-2021-08-18.md', 'journal-2021-08-19.md', 'journal-2021-08-21.md',
+                        'journal-2021-08-22.md', 'journal-2021-08-23.md']
+            sourceDir = os.path.join(unit_test_tmp_dir.uttd, "mvFileTestSourceDir")
+            destDir = os.path.join(unit_test_tmp_dir.uttd, "mvFileTestDestDir")
+
+            # start clean in case an old failure left some junk there.
+            self.cleanUpDirWithFiles(sourceDir)
+            self.cleanUpDirWithFiles(destDir)
+
+            dirShouldExistWithFiles = self.createDirWithFiles(sourceDir, fileList)
+            os.makedirs(destDir)
+
+            # --- test the funcs that should move the files
+            fullyQualifiedSourceMatchFileList = journaldir.get_file_names_by_pattern(sourceDir, journaldir.journal_pat)
+            journaldir.move_files(destDir, fullyQualifiedSourceMatchFileList)
+            print(f"dirShouldExistWithFiles: {dirShouldExistWithFiles}")
+            fullyQualifiedDestMatchFileList = journaldir.get_file_names_by_pattern(destDir, journaldir.journal_pat)
+            sourceFileList = [ os.path.basename(sf) for sf in fullyQualifiedSourceMatchFileList]
+            destFileList = [ os.path.basename(df) for df in fullyQualifiedDestMatchFileList]
+            self.assertCountEqual(sourceFileList, destFileList)
+
+        finally:
+            # --- Clean up the source dir and the dest dir. todo
+            print(f"Executing the finally clause in {tag}")
+            self.cleanUpDirWithFiles(dirShouldExistWithFiles)
+            self.cleanUpDirWithFiles(destDir)
