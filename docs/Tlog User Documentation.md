@@ -36,6 +36,20 @@ manage the creation and completion of sub tasks involved `in resolving an issue'
 as opposed to having an issue that takes many days to complete.  It will make 
 reconciliation with your list much easier.
 
+#### Sidebar on sidebar. Tasks are for a human to be "doable", "manageable", "not microsected", and may have "subparts".
+ The task size constant is that it is "doable" meaning that a task can be cognatively understood by the person doing it, and they have the tools and physical and cognative capabilities to do it, and ideally it is "manageable" fits within a segment of a day so its importance and timliness can be reconciled with other tasks.  (i.e. it shouldn't be completed after it is useful, or may be broken down to a part that is an enabler for some other worker to do other tasks) (see Breaking up tasks by making stories story.md)
+
+ There is a trade off for individuals and teams such that if task management itself becomes an onerous and time consuming task, then its value has to be considered against the value of the task completion.
+
+ A good task manager then reduces the overhead of managing tasks, facillitates their break up, and enciourages tasks.
+ --
+A task shoud not be "microsected", meaning that it is captures written and talked about at a more granular level than necessary to complet it.   Initial authoring of a paragraph for example is a task where the sentnce design word usage, and punctuation typically would be wasteful to subdivide and assign.  
+ 
+
+ The idea that a task is "doable", "manageable", and "not microsected" implies that ther is a minimum subdivision for tasks, and if more layers of decomposition are needed, they should occur above the task level.  The practical implication for tlog is that if a tasks is too large, decompoing it should involve story creation, not establishment of some smaller effort subdivision.
+  - a task may have "sub parts" in its delivery, such as a programmer using functions to break appart a piece of programming logic, or an writer using more or fewer sentences or paragraphs to document an idea.  
+  - "sub parts" can exist within a bulleted list or other text structure (or maybe images?) within a task.   Sub parts are below "task", and the results may be reviewed, presented, or worked on by other resources or tasks
+
 ### TaskLog
 Tasklog represents all of your work that it can get information about in simple 
 text files on a local device.  If you occasionally update your priorities, 

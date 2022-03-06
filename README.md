@@ -4,32 +4,22 @@ On a feature or fix branch, paste the current story text
 from the backlog into here.
 # current work
 
-Created unit_test_tmp_dir.py to establish a unit test temp dir (uttd) as a root path for file system 
-operations needed by unit tests.
+Tasks iin this effort are flowing in from:
+    ~/journal/Endeavors/tl_sprint/tasks in Mongo story.md
 
-It is used for by testdata.getUnitTestUserPathObject() to get a path object that will not interfere with other 
-test and user environments.
+Notes and learning are being recordeed in:
+    ~/dev/tl2/Planning/Technical Implementation Notes/Mongo and Domain model notes.md
 
-tlog now keeps only a single journal file in the jounaldir/yyyy/mm directory
-tlog now moves resolved files into a subdirectoy of jounaldir/yyyy/mm
+x - play with mongo to make a few collections 
+ - goal is to gain background to understand the key structure I 
+   should have in the object model.
+   - prob want a hash as a key for each of the endeavor, story, and task.
+    
+
+
+
 
 # tasks
-x - single journal file in the month directory
- - when writing a jtd story, move any old jtd to an 'old' subdir of the temp location. 
- x - write method in journaldir.py to get listing of files matching a pattern given as an arg
-    - already have: 
-        get_file_names_by_pattern(dir_name, a_pattern) -> List[str]:
- x - initialize ~/tmp/tlog/old if it doesn't exist.     
- x - write method in journaldir.py to move list of files to target dir
-      x - write tests.
- x - write method in tlog.py to 
-   x - call journal dir method to get listing per above.
-   a - remove current jtd file from list.  
-      - leave it there.  it will be immediately rewritten.  
-        a diff with the old copy can show what just changed. 
-   x - call journal dir method to move files. 
-
-
 
 # Project notes
 Add more explanatory notes about the project.
