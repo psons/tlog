@@ -14,6 +14,7 @@ if invoked as script, print it to stdout so a shell alias can cd there.
 
 Composition: Contains all the file system operations needed by tlog.py
 """
+from tlconst import apCfg
 import datetime
 import os
 import re
@@ -31,23 +32,6 @@ class TaskSourceException(Exception):
     def __str__(self):
         return repr(self.value)
 
-journal_path_stub = '/journal'
-tmp_path_stub = '/tmp/tlog'
-endeavor_path_stub = "/Endeavors"
-
-default_journal_path = os.path.expanduser('~') + journal_path_stub
-default_tmp_path = os.path.expanduser('~') + tmp_path_stub
-default_endeavor_name = "default"
-
-convention_log_location = os.getenv('TLOG_TMP', default_tmp_path)
-
-convention_journal_root = os.getenv('JOURNAL_PATH', default_journal_path)
-endeavor_dir = convention_journal_root + endeavor_path_stub
-journal_pat = re.compile(
-    '[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
-story_pat = re.compile('.*story.md')
-
-
 class UserPaths:
     """
     Verifies that journal_root exists as a directory.
@@ -61,8 +45,8 @@ class UserPaths:
             << various endeavor subdirectories >>
                 << various *story.txt files containing task items >>
     """
-    def __init__(self, journal_root=convention_journal_root,
-                 tmp_root=convention_log_location, user_endeavor_dir=endeavor_dir):
+    def __init__(self, journal_root=apCfg.convention_journal_root,
+                 tmp_root=apCfg.convention_log_location, user_endeavor_dir=apCfg.endeavor_dir):
         if os.path.isdir(journal_root):
             self.journal_path = journal_root
         else:
@@ -70,7 +54,7 @@ class UserPaths:
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
-        default_endeavor_dir = os.path.join(self.endeavor_path, default_endeavor_name)
+        default_endeavor_dir = os.path.join(self.endeavor_path, apCfg.default_endeavor_name)
         self.new_task_story_file = os.path.join(default_endeavor_dir, "new task story.md")
         self.git_repo_obj = None
         self.tmp_root = tmp_root
@@ -168,17 +152,11 @@ class Daily:
 def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
     # More advanced versions of endeavor file format later.
-    endeavor_text = default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
+    endeavor_text = apCfg.default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
     debuglog = logging.getLogger('debuglog')
     debuglog.debug(f"endeavor_text: \n{endeavor_text}" )
     return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
             for e_str in endeavor_text.split()]
-
-
-def load_endeavors_deprecated(user_path_obj):
-    endeavor_text = read_file_str(user_path_obj.endeavor_file)
-    print("endeavor_text:", endeavor_text)
-    return [Endeavor_deprecated(e_str, user_path_obj) for e_str in endeavor_text.split()]
 
 def path_join(p, f):
     """wrapper helps prevent module os from being needed in calling modules."""
@@ -252,8 +230,6 @@ def init(aDir):
     if not os.path.exists(aDir):
         os.makedirs(aDir)
 
-
-
 def get_prior_dir(search_dir):
     """search_dir ends with a path like somthing/yyyy/mm
 	then the pathname of the prior dir  will be returned"""
@@ -285,14 +261,14 @@ def get_prior_dir(search_dir):
     return os.path.join(base_path, year_str, mm)
 
 
-class Endeavor_deprecated:
-    def __init__(self, name, a_user_path_obj):
-        self.name = name
-        self.dir_path = os.path.join(a_user_path_obj.endeavor_path, self.name)
-        self.story_list = get_file_names_by_pattern(self.dir_path, story_pat)
-
-    def __str__(self):
-        return "Endeavor name:{} stories:{}".format(self.name, str(self.story_list))
+# class Endeavor_deprecated:
+#     def __init__(self, name, a_user_path_obj):
+#         self.name = name
+#         self.dir_path = os.path.join(a_user_path_obj.endeavor_path, self.name)
+#         self.story_list = get_file_names_by_pattern(self.dir_path, apCfg.story_pat)
+#
+#     def __str__(self):
+#         return "Endeavor name:{} stories:{}".format(self.name, str(self.story_list))
 
 
 class StoryDir:
@@ -308,9 +284,8 @@ class StoryDir:
         self.path = sdir
         self.story_list = []
         if os.path.isdir(sdir):
-            dir_story_list = get_file_names_by_pattern(sdir, story_pat)
-            priority_pat = re.compile('[pP]rioritized.[mM][Dd]')
-            prioritized_file_list: str = get_file_names_by_pattern(sdir, priority_pat)
+            dir_story_list = get_file_names_by_pattern(sdir, apCfg.story_pat)
+            prioritized_file_list: str = get_file_names_by_pattern(sdir, apCfg.priority_pat)
             if prioritized_file_list:
                 pri_file = prioritized_file_list[0]
                 pri_order_text = read_file_str(pri_file) # take first if more than 1 pri file.

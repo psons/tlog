@@ -2,6 +2,7 @@
 import os
 import unittest
 
+from tlconst import apCfg
 # tlog stuff
 from pathlib import Path
 from typing import List
@@ -165,10 +166,10 @@ class TestFileIO(TestCase):
             os.makedirs(destDir)
 
             # --- test the funcs that should move the files
-            fullyQualifiedSourceMatchFileList = journaldir.get_file_names_by_pattern(sourceDir, journaldir.journal_pat)
+            fullyQualifiedSourceMatchFileList = journaldir.get_file_names_by_pattern(sourceDir, apCfg.journal_pat)
             journaldir.move_files(destDir, fullyQualifiedSourceMatchFileList)
             print(f"dirShouldExistWithFiles: {dirShouldExistWithFiles}")
-            fullyQualifiedDestMatchFileList = journaldir.get_file_names_by_pattern(destDir, journaldir.journal_pat)
+            fullyQualifiedDestMatchFileList = journaldir.get_file_names_by_pattern(destDir, apCfg.journal_pat)
             sourceFileList = [ os.path.basename(sf) for sf in fullyQualifiedSourceMatchFileList]
             destFileList = [ os.path.basename(df) for df in fullyQualifiedDestMatchFileList]
             self.assertCountEqual(sourceFileList, destFileList)

@@ -6,7 +6,7 @@ Objects.  Stories read from Endeavor files, for example.
 """
 import os
 from typing import List
-
+from tlconst import apCfg
 from tldocument import TLDocument  # import re
 from docsec import TLogInternalException, Item
 import fileinput
@@ -101,9 +101,9 @@ def find_prev_journal_dir(latest_dir, history_months):
     while file_count == 0 and dirs_to_search > 0:
         search_dir = next_search_dir
         sfl = journaldir.get_file_names_by_pattern(
-            search_dir, journaldir.story_pat)
+            search_dir, apCfg.story_pat)
         jfl = journaldir.get_file_names_by_pattern(
-            search_dir, journaldir.journal_pat)
+            search_dir, apCfg.journal_pat)
         file_count = len(sfl) + len(jfl)
         print("{} stories and {} journals in {}".
               format(len(sfl), len(jfl), search_dir))
@@ -172,7 +172,7 @@ def main():
     # initialize everything
     tag = "tlog main:"
     user_path_o = journaldir.UserPaths()
-    daily_o = journaldir.Daily(journaldir.convention_journal_root)
+    daily_o = journaldir.Daily(apCfg.convention_journal_root)
     journaldir.init(user_path_o.tmp_root)
     journaldir.init(daily_o.jrdir)
 
@@ -203,14 +203,14 @@ def main():
     #     1. build the "old" journal / to do (j/td) file.
     journaldir.init(daily_o.j_month_dir)
     journaldir.init(user_path_o.old_journal_dir)
-    journaldir.init(journaldir.join(user_path_o.endeavor_path, journaldir.default_endeavor_name))
+    journaldir.init(journaldir.join(user_path_o.endeavor_path, apCfg.default_endeavor_name))
     # look back in history to find past journal dir
     prev_journal_dir = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
     story_dir_o = StoryDir(prev_journal_dir)
 
     journal_story_docs = StoryGroup(story_dir_o).story_docs # * story.md docs.
     j_file_list = journaldir.get_file_names_by_pattern(
-        story_dir_o.path, journaldir.journal_pat) # journal {date].md files
+        story_dir_o.path, apCfg.journal_pat) # journal {date].md files
     msg = "no argument sfile_list: " + ",".join(story_dir_o.story_list)
     # ---
 
@@ -303,7 +303,7 @@ def main():
     new_jtd_doc.add_list_items_to_scrum(sprint_task_items)
 
     # 10. Move existing j/td files out of the journaldir
-    journal_file_list = journaldir.get_file_names_by_pattern(daily_o.j_month_dir, journaldir.journal_pat)
+    journal_file_list = journaldir.get_file_names_by_pattern(daily_o.j_month_dir, apCfg.journal_pat)
     if len(journal_file_list) > 0:
         journaldir.move_files(user_path_o.old_journal_dir, journal_file_list)
 

@@ -17,6 +17,10 @@ class Endeavor:
         self.name
         self.storyList: List[Story] = []  # in priority order
 
+    def getEncodable(self):
+        for key in sorted(self.__dict__.keys()):
+            print(f"key: {key}")
+
 class Story:
     def __init__(self, name, parentEndeavor, taskList: List[Task]):
         self.maxTasks: int

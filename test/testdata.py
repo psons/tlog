@@ -3,6 +3,8 @@ import os
 
 import journaldir
 import unit_test_tmp_dir
+from tlconst import apCfg
+
 
 ad1 = "aDocAttribute"
 vd1 = " TheDocValue"
@@ -102,16 +104,16 @@ def getUnitTestUserPathObject():
     """
     gets a UserPath object that is rooted at unit_test_tmp_dir.uttd instead of using the environment
     variables of default locations.
-    This is useful to allow 3 separate runn environments on a laptop:
+    This is useful to allow 3 separate run environments on a laptop:
      1 - a separate environment were unit tests can set up and tear down.
      2 - a development and user acceptance test environment that uses alternate environment locations
      to quickly mock up and reload test data.
      3 - an actual real tlog environment
     :return:
     """
-    ut_journal_root = unit_test_tmp_dir.uttd + journaldir.journal_path_stub
-    ut_tmp_root = unit_test_tmp_dir.uttd + journaldir.tmp_path_stub
-    ut_endeavor_dir = unit_test_tmp_dir.uttd + journaldir.endeavor_path_stub
+    ut_journal_root = unit_test_tmp_dir.uttd + apCfg.journal_path_stub
+    ut_tmp_root = unit_test_tmp_dir.uttd + apCfg.tmp_path_stub
+    ut_endeavor_dir = unit_test_tmp_dir.uttd + apCfg.endeavor_path_stub
     if unit_test_tmp_dir.uttd_exists:
         os.makedirs(ut_journal_root, exist_ok=True)
     else:
