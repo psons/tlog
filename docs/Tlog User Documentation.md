@@ -10,11 +10,12 @@ with the objective that you only switch tasks when it increases productivity.
 A primary goal of Tlog is to provide a small focused and achievable list of about 3 tasks for each day.  
 Those tasks are the right tasks to work on because they reflect your highest priorities and obligations based
 on your goals and plans.  (You still have to decide what those priorities are, but not every day, because 
-they do not change every day!)
+they do not change every day!  )
 
 The flow and terminology of tlog is that of a single day single person Scrum Sprint.
 
 [link to a finalized document summarizing features and Philosophy ] 
+ - About Goals and OKRs https://www.whatmatters.com/faqs/okr-meaning-definition-example
 
 TaskLog is especially well suited to analytical work where your effort is to document and communicate resolutions to issues, or build software systems.
 
