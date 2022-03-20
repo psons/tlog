@@ -2,6 +2,7 @@
 import os
 import unittest
 
+import tlutil
 from tlconst import apCfg
 # tlog stuff
 from pathlib import Path
@@ -58,7 +59,7 @@ class Test(TestCase):
 class TestUserPaths(TestCase):
 
     def testUserJournalPathRaisesE(self):
-        with self.assertRaises(journaldir.TaskSourceException) as tse:
+        with self.assertRaises(tlutil.TaskSourceException) as tse:
             journaldir.UserPaths("/some/bad/path", "/another/bad/path")
         part_of_e_val = tse.exception.value[-31:]
         self.assertEqual("for journals is not a directory", part_of_e_val)

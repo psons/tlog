@@ -73,7 +73,7 @@ class TLDocument:
     Some attributes are supported as properties in the Document class and
     implemented as Attributes on a special first section:
         doc_name DocName: (read / write)
-        max_tasks maxTasks: (read / write)
+        max_tasks max_tasks: (read / write)
 
     The Section and Item classes can be injected with attributes, but
     they should be optional in most or all cases.
@@ -90,27 +90,35 @@ class TLDocument:
     The class DocStructure implements the scrum object to associate Item leader types
     with semantically meaningful special sections like '# Resolved' and '# To Do'.
     """
+    default_max_stories = 3 # todo add support for this in tlog.py.  endeavor.py has it.
     default_maxTasks = 1 # used if not specified in a story.txt
     default_scrum_to_do_task_capacity = 5  # default number of backlog tasks to take into a day sprint
 
     defautInProgHead = "#In progress"
     dname_attr_str = "DocName"
 
+    task_status_list = []
+
     # Item and leader related settings:
+    task_status_list.append('a')
     abandoned_str = "^[aA] *-"
     abandoned_pat = re.compile(abandoned_str)
+    task_status_list.append('x')
     completed_str = "^[xX] *-"
     completed_pat = re.compile(completed_str)
     resolved_str = "|".join([completed_str, abandoned_str])
     resolved_pat = re.compile(resolved_str)  # Used externally in in TLDocument get_xa ..
 
+    task_status_list.append('/')
     in_progress_str = r'^[/\\] *-' # used here in head_str and not_do_str
     in_progress_pat = re.compile(in_progress_str) # used in Item in modify_item_top() that i am refactoring
 
+    task_status_list.append('u')
     unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
     unfinished_str = "^[uU] *-"
     unfinished_pat = re.compile(unfinished_str)  # used in test for Item in modify_item_top() that i am refactoring
                                                 # Good usage in Document to configures the scrum Docstruct
+    task_status_list.append('d')
     do_str = "^[dD] *-"  # used here as part of head_str
     do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
 
@@ -175,10 +183,10 @@ class TLDocument:
 
     doc_name = property(_get_doc_name, _set_doc_name)
 
-    max_tasks_attr_str = "maxTasks"
+    max_tasks_attr_str = "max_tasks"
 
     def _get_max_tasks(self):
-        "getter for maxTasks"
+        "getter for max_tasks"
         return self.get_doc_attrib(TLDocument.max_tasks_attr_str)
 
     def _set_max_tasks(self, max):
@@ -344,7 +352,7 @@ class TLDocument:
 
     def get_document_unresolved_list(self) -> List[Item]:
         """
-        Caller will be responsible for slicing to maxTasks if needed.
+        Caller will be responsible for slicing to max_tasks if needed.
         :return all tasks from all section matching TLDocument.unresolved_pat
         """
         unresolved_items: List[Item] = list()

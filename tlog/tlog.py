@@ -290,7 +290,7 @@ def main():
     #       (if they are written in priority order)
     # however the stories within an endeavor are just in file listing order.
     # (see tlog story 'Prioritized Backlog story.txt'
-    # as a work around, users can make sure only 1 story filer in each endeavor has a non zero 'maxTasks:' value.
+    # as a work around, users can make sure only 1 story filer in each endeavor has a non zero 'max_tasks:' value.
 
     # debuglog.debug("Sprint Candidate Tasks: " + str_o_list(sprint_candidate_tasks, delimiter="\nTask::\n", prefix_delim=True))
 

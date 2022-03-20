@@ -9,6 +9,8 @@ import logging
 import re
 from typing import Pattern, Dict, List
 
+from tlutil import digest
+
 
 class Section:
     head_pat = re.compile("^#")
@@ -395,13 +397,17 @@ class Item:
         otherwise returns an empty string"""
         my_title = self.get_title()
         if my_title:
-            my_bytes = my_title.encode('utf-8')
-            md5_of_bytes = hashlib.md5(my_bytes)
-            hex_digest_of_md5_of_byte_encode_of_title = md5_of_bytes.hexdigest()
+            hex_digest_of_md5_of_byte_encode_of_title = digest(my_title)
             # print("hex md5 title: {}".format(hex_digest_of_md5_of_byte_encode_of_title))
             return hex_digest_of_md5_of_byte_encode_of_title[0:10]
         else:
             return ''
+
+    # def digest(self, in_str):
+    #     my_bytes = in_str.encode('utf-8')
+    #     md5_of_bytes = hashlib.md5(my_bytes)
+    #     hex_digest_of_md5_of_byte_encode_of_title = md5_of_bytes.hexdigest()
+    #     return hex_digest_of_md5_of_byte_encode_of_title
 
     def save_title_hash(self):
         """

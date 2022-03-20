@@ -97,7 +97,7 @@ u - item with sub in progress
 									backlogOut])
 
 	small_story = """\
-maxTasks: 3
+max_tasks: 3
 d - start on the small story
 d - some more work on the small story
 d - refine the small story work

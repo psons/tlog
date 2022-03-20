@@ -21,16 +21,7 @@ import re
 from os import listdir
 from os.path import isfile, join
 import logging
-
-
-class TaskSourceException(Exception):
-    'Task source exception indicates a failure in a data source for endeavors, stories,  etc '
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
+import tlutil
 
 class UserPaths:
     """
@@ -50,7 +41,7 @@ class UserPaths:
         if os.path.isdir(journal_root):
             self.journal_path = journal_root
         else:
-            raise TaskSourceException(journal_root + " for journals is not a directory")
+            raise tlutil.TaskSourceException(journal_root + " for journals is not a directory")
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
@@ -302,7 +293,7 @@ class StoryDir:
                 if story_file not in self.story_list:
                     self.story_list.append(story_file)
         else:
-            raise TaskSourceException(f"{sdir} is not a directory, so can not be a StoryDir")
+            raise tlutil.TaskSourceException(f"{sdir} is not a directory, so can not be a StoryDir")
 
 
     def __str__(self):
