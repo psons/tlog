@@ -2,6 +2,7 @@
 import re
 import unittest
 from tldocument import TLDocument
+import tldocument
 from docsec import Item, Section, DocStructure
 from testdata import ad1, vd1, vd2, doc1_text
 
@@ -97,7 +98,7 @@ u - item with sub in progress
 									backlogOut])
 
 	small_story = """\
-max_tasks: 3
+maxTasks: 3
 d - start on the small story
 d - some more work on the small story
 d - refine the small story work
@@ -195,13 +196,13 @@ class special_sections:
 	"holds some test data for DocumentStructure"
 	def __init__(self):
 		# self.ds = DocStructure( '^#', TLDocument.top_parser_pat)
-		self.ds = DocStructure( Section.head_pat, TLDocument.top_parser_pat)
+		self.ds = DocStructure( Section.head_pat, tldocument.top_parser_pat)
 		self.a_pat = re.compile('^[aA] *-')
 		self.x_pat = re.compile('^[xX] *-')
 		self.ds.add_leader_entry('# Past Tasks', [self.a_pat, self.x_pat])
 		self.ds.add_leader_entry('# Current Tasks', ['^[dD] *-'])
 		self.test_line = 'x - is a completed task'
-		self.test_item: Item = Item(TLDocument.top_parser_pat).fromtext(TLDocument.top_parser_pat, self.test_line) # todo canthis just call the class method fromText on Item?
+		self.test_item: Item = Item(tldocument.top_parser_pat).fromtext(tldocument.top_parser_pat, self.test_line) # todo canthis just call the class method fromText on Item?
 		# print(str(self.ds) + "\n")
 		# place_to_put = special_sections.insert_item("")
 

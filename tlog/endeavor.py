@@ -23,7 +23,7 @@ class Endeavor:
     story_list_key = 'story_list'
     def __init__(self, name, max_stories=None, eid=None):
         self.name = name
-        self.max_stories = max_stories or tldocument.TLDocument.default_max_stories
+        self.max_stories = max_stories or tldocument.default_max_stories
         self.eid = eid or digest(self.name)
         self.story_list: List[Story] = []  # in priority order
 
@@ -84,7 +84,7 @@ class Story:
     def __init__(self, name, parent_endeavor, max_tasks=None, sid=None):
         self.name = name
         self.parent_endeavor: Endeavor = parent_endeavor
-        self.max_tasks: int = max_tasks or tldocument.TLDocument.default_maxTasks
+        self.max_tasks: int = max_tasks or tldocument.default_maxTasks
         self.sid = sid or f"{self.parent_endeavor.eid}.{digest(self.name)}"
         self.task_list = []
         self.parent_endeavor.add_story(self) # so that parent endeavor knows this story is part of it.
@@ -159,7 +159,7 @@ class Task:
         :param parent_story:
         :param tid:
         """
-        if status not in tldocument.TLDocument.task_status_list:
+        if status not in tldocument.task_status_list:
             raise tlutil.TaskSourceException(f"{status} is not a recognizes task status")
             # possibly just warn?
         if parent_story.__class__.__name__ != 'Story':

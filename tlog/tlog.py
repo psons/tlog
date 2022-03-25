@@ -8,6 +8,7 @@ import os
 from typing import List
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
+import tldocument
 from docsec import TLogInternalException, Item
 import fileinput
 from journaldir import StoryDir
@@ -233,12 +234,12 @@ def main():
     new_jtd_doc: TLDocument =  TLDocument()
     new_jtd_doc.add_section_list_items_to_scrum(resolved_doc.journal) # items in resolved file from earlier today run of tlog
 
-    in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(TLDocument.in_progress_pat) # items in old jtd that are in progress
-    unfinished_item_copies = [ item.deep_copy(TLDocument.top_parser_pat) for item in in_progress_items ]
-    [ item.modify_item_top(TLDocument.in_progress_pat, TLDocument.unfinished_s) for item in unfinished_item_copies ] # toggle in progress to unfinished
+    in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.in_progress_pat) # items in old jtd that are in progress
+    unfinished_item_copies = [ item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items ]
+    [ item.modify_item_top(tldocument.in_progress_pat, tldocument.unfinished_s) for item in unfinished_item_copies ] # toggle in progress to unfinished
     new_jtd_doc.add_list_items_to_scrum(unfinished_item_copies)
 
-    resolved_items = old_jtd_doc.select_all_section_items_by_pattern(TLDocument.resolved_pat) # items in jtd that are resolved (xa)
+    resolved_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.resolved_pat) # items in jtd that are resolved (xa)
     new_jtd_doc.add_list_items_to_scrum(resolved_items)
 
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)

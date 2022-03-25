@@ -2,10 +2,10 @@
 
 The domain object model is being created in endeavor.py 
 to support representing Endeavors, Tasks, and Stories in an 
-encodng agnostic way.
+encoding agnostic way.
 
 The json encoding and decoding of things in endeavor.py 
-does not know the semantic meaning of things, an simplu uses the
+does not know the semantic meaning of things, and simply uses the
 attribute names and structure of python types returned by 
 endeavor.Endeavor.get_encodable().
 

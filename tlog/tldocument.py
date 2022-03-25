@@ -8,7 +8,7 @@ with the semantic significance of those patterns
 See tldocument.py for pattern_strs that classify input
 lines
 
-Logic for building TLDocuments from text: (needs update)
+Logic for building TLDocuments line by line from text: (needs update)
     There is always a current Section in a Document.
     There is always a current Item in a Section.
 
@@ -44,6 +44,51 @@ TLDocument
                 - a section for Resolved tasks. (heading '# Resolved {day of month}' ) 
                 - a Section with a limited number of tasks for current work session (heading '# To Do {day of month}')
 """
+default_max_stories = 3 # todo add support for this in tlog.py.
+                        #   At present tlog does not have any object representing an endeavor.
+                        #   Add that first, then read maxStories of the Endeavor line in endeavors.md
+                        #   endeavor.Endeavor already supports max stories using this default.
+default_maxTasks = 1  # used if not specified in a story.txt
+
+# Item and leader related settings:
+task_status_list = []
+abandoned_str = "^[aA] *-"
+task_status_list.append('a')
+abandoned_pat = re.compile(abandoned_str)
+task_status_list.append('x')
+completed_str = "^[xX] *-"
+completed_pat = re.compile(completed_str)
+resolved_str = "|".join([completed_str, abandoned_str])
+resolved_pat = re.compile(resolved_str)  # Used externally in in TLDocument get_xa ..
+
+task_status_list.append('/')
+in_progress_str = r'^[/\\] *-'  # used here in head_str and not_do_str
+in_progress_pat = re.compile(in_progress_str)  # used in Item in modify_item_top() that i am refactoring
+
+task_status_list.append('u')
+unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
+unfinished_str = "^[uU] *-"
+unfinished_pat = re.compile(unfinished_str)  # used in test for Item in modify_item_top() that i am refactoring
+# Good usage in Document to configures the scrum Docstruct
+task_status_list.append('d')
+do_str = "^[dD] *-"  # used here as part of head_str
+do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
+
+head_str = "|".join(
+    [resolved_str, in_progress_str, do_str, unfinished_str])  # used here in head_pat and leader_group_str
+head_pat = re.compile(head_str)
+
+not_do_str = "|".join([resolved_str, in_progress_str, unfinished_str])  # just used here
+not_do_pat = re.compile(not_do_str)  # only used in Document
+
+unresolved_str = "|".join([in_progress_str, do_str])  # used to get sprint candidates from the doc
+unresolved_pat = re.compile(unresolved_str)
+
+leader_group_str = "(" + head_str + ")"  # only used here
+title_group_str = r"\s*(.*\S)\s*$"  # only used here
+# top_parser_str = leader_group_str + title_group_str
+top_parser_pat = re.compile(leader_group_str + title_group_str)
+
 
 class TLDocument:
     """
@@ -90,54 +135,11 @@ class TLDocument:
     The class DocStructure implements the scrum object to associate Item leader types
     with semantically meaningful special sections like '# Resolved' and '# To Do'.
     """
-    default_max_stories = 3 # todo add support for this in tlog.py.
-                            #   At present tlog does nve any object representing an endeavor.
-                            #   Add that first, then read maxStories of the Endeavor line in endeavors.md
-                            #   endeavor.Endeavor already supports max stories using this default.
-    default_maxTasks = 1 # used if not specified in a story.txt
+
     default_scrum_to_do_task_capacity = 5  # default number of backlog tasks to take into a day sprint
 
     defautInProgHead = "#In progress"
     dname_attr_str = "DocName"
-
-    task_status_list = []
-
-    # Item and leader related settings:
-    task_status_list.append('a')
-    abandoned_str = "^[aA] *-"
-    abandoned_pat = re.compile(abandoned_str)
-    task_status_list.append('x')
-    completed_str = "^[xX] *-"
-    completed_pat = re.compile(completed_str)
-    resolved_str = "|".join([completed_str, abandoned_str])
-    resolved_pat = re.compile(resolved_str)  # Used externally in in TLDocument get_xa ..
-
-    task_status_list.append('/')
-    in_progress_str = r'^[/\\] *-' # used here in head_str and not_do_str
-    in_progress_pat = re.compile(in_progress_str) # used in Item in modify_item_top() that i am refactoring
-
-    task_status_list.append('u')
-    unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
-    unfinished_str = "^[uU] *-"
-    unfinished_pat = re.compile(unfinished_str)  # used in test for Item in modify_item_top() that i am refactoring
-                                                # Good usage in Document to configures the scrum Docstruct
-    task_status_list.append('d')
-    do_str = "^[dD] *-"  # used here as part of head_str
-    do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
-
-    head_str = "|".join([resolved_str, in_progress_str, do_str, unfinished_str])  # used here in head_pat and leader_group_str
-    head_pat = re.compile(head_str)
-
-    not_do_str = "|".join([resolved_str, in_progress_str, unfinished_str])  # just used here
-    not_do_pat = re.compile(not_do_str)  # only used in Document
-
-    unresolved_str = "|".join([in_progress_str, do_str])  # used to get sprint candidates from the doc
-    unresolved_pat = re.compile(unresolved_str)
-
-    leader_group_str = "(" + head_str + ")" # only used here
-    title_group_str = r"\s*(.*\S)\s*$"  # only used here
-    # top_parser_str = leader_group_str + title_group_str
-    top_parser_pat = re.compile(leader_group_str + title_group_str)
 
     # need a constructor that takes a list of lines
     # todo - need tests for this
@@ -154,10 +156,10 @@ class TLDocument:
         domth: str = day if day else ""
         self.todo_section_head = f'# To Do {domth}'
         self.resolved_section_head = f'# Resolved {domth}'
-        self.scrum = DocStructure(Section.head_pat, TLDocument.top_parser_pat) # see doc for make_scrum()
-        self.scrum.add_leader_entry(self.resolved_section_head, [TLDocument.abandoned_pat,
-                                                                 TLDocument.completed_pat, TLDocument.unfinished_pat])
-        self.scrum.add_leader_entry(self.todo_section_head, [TLDocument.in_progress_pat, TLDocument.do_pat])
+        self.scrum = DocStructure(Section.head_pat, top_parser_pat) # see doc for make_scrum()
+        self.scrum.add_leader_entry(self.resolved_section_head, [abandoned_pat,
+                                                                 completed_pat, unfinished_pat])
+        self.scrum.add_leader_entry(self.todo_section_head, [in_progress_pat, do_pat])
 
         self._doc_name = name or ""
         self.task_capacity = initial_task_capacity
@@ -172,7 +174,7 @@ class TLDocument:
         and a current section
         """
         self.journal = []
-        self.in_progress = Section(TLDocument.top_parser_pat, None)  # external logic sets to today
+        self.in_progress = Section(top_parser_pat, None)  # external logic sets to today
         # self.backlog = Section(TLDocument.top_parser_pat)
         self.add_section_from_line(None)
 
@@ -186,7 +188,7 @@ class TLDocument:
 
     doc_name = property(_get_doc_name, _set_doc_name)
 
-    max_tasks_attr_str = "max_tasks"
+    max_tasks_attr_str = "maxTasks"
 
     def _get_max_tasks(self):
         "getter for max_tasks"
@@ -250,7 +252,7 @@ class TLDocument:
                 # New section.
                 self.add_section_from_line(data)
 
-        elif TLDocument.top_parser_pat.match(data):
+        elif top_parser_pat.match(data):
             self.current_section.add_section_line(data)
             self.last_add = self.current_section
         else:
@@ -264,7 +266,7 @@ class TLDocument:
         :param data: string to create a section
         :return:
         """
-        self.current_section = Section(TLDocument.top_parser_pat, data)
+        self.current_section = Section(top_parser_pat, data)
         self.journal.append(self.current_section)
         self.last_add = self.current_section
         return self.current_section
@@ -297,7 +299,7 @@ class TLDocument:
             # Document set_doc_attrib calling Section Set Attrib
             self.journal[0].set_sec_attrib(akey, aval)
         else:
-            s = Section(TLDocument.top_parser_pat)
+            s = Section(top_parser_pat)
             s.set_sec_attrib(akey, aval)
             self.journal.insert(0, s)
 
@@ -316,7 +318,7 @@ class TLDocument:
 
 
     def get_limited_tasks_from_unresolved_list(self, )-> List[Item]:
-        mt = TLDocument.default_maxTasks
+        mt = default_maxTasks
         if self.max_tasks:
             mt: int = int(self.max_tasks)
 
@@ -332,7 +334,7 @@ class TLDocument:
         unresolved_items: List[Item] = list()
         section: Section
         for section in self.journal:
-            unresolved_items += section.get_matching_items(TLDocument.unresolved_pat)
+            unresolved_items += section.get_matching_items(unresolved_pat)
         return unresolved_items
 
 
@@ -445,11 +447,12 @@ class TLDocument:
         added_item: bool = False
         for section in self.journal:
             if section.header == section_heading:
-                section.add_item(item, head_insert=True) # # todo, make head_insert behavior part of te Section creation
+                section.add_item(item, head_insert=True) # todo, make head_insert behavior part of the Section creation
                 added_item = True
         if not added_item:
             new_section: Section = self.add_section_from_line(section_heading)
-            new_section.add_item(item, head_insert=True) # todo, make head_insert behavior part of te Section creationan pass in head_insert=true
+            new_section.add_item(item, head_insert=True) # todo, make head_insert behavior part of the Section
+                                                         #   creation pass in head_insert=true
 
 
 def debExit(message=""):
