@@ -19,7 +19,6 @@ import datetime
 import os
 import re
 from os import listdir
-from os.path import isfile, join
 import logging
 import tlutil
 
@@ -178,9 +177,9 @@ def write_filepath(new_content, filepath):
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
 
-    sfd: TextIO
-    with open(filepath, "w") as sfd:
-        sfd.write(new_content)
+    new_fd: TextIO
+    with open(filepath, "w") as new_fd:
+        new_fd.write(new_content)
 
 def remove_filepath(filepath: str):
     if os.path.exists(filepath):
@@ -210,16 +209,6 @@ def make_git_repo(path):
     # print(new_rw_repo)
     return new_rw_repo
 
-
-def init(aDir):
-    """
-	create new dir.
-	Just a wrapper around os module and a place where other app specific
-	dir creation logic might go in the future.
-	:param aDir: a directory to be created if it does not exist.
-	"""
-    if not os.path.exists(aDir):
-        os.makedirs(aDir)
 
 def get_prior_dir(search_dir):
     """search_dir ends with a path like somthing/yyyy/mm
@@ -304,7 +293,7 @@ if __name__ == "__main__":
     print(user_path_o.journal_path)
 
     if len(sys.argv) == 2 and sys.argv[1] == "init":
-        init(user_path_o.journal_path)
+        os.makedirs(user_path_o.journal_path, exist_ok=True)
 
 
 

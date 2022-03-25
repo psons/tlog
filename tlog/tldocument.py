@@ -90,7 +90,10 @@ class TLDocument:
     The class DocStructure implements the scrum object to associate Item leader types
     with semantically meaningful special sections like '# Resolved' and '# To Do'.
     """
-    default_max_stories = 3 # todo add support for this in tlog.py.  endeavor.py has it.
+    default_max_stories = 3 # todo add support for this in tlog.py.
+                            #   At present tlog does nve any object representing an endeavor.
+                            #   Add that first, then read maxStories of the Endeavor line in endeavors.md
+                            #   endeavor.Endeavor already supports max stories using this default.
     default_maxTasks = 1 # used if not specified in a story.txt
     default_scrum_to_do_task_capacity = 5  # default number of backlog tasks to take into a day sprint
 
@@ -254,35 +257,6 @@ class TLDocument:
             self.last_add.add_section_line(data)
 
 
-    def add_line_deprecated(self, data):
-        """
-        Add a single data line into the document according to
-        pattern_strs in the Item and Section classes.
-        """
-        if data is None:
-            return
-        # todo
-        #  do items are going into the backlog section, not the latest journal section.
-        #  change that to put them into journal sections ny line, and can extract a backlog later by whole items.
-        if TLDocument.do_pat.match(data):
-            self.backlog.add_section_line(data)
-            self.last_add = self.backlog
-
-
-        elif Section.head_pat.match(data):
-            if self.current_section.is_empty():
-                # Putting a header on initial section
-                self.current_section.add_section_line(data)
-                self.last_add = self.current_section
-            else:
-                # New section.
-                self.add_section_from_line(data)
-
-        elif TLDocument.not_do_pat.match(data):
-            self.current_section.add_section_line(data)
-            self.last_add = self.current_section
-        else:
-            self.last_add.add_section_line(data)
 
     def add_section_from_line(self, data: object) -> object:
         """

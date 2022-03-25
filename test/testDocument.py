@@ -151,7 +151,7 @@ d - put way misc paper tax files
 	def testDocumentAddLineNone(self):
 		"""TLDocument.add_line handles None"""
 		adoc: TLDocument = TLDocument()
-		adoc.add_line_deprecated(None)
+		adoc.add_document_line(None)
 		self.assertEqual(str(adoc), str(TLDocument()))
 
 
@@ -168,14 +168,14 @@ d - put way misc paper tax files
 		attr = d1.get_doc_attrib(ad1)
 		self.assertEqual(vd1, attr)
 
-	# todo modify this test to check for duplicat attribute in the un named section.
+	# todo modify this test to check for duplicate attribute in the un named section.
 	def testDocumentSecondSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
 		d1 = TLDocument.fromtext(TestDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		d1.set_doc_attrib(ad1, vd2) # set it again
 		attr = d1.get_doc_attrib(ad1)
-		#print("d1 is: ", d1)
+		# print("d1 is: ", d1)
 		self.assertEqual(vd2, attr)
 
 	def testDocumentNameProperty(self):

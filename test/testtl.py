@@ -148,7 +148,6 @@ free text\
         # hash is in the saved input
         # print("itest:\n", itest)
         # print("dtask_item_text_w_saved_hash (unmodified) :" + dtask_item_text_w_saved_hash)
-        # todo fix test
         self.assertEqual(False, itest.title_matches_hash())
 
     def testSaveItemUnModifiedTitleHash1(self):
@@ -480,14 +479,14 @@ class TestStoryIO(unittest.TestCase):
         fileIOPath = journaldir.path_join(fileIOPath, "testDrivenStory.md")
         new_item_section_heading = "# test_write_item_to_story_file\n"
         journaldir.remove_filepath(fileIOPath)
-        print( f"test_write_back_updated_story dtask_item_text: {dtask_item_text}" )
+        # print( f"write_item_to_story_file dtask_item_text: {dtask_item_text}" )
         storyItem = Item.fromtext(TLDocument.top_parser_pat, dtask_item_text)
         storyItem.set_attrib("storySource", fileIOPath)
-        print(f"storyItem:\n{storyItem}")
+        # print(f"storyItem:\n{storyItem}")
         tlog.write_item_to_story_file(storyItem, new_item_section_head=new_item_section_heading)
         reloadStory: TLDocument = tlog.load_doc_from_file(fileIOPath)
         self.assertEqual(new_item_section_heading + str(storyItem), str(reloadStory))
-        # todo create a scaffolding that deletes the fileIOPath
+
 
 
 

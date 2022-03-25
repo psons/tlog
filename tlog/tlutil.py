@@ -9,6 +9,16 @@ def digest(in_str, short=True):
         return hex_digest_of_md5_of_byte_encode_of_in_str[0:10]
     return hex_digest_of_md5_of_byte_encode_of_in_str
 
+class DataException(Exception):
+    'Data exception indicates an invalid composition found in a data structure. imported from file, or a data store'
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+
 class TaskSourceException(Exception):
     'Task source exception indicates a failure in a data source for endeavors, stories,  etc '
 

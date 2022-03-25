@@ -12,19 +12,6 @@ import unit_test_tmp_dir
 import testdata
 import journaldir
 
-# class Test_get_repos(unittest.TestCase):
-#  todo - implement this test
-# def testReadFile(self):
-# 	repos = journaldir.get_repos()
-# 	print(repos)
-# 	self.assertEqual("", "")
-
-# class Test_get_file_names(unittest.TestCase):
-# 	def testGetFileNames(self):
-# 		names = journaldir.get_file_names(testdata.data_dir)
-# 		print(names)
-
-
 if __name__ == '__main__':
     unittest.main()
 
@@ -80,8 +67,7 @@ class TestUserPaths(TestCase):
         self.assertEqual("pass", "pass")
 
 
-# todo when I have a story writer, make test scaffolding that writes a story dir
-#  and reads it back.   This could now use the unit_test_temp_dir module.
+unit_test_tmp_dir.DirTree() # initializes dirs and files for testing
 upo = testdata.getUnitTestUserPathObject()   #journaldir.UserPaths() # defaults based on environment
 test_storydir_str = journaldir.path_join(upo.endeavor_path, "aGoal")
 
@@ -91,13 +77,17 @@ class TestStoryDir(TestCase):
 	and names matching journaldir.story_pat.
 	"""
 
+    def __init__(self, *args, **kwargs):
+        super(TestStoryDir, self).__init__(*args, **kwargs)
+        unit_test_tmp_dir.DirTree() # constructor initializes dirs and files for testing
+
     def testStoryDirConstructor(self):
         """
         constructor creates an object with a list of files.
         This test depends on a particular directory with some stories
         """
-        # todo this is dependant on an Endeavor dir and story dir in the file system.
-        #  The unit test suite should create all that.
+        # this is dependant on an Endeavor dir and story dir in the file system.
+        #  The unit test suite creates all that.
         expected_storydir_str = f"StoryDir:({test_storydir_str}):{test_storydir_str}/small story.md,{test_storydir_str}/the rest of the work story.md,{test_storydir_str}/an unprioritized story.md"
 
         sd = journaldir.StoryDir(test_storydir_str)
@@ -169,14 +159,13 @@ class TestFileIO(TestCase):
             # --- test the funcs that should move the files
             fullyQualifiedSourceMatchFileList = journaldir.get_file_names_by_pattern(sourceDir, apCfg.journal_pat)
             journaldir.move_files(destDir, fullyQualifiedSourceMatchFileList)
-            print(f"dirShouldExistWithFiles: {dirShouldExistWithFiles}")
+            # print(f"dirShouldExistWithFiles: {dirShouldExistWithFiles}")
             fullyQualifiedDestMatchFileList = journaldir.get_file_names_by_pattern(destDir, apCfg.journal_pat)
             sourceFileList = [ os.path.basename(sf) for sf in fullyQualifiedSourceMatchFileList]
             destFileList = [ os.path.basename(df) for df in fullyQualifiedDestMatchFileList]
             self.assertCountEqual(sourceFileList, destFileList)
 
         finally:
-            # --- Clean up the source dir and the dest dir. todo
-            print(f"Executing the finally clause in {tag}")
+            # print(f"Executing the finally clause in {tag}")
             self.cleanUpDirWithFiles(dirShouldExistWithFiles)
             self.cleanUpDirWithFiles(destDir)

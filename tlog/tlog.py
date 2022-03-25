@@ -68,7 +68,7 @@ def remove_item_from_story_file(item: Item) -> Item:
 # todo test write_item_to_story_file()
 def write_item_to_story_file(item: Item, default_file=None, new_item_section_head: str = "# Added Tasks"):
     """
-    Writes an item into either its original storySource, or the default if provided.
+    Writes an item into either its original storySource, or the default if not provided.
     :param item: a task item to write.
     :param default_file: file path to write item into if there is no storySource in item
     :return: Story Document object that was written to disk
@@ -173,9 +173,8 @@ def main():
     tag = "tlog main:"
     user_path_o = journaldir.UserPaths()
     daily_o = journaldir.Daily(apCfg.convention_journal_root)
-    journaldir.init(user_path_o.tmp_root)
-    journaldir.init(daily_o.jrdir)
-
+    os.makedirs(user_path_o.tmp_root, exist_ok=True)
+    os.makedirs(daily_o.jrdir, exist_ok=True)
 
     print("Tlog Working Directory: ", os.getcwd())
     print("Tlog Temporary Directory: ", user_path_o.tmp_root)
@@ -201,9 +200,9 @@ def main():
 
     # --- might be influenced by command line at some point.
     #     1. build the "old" journal / to do (j/td) file.
-    journaldir.init(daily_o.j_month_dir)
-    journaldir.init(user_path_o.old_journal_dir)
-    journaldir.init(journaldir.join(user_path_o.endeavor_path, apCfg.default_endeavor_name))
+    os.makedirs(daily_o.j_month_dir, exist_ok=True) # make the dir for the current jounal file
+    os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old journal
+    os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name), exist_ok=True) # dir default endeavor
     # look back in history to find past journal dir
     prev_journal_dir = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
     story_dir_o = StoryDir(prev_journal_dir)

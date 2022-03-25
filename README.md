@@ -16,11 +16,14 @@ d - build a python domain model to load 1 endeavor and put it in mongo
  - explore enhancing the Endeavor to extract a raw python structure of dicts, lists, and strings.  
    This should be serializable with simplejson and probably any other serialization library
    x - need to understand simpleJson better.
-   d - write a json encode of a simple flat object.
-    d - write a simple method to getEncodable data from the Python class.
+        - simple json is the externally maintain standard package for json.
+   x - write a json encode of a simple flat object.
+    x - write a simple method to getEncodable data from the Python class.
         - see which types are encodable: https://docs.python.org/3/library/json.html#encoders-and-decoders
-    d - feed the encodable data as a dict to json dumps() https://docs.python.org/3/library/json.html#basic-usage 
-        need to make an Endeavor test suite.   Should base off of test/test_journaldir.py TestStoryDir(TestCase)
+    x - feed the encodable data as a dict to json dumps() https://docs.python.org/3/library/json.html#basic-usage
+    x - need to make an Endeavor test suite.
+    d - integrate tlog file system implementation with the endevor.Endeavor objects
+    - Should base off of test/test_journaldir.py TestStoryDir(TestCase)
    in which a StoryDir is really an Endeavor saved in a directory structure.
     - StoryDir has the path to the StoryDir, and should be enhanced with 
         - the 'name' of tha last dir on the path, (aka the Endeavor name) 
