@@ -88,7 +88,7 @@ u - item with sub in progress
  - sub of the in progress.\
 """
 
-	inProgressOut = TLDocument.defautInProgHead + "\n" + """\
+	inProgressOut = TLDocument.defaut_in_prog_head + "\n" + """\
 / - item in progress
 / - item with sub in progress
  - sub of the in progress.\

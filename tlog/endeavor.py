@@ -34,6 +34,7 @@ class Endeavor:
         return f"{self.__class__.__name__}:{self.eid}"
 
     def add_story(self, a_story: Story):
+        """This should typically only be called from Story.__init__()"""
         self.story_list.append(a_story)
 
 
@@ -77,6 +78,7 @@ class Endeavor:
 
 
 class Story:
+    # keys for encoding and decoding to/from Python Dict and List structures.
     max_tasks_key: str = 'maxTasks'
     name_key: str = 'name'
     sid_key: str = 'sid'
@@ -159,8 +161,8 @@ class Task:
         :param parent_story:
         :param tid:
         """
-        if status not in tldocument.task_status_list:
-            raise tlutil.TaskSourceException(f"{status} is not a recognizes task status")
+        if status not in tldocument.task_status_names:
+            raise tlutil.TaskSourceException(f"{status} is not a recognized task status")
             # possibly just warn?
         if parent_story.__class__.__name__ != 'Story':
             raise TypeError(f"A Task must have Story object as its parent.  Found for task title: {title}")

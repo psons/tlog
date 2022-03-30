@@ -5,7 +5,7 @@ from endeavor import Endeavor, Story, Task
 endeavor1 = Endeavor("Write a tlog Server")
 story1: Story = Story("Build a domain model", endeavor1)
 
-task1: Task = Task('d', "Make basic Endeavor, Story, and Task objects", story1, "figure out how objects nest")
+task1: Task = Task('do', "Make basic Endeavor, Story, and Task objects", story1, "figure out how objects nest")
 j_indent = 2
 
 expected_json_of_endeavor1 = """{
@@ -19,7 +19,7 @@ expected_json_of_endeavor1 = """{
       "sid": "8a60ec61a9.bfce9ff884",
       "taskList": [
         {
-          "status": "d",
+          "status": "do",
           "title": "Make basic Endeavor, Story, and Task objects",
           "detail": "figure out how objects nest",
           "tid": "8a60ec61a9.bfce9ff884.04b5400ca6"
@@ -36,7 +36,7 @@ expected_json_of_story1 = """{
   "sid": "8a60ec61a9.bfce9ff884",
   "taskList": [
     {
-      "status": "d",
+      "status": "do",
       "title": "Make basic Endeavor, Story, and Task objects",
       "detail": "figure out how objects nest",
       "tid": "8a60ec61a9.bfce9ff884.04b5400ca6"
@@ -45,7 +45,7 @@ expected_json_of_story1 = """{
 }"""
 
 expected_json_of_task1 = """{
-  "status": "d",
+  "status": "do",
   "title": "Make basic Endeavor, Story, and Task objects",
   "detail": "figure out how objects nest",
   "tid": "8a60ec61a9.bfce9ff884.04b5400ca6"
@@ -85,7 +85,7 @@ class TestStory(unittest.TestCase):
 
 
 task_json_no_detail_tid_key = """{
-  "status": "d",
+  "status": "do",
   "title": "Make basic Endeavor, Story, and Task objects"
 }"""
 
@@ -96,7 +96,7 @@ task_json_no_status_key = """{
 }"""
 
 task_json_no_title_key = """{
-  "status": "d",
+  "status": "do",
   "detail": "",
   "tid": "8a60ec61a9.bfce9ff884.04b5400ca6"
 }"""
@@ -104,7 +104,7 @@ task_json_no_title_key = """{
 
 
 tjndtk_dumps = """{
-  "status": "d",
+  "status": "do",
   "title": "Make basic Endeavor, Story, and Task objects",
   "detail": "",
   "tid": "8a60ec61a9.bfce9ff884.04b5400ca6"

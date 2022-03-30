@@ -378,17 +378,37 @@ class Item:
         else:
             return None
 
-    def get_title(self):
+    def get_leader(self):
         """
-        The title is the top without any task type leader or trailing whitespace
+        The leader is the task type leader without the title
+        The object is assumed to have been constructed with a top_parser_pat pattern
+        with at least 1 grouping in the regular expression.
+        The grouping match will be returned if a valid leader is found
+        otherwise None is returned.
+        See also tldocument.find_status_name() which can find the semantic name for the leader returned by this
+        method.
         """
         # print("regex string:" + Item.top_parser_str + ":")
         item_top = self.top
         topmo = self.top_parser_pat.match(item_top)  # return top match object
         if topmo:
+            return topmo.group(1)
+        else:
+            return None
+
+    def get_title(self):
+        """
+        The title is the top without any task type leader or trailing whitespace
+        The object is assumed to have been constructed with a top_parser_pat pattern
+        with at least 2 groupings in the regular expression.
+        The second grouping match will be returned if a valid leader is found
+        otherwise None is returned.
+        """
+        item_top = self.top
+        topmo = self.top_parser_pat.match(item_top)  # return top match object
+        if topmo:
             return topmo.group(2)
         else:
-            # print("does not match:" + item_top + ":")
             return None
 
     # https://stackoverflow.com/questions/2510716/short-python-alphanumeric-hash-with-minimal-collisions
@@ -402,12 +422,6 @@ class Item:
             return hex_digest_of_md5_of_byte_encode_of_title[0:10]
         else:
             return ''
-
-    # def digest(self, in_str):
-    #     my_bytes = in_str.encode('utf-8')
-    #     md5_of_bytes = hashlib.md5(my_bytes)
-    #     hex_digest_of_md5_of_byte_encode_of_title = md5_of_bytes.hexdigest()
-    #     return hex_digest_of_md5_of_byte_encode_of_title
 
     def save_title_hash(self):
         """
@@ -491,12 +505,15 @@ class Item:
         else:
             return ""
 
+    def detail_str(self):
+        return "\n".join(self.subs) if len(self.subs) != 0 else ""
+
     def __str__(self):
         t = self.top if self.top else ""
         t += ("\n" if self.top and (len(self.attribs) or len(self.subs)) else "")
         t += self.attribs_str()
         t += ("\n" if len(self.attribs) and len(self.subs) else "")
-        s = "\n".join(self.subs) if len(self.subs) != 0 else ""
+        s = self.detail_str()
         # print("DEBUG len(self.subs):" + str(len(self.subs)))
         # print("DEBUG t + s:" + t + s + ":after t + s")
 
@@ -516,25 +533,12 @@ class Item:
 
 class DocStructure:
     """
-    This class is designed to be a generic Document class wit te capability to add Item objects under Section objects
+    This class is designed to be a generic Document class with the capability to add Item objects under Section objects
     according to associated patterns.  The semantic associations are created by the calling class when building
     DocStructure Objects.
 
     The class TLDocument has the tlog semantics and uses this class.
 
-    ----------------
-    This is a partial step slightly in the direction making Section and
-    Item be a generic by extracting the Section *header* and Item *header*
-    patterns out to an encompassing Doc.   It is not quite right for reading
-    story docs because it is going in the direction of inserting things into
-    named sections by item Leader type.  This is good for Journal Documents
-    (see "use:" below)  Stories should keep Items under the Sections they
-    appear in.  The value is to be able to load a Document as a Story, and
-    extract the specialized sections by leader type.  See the specialized methods in TLDocument that make DocStructure objects.
-    The existing Document code suitable for loading stories just needs to know if
-    a particular pattern means a new Section or Item grouping should be
-    started as a series of lines is read.
-    ----------------
     Goal: provide a structure where multiple leader types such as '^d - ' are associated with a
     single section instance
 

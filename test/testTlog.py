@@ -9,6 +9,7 @@ from testdata import getUnitTestUserPathObject
 # from Endeavors/aGoal/small story.md
 upo = getUnitTestUserPathObject()
 expected_story_text= f"""\
+storyName:small story
 maxTasks: 3
 d - start on the small story
 storySource:{upo.endeavor_path}/aGoal/small story.md

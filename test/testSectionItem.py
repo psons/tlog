@@ -72,6 +72,18 @@ free text\
         itest1 = itest.deep_copy(tldocument.top_parser_pat)
         self.assertEqual(str(itest), str(itest1))
 
+    def testGetStatus(self):
+        """
+        get_leader base case with leader and title
+        See also tldocument.find_status_name() which can find the semantic name for the leader.
+        """
+        leader = "d -"
+        title_in = "item with no sub lines!"
+        itest: Item = Item(tldocument.top_parser_pat, leader + title_in)
+        leader_match = itest.get_leader()
+        self.assertEqual(leader, leader_match)
+
+
     def testGetItemTitle1(self):
         """get_title() base case with leader and title"""
         leader = "d -"
@@ -225,8 +237,8 @@ free text\
     def testChange_in_prog_2_unfin(self):
         data = "\ - doing somthing else"
         itest: Item = Item(tldocument.top_parser_pat, data)
-        itest.modify_item_top(tldocument.in_progress_pat, tldocument.unfinished_s)
-        self.assertTrue(tldocument.unfinished_pat.match(itest.top))
+        itest.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s)
+        self.assertTrue(tldocument.statuses.unfinished.pattern.match(itest.top))
 
     def testSecHeadToItemRaisesE(self):
         with self.assertRaises(TLogInternalException) as tle:
@@ -400,7 +412,7 @@ AnAttributeName: the Attribute Value\
         data = "\ - one thing going on"
         out = "u - one thing going on"
         itest: Item = Item(tldocument.top_parser_pat, data)
-        itest.modify_item_top(tldocument.in_progress_pat, tldocument.unfinished_s)
+        itest.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s)
         self.assertEqual(str(itest), out)
 
     def testUpdateProgress2(self):
@@ -408,7 +420,7 @@ AnAttributeName: the Attribute Value\
         data = "/ - another thing going on"
         out = "u - another thing going on"
         itest: Item = Item(tldocument.top_parser_pat, data)
-        itest.modify_item_top(tldocument.in_progress_pat, tldocument.unfinished_s)
+        itest.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s)
         self.assertEqual(str(itest), out)
 
     def test_is_attrib_section(self):

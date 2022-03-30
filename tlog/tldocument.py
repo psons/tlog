@@ -27,8 +27,10 @@ Logic for building TLDocuments line by line from text: (needs update)
     else
 
 """
+
 import re
-from typing import List
+from collections import namedtuple
+from typing import List, Dict
 
 from docsec import Section, DocStructure, Item
 
@@ -50,38 +52,74 @@ default_max_stories = 3 # todo add support for this in tlog.py.
                         #   endeavor.Endeavor already supports max stories using this default.
 default_maxTasks = 1  # used if not specified in a story.txt
 
-# Item and leader related settings:
-task_status_list = []
-abandoned_str = "^[aA] *-"
-task_status_list.append('a')
-abandoned_pat = re.compile(abandoned_str)
-task_status_list.append('x')
-completed_str = "^[xX] *-"
-completed_pat = re.compile(completed_str)
-resolved_str = "|".join([completed_str, abandoned_str])
+
+
+# -------- Status configuration
+# -------- The next several lines establish the ability to parse tasks to find the status name from a regex that
+# -------- matches a leader on a Task Item. The pattern passed to docsec.Item() is built here based on the
+# -------- statuses configured in fill_status_dict()
+# -------- Although docsec.Item().get_leader() based on top_parser_pat defined here, it is find_status_name(leader_str)
+# -------- that can interpret the leader to get a status name.
+# --------
+
+# Define the Status type fields.
+Status = namedtuple('Status', ['name', 'val', 'pat_str', 'pattern'])
+
+def add_status(sd: Dict[str, Status], name, val, pat_str):
+    """
+    Creates a side affect of updating te dict sd with a Status created using athe arges configured in
+    fill_status_dict().   This function also compiles a pattern to store in the Status object
+    """
+    sd[name] = Status(name, val, pat_str, re.compile(pat_str))
+
+def print_statuses(sd: Dict[str, Status]):
+    for status_key in sd.keys():
+        print(f"name:{sd[status_key].name} val:{sd[status_key].val} pat_str:{sd[status_key].pat_str} ", end='')
+        print(f"pattern:{sd[status_key].pattern} type(pattern): {type(sd[status_key].pattern)}" )
+
+def fill_status_dict(sd):
+    """
+    The supported statuses for tasks are configured here with a name, a value, a pattern string.
+    add_status() is called for each configured status to load the sd dictionary
+    """
+    for status_record in [
+                            # name, val, pat_str, pattern
+                            ('abandoned', 'a', "^[aA] *-"),
+                            ('completed', 'x', "^[xX] *-"),
+                            ('in_progress', '/', r'^[/\\] *-'),  # used here in head_str and not_do_str
+                            ('unfinished', 'u', "^[uU] *-"),
+                            ('do', 'd', "^[dD] *-") # Good usage in Document to configures the scrum Docstruct
+                                                    # used here as part of head_str
+                                                    # Good usages in TLDocument to make scrum and add_line()
+                        ]:
+        add_status(sd, *status_record)
+
+status_dict: Dict[str, Status] = {}
+fill_status_dict(status_dict)
+
+# to build statuses of type StatusStruct with dot access to the field names 'abandoned', 'completed', etc.
+# where the field names get a Status named tuple.
+task_status_vals = [status_dict[status_key].val for status_key in status_dict.keys()]
+task_status_names = [status_dict[status_key].name for status_key in status_dict.keys()]
+task_status_objects = [status_dict[status_key] for status_key in status_dict.keys()]
+StatusStruct = namedtuple('StatusStruct', task_status_names)
+statuses = StatusStruct(*task_status_objects)
+
+resolved_str = "|".join([statuses.completed.pat_str, statuses.abandoned.pat_str])
 resolved_pat = re.compile(resolved_str)  # Used externally in in TLDocument get_xa ..
 
-task_status_list.append('/')
-in_progress_str = r'^[/\\] *-'  # used here in head_str and not_do_str
-in_progress_pat = re.compile(in_progress_str)  # used in Item in modify_item_top() that i am refactoring
-
-task_status_list.append('u')
 unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
-unfinished_str = "^[uU] *-"
-unfinished_pat = re.compile(unfinished_str)  # used in test for Item in modify_item_top() that i am refactoring
-# Good usage in Document to configures the scrum Docstruct
-task_status_list.append('d')
-do_str = "^[dD] *-"  # used here as part of head_str
-do_pat = re.compile(do_str)  # Good usages in TLDocument to make scrum and add_line()
+                        # todo re-code with dash to enable status_dict to be used.
 
 head_str = "|".join(
-    [resolved_str, in_progress_str, do_str, unfinished_str])  # used here in head_pat and leader_group_str
+    [resolved_str, statuses.in_progress.pat_str, statuses.do.pat_str, statuses.unfinished.pat_str])  # used here in head_pat and leader_group_str
 head_pat = re.compile(head_str)
 
-not_do_str = "|".join([resolved_str, in_progress_str, unfinished_str])  # just used here
+
+not_do_str = "|".join([resolved_str, statuses.in_progress.pat_str, statuses.unfinished.pat_str])  # just used here
 not_do_pat = re.compile(not_do_str)  # only used in Document
 
-unresolved_str = "|".join([in_progress_str, do_str])  # used to get sprint candidates from the doc
+unresolved_str = "|".join([statuses.in_progress.pat_str, statuses.do.pat_str])  # used to get sprint candidates from the doc
 unresolved_pat = re.compile(unresolved_str)
 
 leader_group_str = "(" + head_str + ")"  # only used here
@@ -89,6 +127,15 @@ title_group_str = r"\s*(.*\S)\s*$"  # only used here
 # top_parser_str = leader_group_str + title_group_str
 top_parser_pat = re.compile(leader_group_str + title_group_str)
 
+def find_status_name(leader_str):
+    for task_status_object in task_status_objects:
+        # print(f"{task_status_object}")
+        if task_status_object.pattern.match(leader_str):
+            # print(f"{leader_str} matches {task_status_object.name} ({task_status_object.val})")
+            return task_status_object.name
+    return None
+
+# --------
 
 class TLDocument:
     """
@@ -117,8 +164,9 @@ class TLDocument:
 
     Some attributes are supported as properties in the Document class and
     implemented as Attributes on a special first section:
-        doc_name DocName: (read / write)
+        doc_name DocName: (read / write) for file system document name
         max_tasks max_tasks: (read / write)
+        story_name storyName: (read / write) for name used in other task stores
 
     The Section and Item classes can be injected with attributes, but
     they should be optional in most or all cases.
@@ -138,8 +186,8 @@ class TLDocument:
 
     default_scrum_to_do_task_capacity = 5  # default number of backlog tasks to take into a day sprint
 
-    defautInProgHead = "#In progress"
-    dname_attr_str = "DocName"
+    defaut_in_prog_head = "#In progress"
+    doc_name_attr_str = "DocName"
 
     # need a constructor that takes a list of lines
     # todo - need tests for this
@@ -157,15 +205,13 @@ class TLDocument:
         self.todo_section_head = f'# To Do {domth}'
         self.resolved_section_head = f'# Resolved {domth}'
         self.scrum = DocStructure(Section.head_pat, top_parser_pat) # see doc for make_scrum()
-        self.scrum.add_leader_entry(self.resolved_section_head, [abandoned_pat,
-                                                                 completed_pat, unfinished_pat])
-        self.scrum.add_leader_entry(self.todo_section_head, [in_progress_pat, do_pat])
-
+        self.scrum.add_leader_entry(self.resolved_section_head, [statuses.abandoned.pattern,
+                                                                 statuses.completed.pattern,
+                                                                 statuses.unfinished.pattern])
+        self.scrum.add_leader_entry(self.todo_section_head, [statuses.in_progress.pattern, statuses.do.pattern])
         self._doc_name = name or ""
         self.task_capacity = initial_task_capacity
-
         self.initialize_journal()
-
         self.add_lines(input_lines)
 
     def initialize_journal(self):
@@ -178,16 +224,33 @@ class TLDocument:
         # self.backlog = Section(TLDocument.top_parser_pat)
         self.add_section_from_line(None)
 
+    # --- story_name property
+    story_name_attr_str = 'storyName'
+
+    def _get_story_name(self):
+        "getter for story_name"
+        return self.get_doc_attrib(TLDocument.story_name_attr_str)
+
+    def _set_story_name(self, name):
+        "setter for story_name"
+        self.set_doc_attrib(TLDocument.story_name_attr_str, name)
+
+    story_name = property(_get_story_name, _set_story_name)
+
+    #--- doc_name property
+    doc_name_attr_str = "DocName"
+
     def _get_doc_name(self):
         "getter for doc_name"
-        return self.get_doc_attrib(TLDocument.dname_attr_str)
+        return self.get_doc_attrib(TLDocument.doc_name_attr_str)
 
     def _set_doc_name(self, name):
         "setter for doc_name"
-        self.set_doc_attrib(TLDocument.dname_attr_str, name)
+        self.set_doc_attrib(TLDocument.doc_name_attr_str, name)
 
     doc_name = property(_get_doc_name, _set_doc_name)
 
+    #--- max_tasks property
     max_tasks_attr_str = "maxTasks"
 
     def _get_max_tasks(self):

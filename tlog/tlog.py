@@ -4,8 +4,12 @@
 Composition: Top level application built of collections of TLDocument
 Objects.  Stories read from Endeavor files, for example.
 """
+import json
 import os
+import re
 from typing import List
+
+from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
 import tldocument
@@ -20,7 +24,7 @@ import logging
 class StoryGroup:
     """
     Adds story semantics around a group of Documents read from files in a directory
-	Combines the journaldir.StoryDir and the tlmodel.Document to get
+	Combines the journaldir.StoryDir and the tldocument.TLDocument to get
 	a collection of tasks.
 	Sets attributes in the tasks in the Documents to allow changes in the tasks to be written back to the
 	    storySource: endeavor/story
@@ -34,18 +38,39 @@ class StoryGroup:
         self.story_docs: List[TLDocument] = [load_and_resave_story_file_with_attribs(s_file)
                                              for s_file in self.story_dir.story_list]
 
+    def get_endeavor_name(self):
+        return os.path.basename(self.story_dir.path)
+
+    def as_endeavor(self)-> Endeavor:
+        endeavor = Endeavor(self.get_endeavor_name())
+        for story_doc in self.story_docs:
+            story = Story(story_doc.story_name, endeavor, story_doc.max_tasks)
+            for task_item in story_doc.get_document_unresolved_list():
+                # todo first arg below needs to be the status.  prob implement a taskItem.get_status()
+                # todo is this right for last arg?: str(taskItem.subs)
+                Task(tldocument.find_status_name(task_item.get_leader()), task_item.get_title(), story,
+                     task_item.detail_str())
+        return endeavor
+
+
     def __str__(self):
         return "\n".join([str(d) for d in self.story_docs])
 
 
 def load_and_resave_story_file_with_attribs(file_name) -> TLDocument:
     """
-    adds 'storySource:' and 'titleHash:' to each item in a doc from file and saves it back to disk.
-    These attributes enable items to be re titled and still update the original story item.
+    Loads a file system file as a TLDocument and saves it back to disk with the following enrichment:.
+        Adds 'storyName:' to the TLDocument representing a Story.
+            This enable the story to be migrated to an object store.
+        adds 'storySource:' 'titleHash:' to each task item in the TLDocument
+            These attributes enable items to be re titled and still update the original story file.
     """
     story_doc: TLDocument = load_doc_from_file(file_name)
     story_doc.attribute_all_unresolved_items(StoryGroup.story_source_attr_name, file_name)
     story_doc.for_journal_sections_add_all_missing_item_title_hash()
+    story_name = os.path.basename(file_name)
+    story_name = re.sub(apCfg.story_suffix_pat, '', story_name)
+    story_doc.story_name = story_name
     journaldir.write_filepath(str(story_doc), file_name)
     return story_doc
 
@@ -118,7 +143,8 @@ def find_prev_journal_dir(latest_dir, history_months):
 
 def load_doc_from_file(file_name) -> TLDocument:
     file_text = journaldir.read_file_str(file_name)
-    return TLDocument.fromtext(file_text)
+    tl_doc = TLDocument.fromtext(file_text)
+    return tl_doc
 
 
 def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
@@ -234,9 +260,9 @@ def main():
     new_jtd_doc: TLDocument =  TLDocument()
     new_jtd_doc.add_section_list_items_to_scrum(resolved_doc.journal) # items in resolved file from earlier today run of tlog
 
-    in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.in_progress_pat) # items in old jtd that are in progress
+    in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.statuses.unfinished.pattern) # items in old jtd that are in progress
     unfinished_item_copies = [ item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items ]
-    [ item.modify_item_top(tldocument.in_progress_pat, tldocument.unfinished_s) for item in unfinished_item_copies ] # toggle in progress to unfinished
+    [ item.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s) for item in unfinished_item_copies ] # toggle in progress to unfinished
     new_jtd_doc.add_list_items_to_scrum(unfinished_item_copies)
 
     resolved_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.resolved_pat) # items in jtd that are resolved (xa)
@@ -267,11 +293,20 @@ def main():
     # 7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)
     debuglog.debug("7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)")
     story_dir_objects: List[StoryDir] = journaldir.load_endeavor_stories(user_path_o)
-    debuglog.debug("a")
+    # need to enhance StoryDir object to (1) load the
 
-    endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
-                                             for story_doc in StoryGroup(sdo).story_docs ] #  .get_short_stories()]
-    debuglog.debug("Load endeavor StoryDirs:...")
+    all_endeavor_story_groups: List[StoryGroup] = [StoryGroup(sdo) for sdo in story_dir_objects]
+    story_docs_from_all_endeavors: List[TLDocument] = []
+    endeavor_models: List[Endeavor] = []
+
+    for esg in all_endeavor_story_groups:
+        story_docs_from_all_endeavors += esg.story_docs
+        endeavor_models.append(esg.as_endeavor())
+
+    for endeavor in endeavor_models:
+        print("Endeavor:")
+        print(json.dumps(endeavor.as_encodable(), indent=2))
+        # todo store this json data in Mongo DB
 
     # 8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
     #    of task items from the stories.
@@ -280,19 +315,14 @@ def main():
     for journal_story_doc in journal_story_docs:
         sprint_candidate_tasks += journal_story_doc.get_limited_tasks_from_unresolved_list() # tasks from stories in journaldir.
 
-    for endeavor_story_doc in endeavor_story_docs:
+    for endeavor_story_doc in story_docs_from_all_endeavors:
         sprint_candidate_tasks += endeavor_story_doc.get_limited_tasks_from_unresolved_list()
 
     debug_message = "sprint_candidate_tasks: \n" + "\n".join([str(sct) for sct in sprint_candidate_tasks])
     debuglog.debug(debug_message)
     # 'sprint candidates': the top tasks in each story that may get into the day sprint.
     # Picking off the top 3 stories will always take from the top endeavor
-    #       (if they are written in priority order)
-    # however the stories within an endeavor are just in file listing order.
-    # (see tlog story 'Prioritized Backlog story.txt'
-    # as a work around, users can make sure only 1 story filer in each endeavor has a non zero 'max_tasks:' value.
-
-    # debuglog.debug("Sprint Candidate Tasks: " + str_o_list(sprint_candidate_tasks, delimiter="\nTask::\n", prefix_delim=True))
+    # Stories within the Endeavor are prioritized according to prioritized.md in the endeavor dir.
 
     # 9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.
     debuglog.debug("9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.")
