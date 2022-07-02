@@ -1,6 +1,7 @@
 """
 Composition: Classes that have a general purpose usage, free of application
-semantics, which are added by the calling code when DocStructure, Section,
+semantics.
+Application semantics are set by the calling code when DocStructure, Section,
 and Item objects are instantiated.
 """
 
@@ -13,6 +14,29 @@ from tlutil import digest
 
 
 class Section:
+    """
+    A Section can be read and written as a single section of a Markdown document
+    divided by H1 headings as identified be the regex "^#".
+    A Section have no H1 heading, if for example the text appears before any H1
+    in a document.  If the caller subsequently adds a line matching te markdown H1 pattern
+    to the section, it will be treated as the H1 for the top of the section. (ie. the Section
+    can have only heading)
+
+    Any text that is not an H1 will be formed into a list of
+    Item objects comprising the body of the Section.
+
+    The Section Objects must be constructed with a regex pattern
+    top_parser_pat, and any lines matching that pattern will cause
+    creation of a new Item in the list of body items.  Any subsequent
+    text will be added to the latest Item in the body item list.
+
+    Text (if present) in the Section before any line matching
+    top_parser_pat is treated as meta data of the section.
+
+    The meta data may consist of text and/or Attributes and will be stored
+    in the first Item in the list of body items.
+    """
+
     head_pat = re.compile("^#")
 
     def __init__(self, item_top_parser_pat, data: str = None) -> None:
@@ -35,6 +59,16 @@ class Section:
             - the attribute dictionary is copied to a new dict
         """
         return Section.fromtext(str(self))
+
+
+    def get_body_data(self):
+        """
+        :return: the list of Items that are not metadata.
+        """
+        body_data = [ body_item for body_item in self.body_items if body_item.has_top() ]
+        return body_data
+
+
 
     def get_section_attrib(self, key):
         """
@@ -89,7 +123,7 @@ class Section:
         """
         Adds a Whole item to Section self.
         head_insert_true is used when building the default endeavor new task story.md from taskes added by the user
-        in the j/td file with th reasoning that short term tasks captured are top priority immediate follow up,
+        in the j/td file with the reasoning that short term tasks captured are top priority immediate follow up,
         so they stay high priority until explicitly moved to a lower priority in the story file.
 
         otherwise, task adding is done in conventional head to tail order.
@@ -488,6 +522,11 @@ class Item:
          - the attribute dictionary is copied to a new dict
         """
         return Item(top_parser_pat, data=self.top, subs=list(self.subs), attrs=dict(self.attribs))
+
+    def has_top(self):
+        if self.top:
+            return True
+        return False
 
     def is_empty(self):
         "return true if no header or body_items, else return false."

@@ -344,7 +344,7 @@ def main():
     journaldir.write_dir_file(todo_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
     debug_msg = "Sprint Items: \n"
     index = 1
-    for sprint_item in todo_tasks.body_items:
+    for sprint_item in todo_tasks.get_body_data():
         debug_msg += f"{index}. {sprint_item}\n"
         index += 1
     debuglog.debug(debug_msg)
@@ -354,7 +354,8 @@ def main():
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
 
 
-    msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.body_items)}"
+    # msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.body_items)}"
+    msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.get_body_data())}"
     debuglog.debug(tag + msg)
     print(tag + msg)
 

@@ -12,8 +12,12 @@ Notes and learning are being recorded in:
 
 # tasks
 
+x - Write a method in Section class to get the body data, which is the body_items, but skipping any 'meta data only'
+items, such as typically the first Item.
+ - this prevents the sprint from having a blank item at the beginning.
+
 d - build a python domain model to load 1 endeavor and put it in mongo
- - explore enhancing the Endeavor to extract a raw python structure of dicts, lists, and strings.  
+  x - explore enhancing the Endeavor to extract a raw python structure of dicts, lists, and strings.  
    This should be serializable with simplejson and probably any other serialization library
    x - need to understand simpleJson better.
         - simple json is the externally maintain standard package for json.
