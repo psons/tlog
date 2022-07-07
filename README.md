@@ -16,7 +16,7 @@ x - Write a method in Section class to get the body data, which is the body_item
 items, such as typically the first Item.
  - this prevents the sprint from having a blank item at the beginning.
 
-d - build a python domain model to load 1 endeavor and put it in mongo
+x - build a python domain model to load 1 endeavor and put it in mongo
   x - explore enhancing the Endeavor to extract a raw python structure of dicts, lists, and strings.  
    This should be serializable with simplejson and probably any other serialization library
    x - need to understand simpleJson better.
@@ -30,21 +30,27 @@ d - build a python domain model to load 1 endeavor and put it in mongo
         x - add a document attribute storyName and set it to so that tlog.endeavor_story_docs 
         is a list of TLDocuments, that can be used to build the endeavor.Endeavors.
         x - class StoryGroup that has tests.  Unwind the following to do it in two steps.
-      1. - get the StoryGroups
+      x - 1. - get the StoryGroups
           1.a. build endeavor.Endeavor as from the StoryGroups.
-      2. - get a list of the story docs from all the story groups.
+      x - 2. - get a list of the story docs from all the story groups.
         endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
                                              for story_doc in StoryGroup(sdo).story_docs ] #  .get_short_stories()]
         x - write StoryGroup.as_endeavor()
-           
-   Before step #8, tlog has the list of story Docs as TLDocument objects, but they are a flat list, not underneath Endeavors.
-    - they do have story source paths so they can be written back.
+-d -  provide an _id based on eid for mongo use. 
+
+todo Mongo tasks in mongocol:
+  x - set attribute _id as eid in the data structure.
+  a - test endeavors.insert_many or update many with upsert=True
+  d - change upsert_endeavor to actually upser, not insert
+  d - refactor to an ObjectCollection class that implements Mongo, but could be changed to 
+      offer other object store implementations  such as firebase
 
 
 # Project notes
 Work is beginning to store the domain model im Mongo DB.
 Moved constant directory names and file patterns to tlconst.apCfg to clean up and document better.
 Move constant names in TLDocument to module scope
+Basic insert to Mongo
 
 [Using this project structure as a guideline](https://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/)
 

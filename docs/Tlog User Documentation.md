@@ -271,7 +271,7 @@ Windows.
 ### install git.  make sure git init works
 optionally set PYTHONUSERBASE per https://pip.pypa.io/en/latest/user_guide/#user-installs
 - need to update these docs to include making the dir and setting the environment
-- include infor on where the module actually goes.
+- include info on where the module actually goes.
 pip install GitPython
    or
 pip install -user GitPython  

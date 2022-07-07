@@ -1,4 +1,5 @@
-# this content should be supported in docstrings.
+# High Level Code Organization
+## this content should be supported in docstrings.
 
 The domain object model is being created in endeavor.py 
 to support representing Endeavors, Tasks, and Stories in an 
@@ -21,9 +22,20 @@ The semantics in tldocument.py must match the endeavor.py
 semantics.  Task statuses for example have a regex that 
 is part of the editor UI contract 'x - ' means completed, 
 but here is a regex to tolerate variable user entry like
-'/ - ' or '\ - ' for in progress, so tldocument.py will 
+'/ - ' or '\ - ' as meaning the same thing; 'in progress', so tldocument.py will 
 hold the semantic meaning encoding for things, and
 endeavor.py will import it.
+
+# python environment management
+The tlog project dir contains a venv, used in development and testing.
+activate that venev, and use pip to install:
+
+## Gitpython
+    pip install GitPython
+https://gitpython.readthedocs.io/en/stable/
+## pymongo
+    pip install pymongo
+https://pypi.org/project/pymongo/
 
 
 

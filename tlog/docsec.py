@@ -122,7 +122,7 @@ class Section:
     def add_item(self, arg_item, head_insert: bool = False):
         """
         Adds a Whole item to Section self.
-        head_insert_true is used when building the default endeavor new task story.md from taskes added by the user
+        head_insert_true is used when building the default an_endeavor new task story.md from taskes added by the user
         in the j/td file with the reasoning that short term tasks captured are top priority immediate follow up,
         so they stay high priority until explicitly moved to a lower priority in the story file.
 

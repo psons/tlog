@@ -13,7 +13,7 @@ import tldocument
 
 class Endeavor:
     """
-    An endeavor is a goal like thing to achieve.  It is much like a agile epic, in that it will end up being
+    An an_endeavor is a goal like thing to achieve.  It is much like a agile epic, in that it will end up being
     fulfilled through multiple stories that likely, at the outset are not fully understood or enumerated.
     See tlog user documentation.
     """
@@ -89,7 +89,7 @@ class Story:
         self.max_tasks: int = max_tasks or tldocument.default_maxTasks
         self.sid = sid or f"{self.parent_endeavor.eid}.{digest(self.name)}"
         self.task_list = []
-        self.parent_endeavor.add_story(self) # so that parent endeavor knows this story is part of it.
+        self.parent_endeavor.add_story(self) # so that parent an_endeavor knows this story is part of it.
 
     def add_task(self, a_task: Task):
         self.task_list.append(a_task)

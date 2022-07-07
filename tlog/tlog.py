@@ -9,6 +9,7 @@ import os
 import re
 from typing import List
 
+import mongocol
 from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
@@ -27,7 +28,7 @@ class StoryGroup:
 	Combines the journaldir.StoryDir and the tldocument.TLDocument to get
 	a collection of tasks.
 	Sets attributes in the tasks in the Documents to allow changes in the tasks to be written back to the
-	    storySource: endeavor/story
+	    storySource: an_endeavor/story
 	journal to be written back to the original stories
 	"""
 
@@ -229,7 +230,7 @@ def main():
     #     1. build the "old" journal / to do (j/td) file.
     os.makedirs(daily_o.j_month_dir, exist_ok=True) # make the dir for the current jounal file
     os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old journal
-    os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name), exist_ok=True) # dir default endeavor
+    os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name), exist_ok=True) # dir default an_endeavor
     # look back in history to find past journal dir
     prev_journal_dir = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
     story_dir_o = StoryDir(prev_journal_dir)
@@ -305,8 +306,10 @@ def main():
 
     for endeavor in endeavor_models:
         print("Endeavor:")
-        print(json.dumps(endeavor.as_encodable(), indent=2))
-        # todo store this json data in Mongo DB
+        # print(json.dumps(endeavor.as_encodable(), indent=2))
+        # todo store this endeavor as json data in Mongo DB
+        # mongocol.upsert_endeavor(endeavor.as_encodable())
+        mongocol.upsert_endeavor(endeavor)
 
     # 8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
     #    of task items from the stories.
@@ -321,8 +324,8 @@ def main():
     debug_message = "sprint_candidate_tasks: \n" + "\n".join([str(sct) for sct in sprint_candidate_tasks])
     debuglog.debug(debug_message)
     # 'sprint candidates': the top tasks in each story that may get into the day sprint.
-    # Picking off the top 3 stories will always take from the top endeavor
-    # Stories within the Endeavor are prioritized according to prioritized.md in the endeavor dir.
+    # Picking off the top 3 stories will always take from the top an_endeavor
+    # Stories within the Endeavor are prioritized according to prioritized.md in the an_endeavor dir.
 
     # 9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.
     debuglog.debug("9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.")

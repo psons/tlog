@@ -47,9 +47,9 @@ TLDocument
                 - a Section with a limited number of tasks for current work session (heading '# To Do {day of month}')
 """
 default_max_stories = 3 # todo add support for this in tlog.py.
-                        #   At present tlog does not have any object representing an endeavor.
+                        #   At present tlog does not have any object representing an an_endeavor.
                         #   Add that first, then read maxStories of the Endeavor line in endeavors.md
-                        #   endeavor.Endeavor already supports max stories using this default.
+                        #   an_endeavor.Endeavor already supports max stories using this default.
 default_maxTasks = 1  # used if not specified in a story.txt
 
 

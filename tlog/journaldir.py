@@ -32,7 +32,7 @@ class UserPaths:
         << possibly the endeavor_dir location>>
     endeavor_dir:
             endeavors.md
-            << various endeavor subdirectories >>
+            << various an_endeavor subdirectories >>
                 << various *story.txt files containing task items >>
     """
     def __init__(self, journal_root=apCfg.convention_journal_root,
@@ -141,7 +141,7 @@ class Daily:
 
 def load_endeavor_stories(user_path_obj):
     """return a list of StoryDir objects for each entry in the endeavors file."""
-    # More advanced versions of endeavor file format later.
+    # More advanced versions of an_endeavor file format later.
     endeavor_text = apCfg.default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
     debuglog = logging.getLogger('debuglog')
     debuglog.debug(f"endeavor_text: \n{endeavor_text}" )
