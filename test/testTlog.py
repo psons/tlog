@@ -5,7 +5,7 @@ from tlog import StoryGroup
 
 
 from test_journaldir import test_storydir_str
-from testdata import getUnitTestUserPathObject
+from tl_testdata import getUnitTestUserPathObject
 # from Endeavors/aGoal/small story.md
 upo = getUnitTestUserPathObject()
 expected_story_text= f"""\

@@ -37,5 +37,9 @@ https://gitpython.readthedocs.io/en/stable/
     pip install pymongo
 https://pypi.org/project/pymongo/
 
+# Project Organization
+[Using this project structure as a guideline](https://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/)
+
+[Using this branch strategy](https://nvie.com/posts/a-successful-git-branching-model/)
 
 

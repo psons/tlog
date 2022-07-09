@@ -21,11 +21,11 @@ TaskLog is especially well suited to analytical work where your effort is to doc
 
 ##TaskLog input: Sources of Tasks
 TaskLog assumes that you do things related to multiple different parties that 
-are disinterested in each others priorities, and allows you to draw from a list 
+are disinterested in each other's priorities, and allows you to draw from a list 
 of tasks for each of those sources of work and manage them into your single 
-threaded consciousness!  For example you may be working on a project that assigns 
+threaded consciousness!  For example, you may be working on a project that assigns 
 you "tickets" to work on.  You have e-mail that demands attention, possibly 
-multiple accounts.  You have career skills to develop, and a personal life including 
+multiple e-mail accounts.  You have career skills to develop, and a personal life including 
 relationships with other demands.
 
 ### Sidebar on managing task size at the source
@@ -38,18 +38,24 @@ as opposed to having an issue that takes many days to complete.  It will make
 reconciliation with your list much easier.
 
 #### Sidebar on sidebar. Tasks are for a human to be "doable", "manageable", "not microsected", and may have "subparts".
- The task size constant is that it is "doable" meaning that a task can be cognatively understood by the person doing it, and they have the tools and physical and cognative capabilities to do it, and ideally it is "manageable" fits within a segment of a day so its importance and timliness can be reconciled with other tasks.  (i.e. it shouldn't be completed after it is useful, or may be broken down to a part that is an enabler for some other worker to do other tasks) (see Breaking up tasks by making stories story.md)
+The task size constant is that it is "doable" meaning that a task can be cognitively understood by the person doing it, and they have the tools and physical and cognative capabilities to do it, and ideally it is "manageable" fits within a segment of a day so its importance and timliness can be reconciled with other tasks.  (i.e. it shouldn't be completed after it is useful, or may be broken down to a part that is an enabler for some other worker to do other tasks) (see Breaking up tasks by making stories story.md)
 
- There is a trade off for individuals and teams such that if task management itself becomes an onerous and time consuming task, then its value has to be considered against the value of the task completion.
+There is a trade off for individuals and teams such that if task management itself becomes an onerous and time-consuming task, then its value has to be considered against the value of the task completion.
 
- A good task manager then reduces the overhead of managing tasks, facillitates their break up, and enciourages tasks.
+A good task manager then reduces the overhead of managing tasks, facilitates their break up, and encourages tasks.
  --
-A task shoud not be "microsected", meaning that it is captures written and talked about at a more granular level than necessary to complet it.   Initial authoring of a paragraph for example is a task where the sentnce design word usage, and punctuation typically would be wasteful to subdivide and assign.  
- 
+A task should not be "microsected", meaning that it is captured written and talked about at a more granular level than necessary to complete it.   Initial authoring of a paragraph for example is a task where the sentnce design word usage, and punctuation typically would be wasteful to subdivide and assign.  
+exception: a procedure may be helpful to written as a series of microsected tasks in order to discover 
+and document the sequence.  
 
- The idea that a task is "doable", "manageable", and "not microsected" implies that ther is a minimum subdivision for tasks, and if more layers of decomposition are needed, they should occur above the task level.  The practical implication for tlog is that if a tasks is too large, decompoing it should involve story creation, not establishment of some smaller effort subdivision.
-  - a task may have "sub parts" in its delivery, such as a programmer using functions to break appart a piece of programming logic, or an writer using more or fewer sentences or paragraphs to document an idea.  
-  - "sub parts" can exist within a bulleted list or other text structure (or maybe images?) within a task.   Sub parts are below "task", and the results may be reviewed, presented, or worked on by other resources or tasks
+ The idea that a task is "doable", "manageable", and "not microsected" implies that there is a minimum subdivision 
+ for tasks, and if more layers of decomposition are needed, they should occur above the task level.  The 
+ practical implication for tlog is that if a tasks is too large, decomposing it should involve story 
+ creation, not establishment of some smaller effort subdivision.
+  - a task may have "sub parts" in its delivery, such as a programmer using functions to break apart a piece of 
+    programming logic, or a writer using more or fewer sentences or paragraphs to document an idea.  
+  - "sub parts" can exist within a bulleted list or other text structure (or maybe images?) within a 
+    task.   Sub parts are below "task", and the results may be reviewed, presented, or worked on by other resources or tasks
 
 ### TaskLog
 Tasklog represents all of your work that it can get information about in simple 

@@ -10,7 +10,7 @@ Tasks in this effort are flowing in from:
 Notes and learning are being recorded in:
     ~/dev/tl2/Planning/Technical Implementation Notes/Mongo and Domain model notes.md
 
-# tasks
+## current work tasks
 
 x - Write a method in Section class to get the body data, which is the body_items, but skipping any 'meta data only'
 items, such as typically the first Item.
@@ -26,7 +26,7 @@ x - build a python domain model to load 1 endeavor and put it in mongo
         - see which types are encodable: https://docs.python.org/3/library/json.html#encoders-and-decoders
     x - feed the encodable data as a dict to json dumps() https://docs.python.org/3/library/json.html#basic-usage
     x - need to make an Endeavor test suite.
-    d - integrate tlog file system implementation with the endevor.Endeavor objects
+    x - integrate tlog file system implementation with the endevor.Endeavor objects
         x - add a document attribute storyName and set it to so that tlog.endeavor_story_docs 
         is a list of TLDocuments, that can be used to build the endeavor.Endeavors.
         x - class StoryGroup that has tests.  Unwind the following to do it in two steps.
@@ -36,22 +36,20 @@ x - build a python domain model to load 1 endeavor and put it in mongo
         endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
                                              for story_doc in StoryGroup(sdo).story_docs ] #  .get_short_stories()]
         x - write StoryGroup.as_endeavor()
--d -  provide an _id based on eid for mongo use. 
+x -  provide an _id based on eid for mongo use. 
 
 todo Mongo tasks in mongocol:
   x - set attribute _id as eid in the data structure.
   a - test endeavors.insert_many or update many with upsert=True
-  d - change upsert_endeavor to actually upser, not insert
-  d - refactor to an ObjectCollection class that implements Mongo, but could be changed to 
-      offer other object store implementations  such as firebase
+  x - change upsert_endeavor to actually upsert, not insert
 
 
 # Project notes
+See docs/programmer doc.md for infomation about coding and contributing to this project.
+
+## This section is the change summary for non trivial commit increments.
+### 2022-07-09 commit
 Work is beginning to store the domain model im Mongo DB.
 Moved constant directory names and file patterns to tlconst.apCfg to clean up and document better.
 Move constant names in TLDocument to module scope
-Basic insert to Mongo
-
-[Using this project structure as a guideline](https://www.jeffknupp.com/blog/2013/08/16/open-sourcing-a-python-project-the-right-way/)
-
-[Using this branch strategy](https://nvie.com/posts/a-successful-git-branching-model/)
+Basic insert to Mongo supported

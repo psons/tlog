@@ -1,10 +1,12 @@
-#testdata.py
+#tl_testdata.py
 import os
 
 import journaldir
 import unit_test_tmp_dir
 from tlconst import apCfg
-
+"""
+Test data with tlog semantic tasks leaders, section headers and attribute syntax.
+"""
 
 ad1 = "aDocAttribute"
 vd1 = " TheDocValue"

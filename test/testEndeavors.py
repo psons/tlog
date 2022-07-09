@@ -11,7 +11,7 @@ j_indent = 2
 expected_json_of_endeavor1 = """{
   "name": "Write a tlog Server",
   "maxStories": 3,
-  "eid": "8a60ec61a9",
+  "_id": "8a60ec61a9",
   "story_list": [
     {
       "maxTasks": 1,

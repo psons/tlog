@@ -4,7 +4,7 @@ import unittest
 from tldocument import TLDocument
 import tldocument
 from docsec import Item, Section, DocStructure
-from testdata import ad1, vd1, vd2, doc1_text
+from tl_testdata import ad1, vd1, vd2, doc1_text
 
 
 class TestDocument(unittest.TestCase):

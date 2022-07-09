@@ -19,10 +19,11 @@ class Endeavor:
     """
     name_key: str = 'name'
     max_stories_key: str = 'maxStories'
-    eid_key: str = 'eid'
+    eid_key: str = '_id' # name _id is used as key in Mongo.
     story_list_key = 'story_list'
     def __init__(self, name, max_stories=None, eid=None):
-        self.name = name
+        self.name = name    # todo: it should not be possible to make an Endeavor with null or empty Name,
+                            #   which would result a common unique eid.
         self.max_stories = max_stories or tldocument.default_max_stories
         self.eid = eid or digest(self.name)
         self.story_list: List[Story] = []  # in priority order

@@ -2,7 +2,7 @@
 import os
 import unittest
 
-import testdata
+import tl_testdata
 import unit_test_tmp_dir
 
 import journaldir
@@ -11,7 +11,7 @@ import tlog
 #.tlog import write_back_updated_story
 
 from docsec import Section, TLogInternalException, ItemAttribute, Item
-from testdata import dtask_line, dtask_item_text, \
+from tl_testdata import dtask_line, dtask_item_text, \
     as1, vs1, as2, vs2, ai1, vi1, item_attrib_line1, ai2, vi2, item_attrib_line2, item_2attr_str, \
     dtask_item_text_w_saved_hash, dtask_item_text_w_saved_hash_modified_title, sec_two_items, sec_attrib_wrong, \
     sec_w_attrib, sec_head, is_attrib_section_cases
@@ -480,7 +480,7 @@ class TestStoryIO(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.userPathObject = testdata.getUnitTestUserPathObject()
+        cls.userPathObject = tl_testdata.getUnitTestUserPathObject()
         #journaldir.UserPaths(ut_journal_root, ut_tmp_root, ut_endeavor_dir)
 
     def test_write_item_to_story_file(self):

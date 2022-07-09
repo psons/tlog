@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List
 from unittest import TestCase
 import unit_test_tmp_dir
-import testdata
+import tl_testdata
 import journaldir
 
 if __name__ == '__main__':
@@ -68,7 +68,7 @@ class TestUserPaths(TestCase):
 
 
 unit_test_tmp_dir.DirTree() # initializes dirs and files for testing
-upo = testdata.getUnitTestUserPathObject()   #journaldir.UserPaths() # defaults based on environment
+upo = tl_testdata.getUnitTestUserPathObject()   #journaldir.UserPaths() # defaults based on environment
 test_storydir_str = journaldir.path_join(upo.endeavor_path, "aGoal")
 
 class TestStoryDir(TestCase):
@@ -106,9 +106,9 @@ class TestFileIO(TestCase):
         :return:
         """
         fileIOPath = journaldir.path_join(upo.endeavor_path, "file-io-test.txt")
-        journaldir.write_filepath(testdata.dtask_line, fileIOPath)
+        journaldir.write_filepath(tl_testdata.dtask_line, fileIOPath)
         expected_str = journaldir.read_file_str(fileIOPath)
-        self.assertEqual(expected_str, testdata.dtask_line)
+        self.assertEqual(expected_str, tl_testdata.dtask_line)
 
     def createDirWithFiles(self, dir: str, files: List[str]):
         """

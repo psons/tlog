@@ -304,12 +304,11 @@ def main():
         story_docs_from_all_endeavors += esg.story_docs
         endeavor_models.append(esg.as_endeavor())
 
+    # 7.a load / upsert the Endeavors to Mongo.
     for endeavor in endeavor_models:
-        print("Endeavor:")
-        # print(json.dumps(endeavor.as_encodable(), indent=2))
-        # todo store this endeavor as json data in Mongo DB
-        # mongocol.upsert_endeavor(endeavor.as_encodable())
         mongocol.upsert_endeavor(endeavor)
+
+    mongocol.list_endeavors()
 
     # 8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
     #    of task items from the stories.

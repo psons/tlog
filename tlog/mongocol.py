@@ -1,16 +1,25 @@
 from pymongo import MongoClient
 
 import pprint
-
-def upsert_endeavor(an_endeavor):
+from endeavor import Endeavor
+def upsert_endeavor(an_endeavor: Endeavor):
     client = MongoClient('localhost', 27017)
     db = client['tlog']         # tlog is the db
     endeavors = db['endeavors'] # endeavors is the collection
 
-    endeavor_id = endeavors.insert_one(an_endeavor.as_encodable()).inserted_id
+    # endeavor_id = endeavors.insert_one(an_endeavor.as_encodable()).inserted_id
+    endeavor_id = endeavors.update_one(
+        {'_id': an_endeavor.eid},
+        {"$set": an_endeavor.as_encodable()}, upsert=True).upserted_id
 
     print(f"Mongo! endeavor _id: {endeavor_id} inserted into {endeavors}")
 
+def list_endeavors():
+    client = MongoClient('localhost', 27017)
+    db = client['tlog']         # tlog is the db
+    endeavors = db['endeavors'] # endeavors is the collection
+    for endeavor in endeavors.find():
+        pprint.pprint(endeavor)
 
 
 
