@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 
+# mongdb Endeavor collection module
+
 import pprint
 from endeavor import Endeavor
 def upsert_endeavor(an_endeavor: Endeavor):

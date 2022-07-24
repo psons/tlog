@@ -9,7 +9,7 @@ import os
 import re
 from typing import List
 
-import mongocol
+#import mongocol
 from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
@@ -305,10 +305,10 @@ def main():
         endeavor_models.append(esg.as_endeavor())
 
     # 7.a load / upsert the Endeavors to Mongo.
-    for endeavor in endeavor_models:
-        mongocol.upsert_endeavor(endeavor)
-
-    mongocol.list_endeavors()
+    # for endeavor in endeavor_models:
+    #     mongocol.upsert_endeavor(endeavor)
+    #
+    # mongocol.list_endeavors()
 
     # 8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
     #    of task items from the stories.
