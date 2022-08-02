@@ -53,7 +53,6 @@ class UserPaths:
 
 
     def git_init_journal(self):
-        print(self.journal_path)
         self.git_repo_obj = make_git_repo(self.journal_path)
 
     def git_add_all(self, daily_o, message):

@@ -81,7 +81,7 @@ def remove_item_from_story_file(item: Item) -> Item:
     always log the item being removed.
     """
     debuglog = logging.getLogger('debuglog')
-    tag = "write_item_to_story_file():"
+    tag = "remove_item_from_story_file:"
     story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
     if not story_source:
         debuglog.warning(f"{tag} item to remove does not have a 'storySource:' attribute.")
@@ -162,10 +162,77 @@ def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
         r_str = delimiter + r_str
     return r_str
 
-supported_commands = ["j_month_dir"]
-"""
-j_month_dir - treat the next argument to tlog as the journal_dir.
-"""
+
+
+
+def initialize_file_paths():
+    user_path_o = journaldir.UserPaths()
+    daily_o = journaldir.Daily(apCfg.convention_journal_root)
+    os.makedirs(user_path_o.tmp_root, exist_ok=True)
+    os.makedirs(daily_o.jrdir, exist_ok=True)
+    print("Tlog Working Directory: ", os.getcwd())
+    print("Tlog Temporary Directory: ", user_path_o.tmp_root)
+    debuglog = logging.getLogger('debuglog')
+    debuglog.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    debug_handler = logging.FileHandler(user_path_o.debug_log_file)
+    debug_handler.setLevel(logging.DEBUG)
+    debug_handler.setFormatter(formatter)
+    debuglog.addHandler(debug_handler)
+    info_handler = logging.StreamHandler()
+    info_handler.setLevel(logging.INFO)
+    debuglog.addHandler(info_handler)
+    user_path_o.git_init_journal()
+    return daily_o, debuglog, user_path_o
+
+
+def write_resolved_tasks(daily_o, old_jtd_doc):
+    resolved_doc: TLDocument = load_doc_from_file(journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
+    new_jtd_doc: TLDocument = TLDocument()
+    new_jtd_doc.add_section_list_items_to_scrum(
+        resolved_doc.journal)  # items in resolved file from earlier today run of tlog
+    in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(
+        tldocument.statuses.unfinished.pattern)  # items in old jtd that are in progress
+    unfinished_item_copies = [item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items]
+    [item.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s) for item in
+     unfinished_item_copies]  # toggle in progress to unfinished
+    new_jtd_doc.add_list_items_to_scrum(unfinished_item_copies)
+    resolved_items = old_jtd_doc.select_all_section_items_by_pattern(
+        tldocument.resolved_pat)  # items in jtd that are resolved (xa)
+    new_jtd_doc.add_list_items_to_scrum(resolved_items)
+    resolved_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.resolved_section_head])
+    print("resolved_data:", resolved_data)
+    journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
+    return new_jtd_doc, resolved_items
+
+
+def update_endeavors(daily_o, last_journal, old_jtd_doc, resolved_items, user_path_o):
+    for story_item in old_jtd_doc.get_document_unresolved_list():
+        write_item_to_story_file(story_item, user_path_o.new_task_story_file)
+    user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal}")
+    [remove_item_from_story_file(r_item) for r_item in resolved_items]
+
+
+def load_task_data(daily_o, user_path_o):
+    old_jtd_doc = TLDocument(day=daily_o.domth)
+    look_back_months = 24
+    os.makedirs(daily_o.j_month_dir, exist_ok=True)  # make the dir for the current jounal file
+    os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old journal
+    os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name),
+                exist_ok=True)  # dir default an_endeavor
+    # look back in history to find past journal dir
+    prev_journal_dir = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
+    story_dir_o = StoryDir(prev_journal_dir)
+    j_file_list = journaldir.get_file_names_by_pattern(
+        story_dir_o.path, apCfg.journal_pat)  # journal {date].md files
+
+    # load the latest journal into the journal for today
+    last_journal = "no_journal_yet"
+    if len(j_file_list) > 0:
+        last_journal = j_file_list[-1]
+        old_jtd_doc.add_lines(fileinput.input(last_journal))
+    return last_journal, old_jtd_doc
+
 
 def main():
     """
@@ -173,12 +240,12 @@ def main():
     User environment includes directories of story files with tasks, which will be read into lists of stories.
         See Tlog User Documentation.md
 
+    # ==== process_work done
     1. build the "old" journal / to do (j/td) file.
     2. make_scrum_resolved() as:
         a. start with the existing resolved file add to new j/td scrum object as resolved.
         b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum object as resolved.
         c. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
-            todo need about 5 test cases for item.add_item_merge_enhanced(self, other_item):
     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to
         insert_update_document_item(item) merge the backlog into the journal.
@@ -187,7 +254,8 @@ def main():
        flagged as 'x -' or 'a -' in j/td by a user.
 
     7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)
-        - eventually the stores in the endeavors will be prioritized.  There is a story for that.
+
+    # ==== plan_day
     8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
         of task items from the stories.
     9. Pop the global sprint size number of stories off the backlogs of list. Add them to new j/td scrum object as to do.
@@ -198,105 +266,34 @@ def main():
     """
 
     # initialize everything
-    tag = "tlog main:"
-    user_path_o = journaldir.UserPaths()
-    daily_o = journaldir.Daily(apCfg.convention_journal_root)
-    os.makedirs(user_path_o.tmp_root, exist_ok=True)
-    os.makedirs(daily_o.jrdir, exist_ok=True)
-
-    print("Tlog Working Directory: ", os.getcwd())
-    print("Tlog Temporary Directory: ", user_path_o.tmp_root)
-    debuglog = logging.getLogger('debuglog')
-    debuglog.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    debug_handler = logging.FileHandler(user_path_o.debug_log_file)
-    debug_handler.setLevel(logging.DEBUG)
-    debug_handler.setFormatter(formatter)
-    debuglog.addHandler(debug_handler)
-
-    info_handler = logging.StreamHandler()
-    info_handler.setLevel(logging.INFO)
-    debuglog.addHandler(info_handler)
-
-    user_path_o.git_init_journal()
-    old_jtd_doc = TLDocument(day=daily_o.domth)
-    look_back_months = 24
+    daily_o, debuglog, user_path_o = initialize_file_paths()
 
     # ############################
     # Gather input state from Disk and command line
     # ============================
-
-    # --- might be influenced by command line at some point.
     #     1. build the "old" journal / to do (j/td) file.
-    os.makedirs(daily_o.j_month_dir, exist_ok=True) # make the dir for the current jounal file
-    os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old journal
-    os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name), exist_ok=True) # dir default an_endeavor
-    # look back in history to find past journal dir
-    prev_journal_dir = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
-    story_dir_o = StoryDir(prev_journal_dir)
-
-    journal_story_docs = StoryGroup(story_dir_o).story_docs # * story.md docs.
-    j_file_list = journaldir.get_file_names_by_pattern(
-        story_dir_o.path, apCfg.journal_pat) # journal {date].md files
-    msg = "no argument sfile_list: " + ",".join(story_dir_o.story_list)
-    # ---
-
-    print(tag + msg)
-    print(tag + "no argument jfile_list:" + ",".join(j_file_list))
-
-    #
-    # load the latest journal into the journal for today
-    last_journal = "no_journal_yet"
-    if len(j_file_list) > 0:
-        last_journal = j_file_list[-1]
-        # old_jtd_doc = load_and_resave_story_file_with_attribs(last_journal)
-        old_jtd_doc.add_lines(fileinput.input(last_journal))
+    last_journal, old_jtd_doc = load_task_data(daily_o, user_path_o)
 
     #     2. make_scrum_resolved() as:
     #         a. start with the existing resolved file add to new j/td scrum object as resolved.
-    #         b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum object as resolved.
+    #         b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum
+    #         object as resolved.
     #         c. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
-
-    resolved_doc: TLDocument = load_doc_from_file( journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
-    new_jtd_doc: TLDocument =  TLDocument()
-    new_jtd_doc.add_section_list_items_to_scrum(resolved_doc.journal) # items in resolved file from earlier today run of tlog
-
-    in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.statuses.unfinished.pattern) # items in old jtd that are in progress
-    unfinished_item_copies = [ item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items ]
-    [ item.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s) for item in unfinished_item_copies ] # toggle in progress to unfinished
-    new_jtd_doc.add_list_items_to_scrum(unfinished_item_copies)
-
-    resolved_items = old_jtd_doc.select_all_section_items_by_pattern(tldocument.resolved_pat) # items in jtd that are resolved (xa)
-    new_jtd_doc.add_list_items_to_scrum(resolved_items)
-
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
-    debuglog.debug("3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)")
+    new_jtd_doc, resolved_items = write_resolved_tasks(daily_o, old_jtd_doc)
 
-    resolved_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.resolved_section_head])
-    print("resolved_data:", resolved_data)
-    journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
-
-    #     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to
-    debuglog.debug("4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to")
-    #         insert_update_document_item(item) merge the backlog into the journal.
-    # write all the tasks from the old jtd
-    for story_item in old_jtd_doc.get_document_unresolved_list():
-        write_item_to_story_file(story_item, user_path_o.new_task_story_file)
-
+    #     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_
+    #     item_to_story_file() call to
     #     5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.
-    debuglog.debug("5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.")
-    user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal}")
+    #     6. Remove resolved items from stories using remove_item_from_story_file(r_item).
+    update_endeavors(daily_o, last_journal, old_jtd_doc, resolved_items, user_path_o)
 
-    # 6. Remove resolved items from stories using remove_item_from_story_file(r_item).
-    debuglog.debug("6. Remove resolved items from stories using remove_item_from_story_file(r_item).")
-    [remove_item_from_story_file(r_item) for r_item in resolved_items]
-
-    # 7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)
-    debuglog.debug("7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)")
+    #     7. Read the Endeavor stories according to load_endeavor_stories(user_path_o)
+    #     (now including the old j/td tasks)
     story_dir_objects: List[StoryDir] = journaldir.load_endeavor_stories(user_path_o)
-    # need to enhance StoryDir object to (1) load the
 
     all_endeavor_story_groups: List[StoryGroup] = [StoryGroup(sdo) for sdo in story_dir_objects]
+
     story_docs_from_all_endeavors: List[TLDocument] = []
     endeavor_models: List[Endeavor] = []
 
@@ -310,12 +307,9 @@ def main():
     #
     # mongocol.list_endeavors()
 
-    # 8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
-    #    of task items from the stories.
-    debuglog.debug("8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)")
+    #     8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
+    #     of task items from the stories.
     sprint_candidate_tasks: List[TLDocument] = list()
-    for journal_story_doc in journal_story_docs:
-        sprint_candidate_tasks += journal_story_doc.get_limited_tasks_from_unresolved_list() # tasks from stories in journaldir.
 
     for endeavor_story_doc in story_docs_from_all_endeavors:
         sprint_candidate_tasks += endeavor_story_doc.get_limited_tasks_from_unresolved_list()
@@ -327,7 +321,6 @@ def main():
     # Stories within the Endeavor are prioritized according to prioritized.md in the an_endeavor dir.
 
     # 9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.
-    debuglog.debug("9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.")
     sprint_size = TLDocument.default_scrum_to_do_task_capacity
     num_sprint_canidates = len(sprint_candidate_tasks);
     sprint_task_items = sprint_candidate_tasks[0:sprint_size]
@@ -340,7 +333,6 @@ def main():
         journaldir.move_files(user_path_o.old_journal_dir, journal_file_list)
 
     # 11. Persist the scrum todo_data
-    debuglog.debug("11. Persist the scrum todo_data")
     todo_tasks = new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.todo_section_head]
     todo_data = str(todo_tasks)
     journaldir.write_dir_file(todo_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
@@ -352,16 +344,12 @@ def main():
     debuglog.debug(debug_msg)
 
     # 12. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
-    debuglog.debug("11. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with")
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
-
 
     # msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.body_items)}"
     msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.get_body_data())}"
-    debuglog.debug(tag + msg)
-    print(tag + msg)
-
-    # print(f"Current scrum for daily sprint:\n{new_jtd_doc.scrum}")
+    debuglog.debug(msg)
+    print(msg)
 
 
 if __name__ == "__main__":

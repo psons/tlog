@@ -11,7 +11,7 @@ import os
 import journaldir
 import tlutil
 
-uttd = "../unit-test-tmp-dir"   # perhaps: /Users/paulsons/dev/tl2/tlog/unit-test-tmp-dir
+uttd = "../unit-test-tmp-dir"   # perhaps: tldev/tlog/unit-test-tmp-dir
 
 uttd_exists = os.path.isdir(uttd)
 

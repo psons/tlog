@@ -5,43 +5,48 @@ from the backlog into here.
 # current work
 
 Tasks in this effort are flowing in from:
-    ~/journal/Endeavors/tl_sprint/tasks in Mongo story.md
+    Mongo and File Integration sameness story.md
 
 Notes and learning are being recorded in:
-    ~/dev/tl2/Planning/Technical Implementation Notes/Mongo and Domain model notes.md
+    tldev/../Planning/Technical Implementation Notes/Mongo and Domain model notes.md
 
 ## current work tasks
+storyName:Mongo and File Integration sameness story
 
-x - Write a method in Section class to get the body data, which is the body_items, but skipping any 'meta data only'
-items, such as typically the first Item.
- - this prevents the sprint from having a blank item at the beginning.
+Story goal is to code and test round trip read Endeavors, save to mongo, read back
+and write to files without loss of information.  The storoies written back may be enhanced 
+with some key info needed to locate tasks in te endeavors mongo collection, just as 
+tasks are stored in a storydir in the file system.
 
-x - build a python domain model to load 1 endeavor and put it in mongo
-  x - explore enhancing the Endeavor to extract a raw python structure of dicts, lists, and strings.  
-   This should be serializable with simplejson and probably any other serialization library
-   x - need to understand simpleJson better.
-        - simple json is the externally maintain standard package for json.
-   x - write a json encode of a simple flat object.
-    x - write a simple method to getEncodable data from the Python class.
-        - see which types are encodable: https://docs.python.org/3/library/json.html#encoders-and-decoders
-    x - feed the encodable data as a dict to json dumps() https://docs.python.org/3/library/json.html#basic-usage
-    x - need to make an Endeavor test suite.
-    x - integrate tlog file system implementation with the endevor.Endeavor objects
-        x - add a document attribute storyName and set it to so that tlog.endeavor_story_docs 
-        is a list of TLDocuments, that can be used to build the endeavor.Endeavors.
-        x - class StoryGroup that has tests.  Unwind the following to do it in two steps.
-      x - 1. - get the StoryGroups
-          1.a. build endeavor.Endeavor as from the StoryGroups.
-      x - 2. - get a list of the story docs from all the story groups.
-        endeavor_story_docs: List[TLDocument] = [story_doc for sdo in story_dir_objects
-                                             for story_doc in StoryGroup(sdo).story_docs ] #  .get_short_stories()]
-        x - write StoryGroup.as_endeavor()
-x -  provide an _id based on eid for mongo use. 
+put another way:
+    File system state (committed Git) 
+        -> Story Dir markdown 
+        -> Object -> encodable -> write Mongo 
+        -> read Mongo -> JSON? -> Object -> StoryDir 
+        -> File system state: Git diff should be same. 
 
-todo Mongo tasks in mongocol:
-  x - set attribute _id as eid in the data structure.
-  a - test endeavors.insert_many or update many with upsert=True
-  x - change upsert_endeavor to actually upsert, not insert
+d - object from Mongo
+storySource:/Users/paulsons/journal/Endeavors/tl_july/Mongo and File Integration sameness story.md
+titleHash:d39a6200c5
+ - read Mongo -> JSON? -> Endeavor Object
+
+d - make an integration test directory and a testMongo class.
+storySource:/Users/paulsons/journal/Endeavors/tl_july/Mongo and File Integration sameness story.md
+titleHash:aeaac60d35
+
+d - Object to mongo and back
+storySource:/Users/paulsons/journal/Endeavors/tl_july/Mongo and File Integration sameness story.md
+titleHash:04502d00b3
+ - integration test to verify Endeavor Object -> encodable -> write Mongo -> read Mongo -> JSON? -> Endeavor Object
+
+d - create Story Dir markdown from Endeavor Object
+storySource:/Users/paulsons/journal/Endeavors/tl_july/Mongo and File Integration sameness story.md
+titleHash:d05255d958
+ - add tests too.
+
+d - write Story Dir to file system 
+storySource:/Users/paulsons/journal/Endeavors/tl_july/Mongo and File Integration sameness story.md
+titleHash:dd15886bcc
 
 
 # Project notes
