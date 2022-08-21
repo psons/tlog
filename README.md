@@ -14,7 +14,7 @@ Notes and learning are being recorded in:
 storyName:Mongo and File Integration sameness story
 
 Story goal is to code and test round trip read Endeavors, save to mongo, read back
-and write to files without loss of information.  The storoies written back may be enhanced 
+and write to files without loss of information.  The stories written back may be enhanced 
 with some key info needed to locate tasks in te endeavors mongo collection, just as 
 tasks are stored in a storydir in the file system.
 

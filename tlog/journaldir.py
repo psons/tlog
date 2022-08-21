@@ -70,7 +70,8 @@ class UserPaths:
 
 # todo add a test perhaps via a higher level function in tlog
 def get_file_names_by_pattern(source_dir_name, a_pattern: re.Pattern) -> List[str]:
-    # todo make a default for a_pattern that is a compiled re that matches everything.
+    # todo make a default for a_pattern that is a compiled re that
+    #  matches everything.
     """
 	Get the file names in a directory that match a compiled regex 
 	pattern that are not themselves directories.

@@ -77,7 +77,7 @@ def load_and_resave_story_file_with_attribs(file_name) -> TLDocument:
 
 def remove_item_from_story_file(item: Item) -> Item:
     """
-    Remove item from it's file indicated by it's 'storySource:' attribute
+    Remove item from file indicated by it's 'storySource:' attribute
     always log the item being removed.
     """
     debuglog = logging.getLogger('debuglog')

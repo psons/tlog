@@ -18,9 +18,10 @@ class Section:
     A Section can be read and written as a single section of a Markdown document
     divided by H1 headings as identified be the regex "^#".
     A Section have no H1 heading, if for example the text appears before any H1
-    in a document.  If the caller subsequently adds a line matching te markdown H1 pattern
-    to the section, it will be treated as the H1 for the top of the section. (ie. the Section
-    can have only heading)
+    in a document.  If the caller subsequently adds a line matching the markdown
+    H1 pattern
+    to the section, it will be treated as the H1 for the top of the section.
+    (ie. the Section can have only heading)
 
     Any text that is not an H1 will be formed into a list of
     Item objects comprising the body of the Section.

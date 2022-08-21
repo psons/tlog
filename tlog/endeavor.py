@@ -1,4 +1,4 @@
-# the model of endeavors, and the stories and tasks tha make them up
+# the model of endeavors, and the stories and tasks that make them up
 # this model is agnostic of:
 #  - parsing and storage representation.
 #  - semantic meaning of attributes
