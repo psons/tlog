@@ -30,7 +30,7 @@ Logic for building TLDocuments line by line from text: (needs update)
 
 import re
 from collections import namedtuple
-from typing import List, Dict
+from typing import List, Dict, Pattern
 
 from docsec import Section, DocStructure, Item
 
@@ -86,9 +86,10 @@ def fill_status_dict(sd):
                             # name, val, pat_str, pattern
                             ('abandoned', 'a', "^[aA] *-"),
                             ('completed', 'x', "^[xX] *-"),
+                            ('scheduled', 's', "^[sS] *-"),
                             ('in_progress', '/', r'^[/\\] *-'),  # used here in head_str and not_do_str
                             ('unfinished', 'u', "^[uU] *-"),
-                            ('do', 'd', "^[dD] *-") # Good usage in Document to configures the scrum Docstruct
+                            ('do', 'd', "^[dD] *-") # Good usage in Document to configure the scrum Docstruct
                                                     # used here as part of head_str
                                                     # Good usages in TLDocument to make scrum and add_line()
                         ]:
@@ -112,20 +113,27 @@ unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
                         # todo re-code with dash to enable status_dict to be used.
 
 head_str = "|".join(
-    [resolved_str, statuses.in_progress.pat_str, statuses.do.pat_str, statuses.unfinished.pat_str])  # used here in head_pat and leader_group_str
+    [resolved_str, statuses.scheduled.pat_str, statuses.in_progress.pat_str, statuses.do.pat_str, statuses.unfinished.pat_str])  # used here in head_pat and leader_group_str
 head_pat = re.compile(head_str)
 
 
 not_do_str = "|".join([resolved_str, statuses.in_progress.pat_str, statuses.unfinished.pat_str])  # just used here
 not_do_pat = re.compile(not_do_str)  # only used in Document
 
-unresolved_str = "|".join([statuses.in_progress.pat_str, statuses.do.pat_str])  # used to get sprint candidates from the doc
-unresolved_pat = re.compile(unresolved_str)
+unresolved_str = "|".join([statuses.in_progress.pat_str, statuses.do.pat_str, ])
+    # used to write old data back to endeavors
+    # used to get sprint candidates
+unresolved_pat: Pattern = re.compile(unresolved_str)
+
+scheduled_pat: Pattern = re.compile(statuses.scheduled.pat_str)
 
 leader_group_str = "(" + head_str + ")"  # only used here
 title_group_str = r"\s*(.*\S)\s*$"  # only used here
-# top_parser_str = leader_group_str + title_group_str
+
+# this pattern used 2 regex match groups to parse lines as task Items
+# composed of a leader at the beginning of the line, and some text as the title.
 top_parser_pat = re.compile(leader_group_str + title_group_str)
+
 
 def find_status_name(leader_str):
     for task_status_object in task_status_objects:
@@ -137,6 +145,7 @@ def find_status_name(leader_str):
 
 # --------
 
+
 class TLDocument:
     """
     Document objects are made from lists of text lines to be made into Sections
@@ -145,20 +154,20 @@ class TLDocument:
     Methods are included to support collecting items by pattern for the caller
     to build the scrum object.
 
-    Any line beginning with d, D, x, X,  /, \ is a task line.
+    Any line beginning with d, D, s, S, x, X, a, A,  /, \ is a task line.
         d, D - represent 'do' tasks, and get added to the document.backlog
-        x, x - represent complete tasks and get added to the current Section
+        s, S - represent 'scheduled' tasks for later.  Ignored for prioritzation today.
+        x, x - represent complete tasks and get added to the scrum document to write as resolved.
+        a, A - represent abanndon tasks, no longer needed and get added to the scrum document to write as resolved.
         /, \ - represent in progress tasks,  with a copy changed to
-                u - (unfinished) and added to the scrum object Resolved section.
+                u - (unfinished) and added to the scrum document and written as resolved section.
     If a task line is followed by lines that are a bullet list, or free text,
     the additional lines will be kept together as part of the task Item object.
 
-    Any input text line line that is not a Section or Item header gets added to the
+    Any input text line that is not a Section or Item header gets added to the
     current Item.
 
     Items that begin a section, sometimes do not have a task line
-
-    Support multiline task Items.
 
     Attributes are supported using the class TLAttribute
 
@@ -171,17 +180,14 @@ class TLDocument:
     The Section and Item classes can be injected with attributes, but
     they should be optional in most or all cases.
 
-    ## Evolution:
-    The class TLDocument is refactored over time to hold any semantic meaning for the
+    The class TLDocument holds the semantic meaning for the
     documents needed by tlog.
 
     The 'journal' has evolved to be created of Sections and Items *as read from disk*.
-    The name journal may not make sense anymore, and this could be a list
-    named document_sections in a generic Document class free of TLog semantics,
-    possibly just being a Markdown Document.
+    The name 'journal' is being replaced with 'blotter', as the active file where work and status changes are made.
 
     The class DocStructure implements the scrum object to associate Item leader types
-    with semantically meaningful special sections like '# Resolved' and '# To Do'.
+    with semantically meaningful special sections like '# Resolved' and '# To Do', and '# Scheduled for later'
     """
 
     default_scrum_to_do_task_capacity = 5  # default number of backlog tasks to take into a day sprint
@@ -204,11 +210,14 @@ class TLDocument:
         domth: str = day if day else ""
         self.todo_section_head = f'# To Do {domth}'
         self.resolved_section_head = f'# Resolved {domth}'
+        self.scheduled_section_head = f'# Scheduled {domth}'
         self.scrum = DocStructure(Section.head_pat, top_parser_pat) # see doc for make_scrum()
         self.scrum.add_leader_entry(self.resolved_section_head, [statuses.abandoned.pattern,
-                                                                 statuses.completed.pattern,
-                                                                 statuses.unfinished.pattern])
-        self.scrum.add_leader_entry(self.todo_section_head, [statuses.in_progress.pattern, statuses.do.pattern])
+                                                                 statuses.completed.pattern])
+        self.scrum.add_leader_entry(self.todo_section_head, [statuses.in_progress.pattern,
+                                                             statuses.do.pattern])
+        self.scrum.add_leader_entry(self.scheduled_section_head, [statuses.scheduled.pattern])
+
         self._doc_name = name or ""
         self.task_capacity = initial_task_capacity
         self.initialize_journal()
@@ -220,7 +229,7 @@ class TLDocument:
         and a current section
         """
         self.journal = []
-        self.in_progress = Section(top_parser_pat, None)  # external logic sets to today
+        # self.in_progress = Section(top_parser_pat, None)  # external logic sets to today
         # self.backlog = Section(TLDocument.top_parser_pat)
         self.add_section_from_line(None)
 
@@ -375,9 +384,9 @@ class TLDocument:
             s += sec_newline + sec_str
         return s
 
-    def in_progress_str(self):
-        "Return the in_progress section as a string."
-        return str(self.in_progress)
+    # def in_progress_str(self):
+    #     "Return the in_progress section as a string."
+    #     return str(self.in_progress)
 
 
     def get_limited_tasks_from_unresolved_list(self, )-> List[Item]:
@@ -385,21 +394,26 @@ class TLDocument:
         if self.max_tasks:
             mt: int = int(self.max_tasks)
 
-        limited_list: List[Item] = self.get_document_unresolved_list()[0:mt]
+        limited_list: List[Item] = self.get_document_matching_list(unresolved_pat)[0:mt]
         return limited_list
 
+    def get_document_items_by_pattern(self, match_pat: Pattern):
+        matched_items: List[Item] = list()
+        section: Section
+        for section in self.journal:
+            matched_items += section.get_matching_items(match_pat)
+        return matched_items
 
-    def get_document_unresolved_list(self) -> List[Item]:
+    def get_document_matching_list(self, pattern: re.Pattern) -> List[Item]:
         """
         Caller will be responsible for slicing to max_tasks if needed.
         :return all tasks from all section matching TLDocument.unresolved_pat
         """
-        unresolved_items: List[Item] = list()
+        matching_items: List[Item] = list()
         section: Section
         for section in self.journal:
-            unresolved_items += section.get_matching_items(unresolved_pat)
-        return unresolved_items
-
+            matching_items += section.get_matching_items(pattern)
+        return matching_items
 
     def attribute_all_unresolved_items(self, key, val):
         """creates attribute on every item in the backlog section.
@@ -407,7 +421,7 @@ class TLDocument:
         :param :key the name of the attribute to set.
         param :val the value to set for the attribute.
         """
-        for item in self.get_document_unresolved_list(): # .backlog.body_items:
+        for item in self.get_document_matching_list(unresolved_pat):
             item.set_attrib(key, val)
 
     def for_journal_sections_add_all_missing_item_title_hash(self):
@@ -430,13 +444,13 @@ class TLDocument:
         num_t = int(num_t)
         return list(task_list[0:num_t])
 
-    def shorten_in_progress(self, num_tasks=None):
-        """
-        discard extra tasks in the in_progress section
-        """
-        self.in_progress.body_items = self.shorten_task_list(
-            self.in_progress.body_items, num_tasks)
-        return self
+    # def shorten_in_progress(self, num_tasks=None):
+    #     """
+    #     discard extra tasks in the in_progress section
+    #     """
+    #     self.in_progress.body_items = self.shorten_task_list(
+    #         self.in_progress.body_items, num_tasks)
+    #     return self
 
 
     def __str__(self):
@@ -447,7 +461,7 @@ class TLDocument:
 
 
     def add_section_list_items_to_scrum(self, section_list: List[Section]):
-        """Given list of Section objects, add all it's Items to the scrum"""
+        """Given list of Section objects, add all their Items to the scrum"""
         for section in section_list:
             self.add_section_items_to_scrum(section)
 

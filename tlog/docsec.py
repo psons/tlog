@@ -61,15 +61,12 @@ class Section:
         """
         return Section.fromtext(str(self))
 
-
     def get_body_data(self):
         """
         :return: the list of Items that are not metadata.
         """
-        body_data = [ body_item for body_item in self.body_items if body_item.has_top() ]
+        body_data = [body_item for body_item in self.body_items if body_item.has_top()]
         return body_data
-
-
 
     def get_section_attrib(self, key):
         """
@@ -101,7 +98,7 @@ class Section:
 
     def add_section_line(self, data):
         """
-        Used for building up sections ant items line by line from text strings.
+        Used for building up sections and items line by line from text strings.
         See doc under TLDocument.add_line()
         """
         if Section.head_pat.match(data):
@@ -518,7 +515,7 @@ class Item:
         """
         Makes a copy where
          - the top element refers to the same top string, which is ok
-           because strigs are immutable
+           because strings are immutable
          - the subs list is copied to a new list.
          - the attribute dictionary is copied to a new dict
         """
@@ -614,11 +611,13 @@ class DocStructure:
         self.head_instance_dict: Dict[str, Section] = {} # map string headers -> Section instances
         self.leader_instance_dict:[str, Section] = {} # for callers to add to the correct instances
 
-
     def add_leader_entry(self, heading: str, pattern_strs: List[Pattern[str]]):
         """
         Add an association between a list of leader pattern_strs and a heading and
-        Section instance for that heading
+        Section instance for that heading:
+            each item in the pattern_strs list will be mapped to a Section object indexed
+            by heading
+
         Will not support update of a heading once it is added.
         """
         if not self.header_pat.match(heading):
@@ -629,7 +628,7 @@ class DocStructure:
         self.head_instance_dict[heading] = Section(self.item_top_parser_pat, heading) # todo set item insert prefrence at head or tail as a new attribute of a section.
         for leader in pattern_strs:
             self.leader_instance_dict[re.compile(leader)] = self.head_instance_dict[heading]
-            #print("compile re for {} is {}".format(leader, str(re.compile(leader))))
+            # print("compile re for {} is {}".format(leader, str(re.compile(leader))))
 
     def __repr__(self):
         return "\n".join([ str(leader) + " => " + self.leader_instance_dict[leader].header
@@ -640,10 +639,22 @@ class DocStructure:
         ds = "\n".join([str(self.head_instance_dict[s]) for s in self.head_instance_dict.keys()])
         return ds
 
-
+    def get_report_str(self, report_section_names: List[str]):
+        """
+        Given a list of section names, return the concatenated
+        string representation if found in this DocStructure
+        """
+        report_section_obj_list: List[Section] =  []
+        for report_section in report_section_names:
+            if report_section in self.head_instance_dict.keys():
+                report_section_obj_list.append(self.head_instance_dict[report_section])
+            else:
+                raise TLogInternalException(
+                    f"A section name was requested that is not part of DocStructure {repr(self)}")
+        return "\n\n".join([str(section) for section in report_section_obj_list])  # stringify the list of matches.
     def insert_item(self, item: Item):
         """
-        Side affect: insert Item in first matching section in leader_instance_dict
+        Side effect: insert Item in first matching section in leader_instance_dict
         Return the instance from leader_instance_dict matching item.top or None"""
         for key_pat in self.leader_instance_dict.keys():
             if key_pat.match(item.top):

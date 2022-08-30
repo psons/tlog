@@ -1,5 +1,5 @@
 #!/usr/bin/env python -d
-#!/usr/local/bin/python3
+# !/usr/local/bin/python3
 """
 Composition: Top level application built of collections of TLDocument
 Objects.  Stories read from Endeavor files, for example.
@@ -9,7 +9,7 @@ import os
 import re
 from typing import List
 
-#import mongocol
+# import mongocol
 from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
@@ -18,6 +18,7 @@ from docsec import TLogInternalException, Item
 import fileinput
 from journaldir import StoryDir
 import journaldir
+from docsec import DocStructure
 # import sys
 import logging
 
@@ -42,17 +43,16 @@ class StoryGroup:
     def get_endeavor_name(self):
         return os.path.basename(self.story_dir.path)
 
-    def as_endeavor(self)-> Endeavor:
+    def as_endeavor(self) -> Endeavor:
         endeavor = Endeavor(self.get_endeavor_name())
         for story_doc in self.story_docs:
             story = Story(story_doc.story_name, endeavor, story_doc.max_tasks)
-            for task_item in story_doc.get_document_unresolved_list():
+            for task_item in story_doc.get_document_items_by_pattern(tldocument.unresolved_pat):
                 # todo first arg below needs to be the status.  prob implement a taskItem.get_status()
                 # todo is this right for last arg?: str(taskItem.subs)
                 Task(tldocument.find_status_name(task_item.get_leader()), task_item.get_title(), story,
                      task_item.detail_str())
         return endeavor
-
 
     def __str__(self):
         return "\n".join([str(d) for d in self.story_docs])
@@ -75,6 +75,7 @@ def load_and_resave_story_file_with_attribs(file_name) -> TLDocument:
     journaldir.write_filepath(str(story_doc), file_name)
     return story_doc
 
+
 def remove_item_from_story_file(item: Item) -> Item:
     """
     Remove item from file indicated by it's 'storySource:' attribute
@@ -82,12 +83,12 @@ def remove_item_from_story_file(item: Item) -> Item:
     """
     debuglog = logging.getLogger('debuglog')
     tag = "remove_item_from_story_file:"
-    story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
+    story_source = item.get_item_attrib(StoryGroup.story_source_attr_name)
     if not story_source:
         debuglog.warning(f"{tag} item to remove does not have a 'storySource:' attribute.")
         return None
     filepath = story_source
-    story_tldoc: TLDocument= load_doc_from_file(filepath)
+    story_tldoc: TLDocument = load_doc_from_file(filepath)
     story_tldoc.remove_document_item(item)
     journaldir.write_filepath(str(story_tldoc), filepath)
 
@@ -101,7 +102,7 @@ def write_item_to_story_file(item: Item, default_file=None, new_item_section_hea
     :return: Story Document object that was written to disk
     """
     tag = "write_item_to_story_file():"
-    story_source  = item.get_item_attrib(StoryGroup.story_source_attr_name)
+    story_source = item.get_item_attrib(StoryGroup.story_source_attr_name)
     filepath = default_file
     if story_source:
         filepath = story_source
@@ -114,7 +115,7 @@ def write_item_to_story_file(item: Item, default_file=None, new_item_section_hea
                 f"and no default has been provided")
 
     # get the story contents from disk and insert / update the item.
-    story_tldoc: TLDocument= load_doc_from_file(filepath)
+    story_tldoc: TLDocument = load_doc_from_file(filepath)
     story_tldoc.insert_update_document_item(item, new_item_section_head)
     journaldir.write_filepath(str(story_tldoc), filepath)
     return story_tldoc
@@ -163,8 +164,6 @@ def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
     return r_str
 
 
-
-
 def initialize_file_paths():
     user_path_o = journaldir.UserPaths()
     daily_o = journaldir.Daily(apCfg.convention_journal_root)
@@ -186,28 +185,53 @@ def initialize_file_paths():
     return daily_o, debuglog, user_path_o
 
 
+# todo - replace this method with 2 methods:
+#    a method that builds the new blotter with a scrum that has all the previously resolved 'x - '
 def write_resolved_tasks(daily_o, old_jtd_doc):
+    """
+    Get a new blotter doc started, with '/ -' and also write them as 'u - ' to the resolved file.
+    Include 'x -' and 'a -' in the new blotter for next steps in main()
+    """
+    #         c. 
+    #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
+
+    # reads the current resolved into a doc if there are any. 
     resolved_doc: TLDocument = load_doc_from_file(journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
-    new_jtd_doc: TLDocument = TLDocument()
-    new_jtd_doc.add_section_list_items_to_scrum(
+    
+    # loads them into a blotter doc scrum object as resolved.
+    new_blotter_doc: TLDocument = TLDocument()
+    new_blotter_doc.add_section_list_items_to_scrum(
         resolved_doc.journal)  # items in resolved file from earlier today run of tlog
+ 
+    # gets a list of the in '/ -' in-progress from old blotter 
     in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(
-        tldocument.statuses.unfinished.pattern)  # items in old jtd that are in progress
-    unfinished_item_copies = [item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items]
-    [item.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s) for item in
-     unfinished_item_copies]  # toggle in progress to unfinished
-    new_jtd_doc.add_list_items_to_scrum(unfinished_item_copies)
-    resolved_items = old_jtd_doc.select_all_section_items_by_pattern(
+        tldocument.statuses.in_progress.pattern)  # items in old blotter that are in progress
+    
+    # makes a copy of the list and modifies the leader from '/ - ' to 'u - ' for the resolved doc
+    # unfinished_item_copies = [item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items]
+    # for item in unfinished_item_copies:
+    #     # toggle in progress to unfinished
+    #     item.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s)
+    
+    # extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
+    # new_blotter_doc.add_list_items_to_scrum(unfinished_item_copies)
+    xa_resolved_items = old_jtd_doc.select_all_section_items_by_pattern(
         tldocument.resolved_pat)  # items in jtd that are resolved (xa)
-    new_jtd_doc.add_list_items_to_scrum(resolved_items)
-    resolved_data = str(new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.resolved_section_head])
+    new_blotter_doc.add_list_items_to_scrum(xa_resolved_items) # puts xa_resolved_items in the resolved Section
+
+    resolved_data = str(new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.resolved_section_head])
     print("resolved_data:", resolved_data)
     journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
-    return new_jtd_doc, resolved_items
+
+    new_blotter_doc.add_list_items_to_scrum(in_progress_items)  # puts in_progress_items in the to do Section
+
+    return new_blotter_doc
 
 
 def update_endeavors(daily_o, last_journal, old_jtd_doc, resolved_items, user_path_o):
-    for story_item in old_jtd_doc.get_document_unresolved_list():
+    for story_item in old_jtd_doc.get_document_matching_list(tldocument.unresolved_pat):
+        write_item_to_story_file(story_item, user_path_o.new_task_story_file)
+    for story_item in old_jtd_doc.get_document_matching_list(tldocument.scheduled_pat):
         write_item_to_story_file(story_item, user_path_o.new_task_story_file)
     user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal}")
     [remove_item_from_story_file(r_item) for r_item in resolved_items]
@@ -241,28 +265,30 @@ def main():
         See Tlog User Documentation.md
 
     # ==== process_work done
-    1. build the "old" journal / to do (j/td) file.
-    2. make_scrum_resolved() as:
-        a. start with the existing resolved file add to new j/td scrum object as resolved.
-        b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum object as resolved.
-        c. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
-    3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
-    4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_item_to_story_file() call to
-        insert_update_document_item(item) merge the backlog into the journal.
-    5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.
-    6. Remove resolved items from stories using remove_item_from_story_file(r_item).  Resolved items have been
-       flagged as 'x -' or 'a -' in j/td by a user.
+    #     1. build the "old" blotter file.
+    #     2. make_scrum_resolved() as:
+    #         a. start with the existing resolved file add to new blotter doc scrum object as resolved.
+    #         b. extract '/ -' in-progress from old blotter.  Flip them to 'u -'. add them to new blotter scrum
+    #         object as resolved.
+    #         c. extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
+    #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
 
-    7. Read the Endeavor stories according to load_endeavor_stories(user_path_o) (now including the old j/td tasks)
+    #     4. Write everything in old blotter back to Endeavor stories on disk, merging according to the write_
+    #     item_to_story_file() call to
+    #     5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.
+    #     6. Remove resolved items from stories using remove_item_from_story_file(r_item).
+
+    #     7. Read the Endeavor stories according to load_endeavor_stories(user_path_o)
+    #     (now including the old blotter tasks)
 
     # ==== plan_day
-    8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
-        of task items from the stories.
-    9. Pop the global sprint size number of stories off the backlogs of list. Add them to new j/td scrum object as to do.
-    10. Move existing j/td files out of the journaldir
-    11. Persist the scrum todo_data
-    12. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
-        resolved items now removed. ( they are flagged as resolved in stories in the previous commit)
+    #     8.a Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
+    #     of task items from the stories.
+    #     8.b Get scheduled tasks from endeavor story docs.  Build a list of scheduled tasks.
+    #     9. Pop the global sprint size number of stories off the backlog list. Add em to new blotter scrum object as to do.
+    #     10. Move existing blotter files out of the journaldir
+    #     11. Persist the scrum td and sched
+    #     12. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
     """
 
     # initialize everything
@@ -271,25 +297,27 @@ def main():
     # ############################
     # Gather input state from Disk and command line
     # ============================
-    #     1. build the "old" journal / to do (j/td) file.
-    last_journal, old_jtd_doc = load_task_data(daily_o, user_path_o)
+    #     1. build the "old" blotter file.
+    last_journal, old_blotter_doc = load_task_data(daily_o, user_path_o)
 
-    #     2. make_scrum_resolved() as:
-    #         a. start with the existing resolved file add to new j/td scrum object as resolved.
-    #         b. extract '/ -' in-progress from old j/td.  Flip them to 'u -'. add them to new j/td scrum
+    #     2. Get a new blotter doc started, with '/ -' and also write them as 'u - ' to the resolved file.
+    #         still need the 'x -' and 'a -' to clear them out of the source Endeavors stories.
+    #         a. start with the existing resolved file add to new blotter doc scrum object as resolved.
+    #         b. extract '/ -' in-progress from old blotter.  Flip them to 'u -'. add them to new blotter scrum
     #         object as resolved.
-    #         c. extract 'x -' completed tasks from old j/td.  Add them to new j/td scrum object as resolved
+    #         c. extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
-    new_jtd_doc, resolved_items = write_resolved_tasks(daily_o, old_jtd_doc)
+    new_blotter_doc = write_resolved_tasks(daily_o, old_blotter_doc)
+    resolved_items = new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.resolved_section_head].body_items
 
-    #     4. Write everything in old j/td back to Endeavor stories on disk, merging according to the write_
-    #     item_to_story_file() call to
+    #     4. Write everything in old blotter back to Endeavor stories on disk, merging according to the
+    #           write_item_to_story_file() doc string.
     #     5. Git commit the updates, which will include tasks updated to 'x -' and 'a -'.
     #     6. Remove resolved items from stories using remove_item_from_story_file(r_item).
-    update_endeavors(daily_o, last_journal, old_jtd_doc, resolved_items, user_path_o)
+    update_endeavors(daily_o, last_journal, old_blotter_doc, resolved_items, user_path_o)
 
     #     7. Read the Endeavor stories according to load_endeavor_stories(user_path_o)
-    #     (now including the old j/td tasks)
+    #     (now including the old blotter tasks)
     story_dir_objects: List[StoryDir] = journaldir.load_endeavor_stories(user_path_o)
 
     all_endeavor_story_groups: List[StoryGroup] = [StoryGroup(sdo) for sdo in story_dir_objects]
@@ -307,10 +335,9 @@ def main():
     #
     # mongocol.list_endeavors()
 
-    #     8. Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
+    #     8.a Shorten the stories to max tasks in each.  Build a sprint candidate list (short backlog list)
     #     of task items from the stories.
     sprint_candidate_tasks: List[TLDocument] = list()
-
     for endeavor_story_doc in story_docs_from_all_endeavors:
         sprint_candidate_tasks += endeavor_story_doc.get_limited_tasks_from_unresolved_list()
 
@@ -320,22 +347,34 @@ def main():
     # Picking off the top 3 stories will always take from the top an_endeavor
     # Stories within the Endeavor are prioritized according to prioritized.md in the an_endeavor dir.
 
-    # 9. Pop the global sprint size number of stories off the backlog list. Add them to new j/td scrum object as t-do.
+    #   8.b Get scheduled tasks from endeavor story docs.  Build a list of scheduled tasks.
+    scheduled_tasks: List[TLDocument] = list()
+    for endeavor_story_doc in story_docs_from_all_endeavors:
+        scheduled_tasks += endeavor_story_doc.get_document_matching_list(tldocument.scheduled_pat)
+
+    # 9. Pop the global sprint size number of stories off the backlog list. Add em to new blotter scrum object as to do.
     sprint_size = TLDocument.default_scrum_to_do_task_capacity
-    num_sprint_canidates = len(sprint_candidate_tasks);
+    num_sprint_candidates = len(sprint_candidate_tasks);
     sprint_task_items = sprint_candidate_tasks[0:sprint_size]
 
-    new_jtd_doc.add_list_items_to_scrum(sprint_task_items)
+    new_blotter_doc.add_list_items_to_scrum(sprint_task_items)
+    new_blotter_doc.add_list_items_to_scrum(scheduled_tasks)    # the scrum object knows the section
+                                                                # to put these in based on the leader pattern
 
-    # 10. Move existing j/td files out of the journaldir
+    # 10. Move existing blotter files out of the journaldir
     journal_file_list = journaldir.get_file_names_by_pattern(daily_o.j_month_dir, apCfg.journal_pat)
     if len(journal_file_list) > 0:
         journaldir.move_files(user_path_o.old_journal_dir, journal_file_list)
 
-    # 11. Persist the scrum todo_data
-    todo_tasks = new_jtd_doc.scrum.head_instance_dict[new_jtd_doc.todo_section_head]
-    todo_data = str(todo_tasks)
-    journaldir.write_dir_file(todo_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
+    # 11. Persist the scrum td and sched
+    new_scrum: DocStructure = new_blotter_doc.scrum
+    blotter_data: str = new_scrum.get_report_str([new_blotter_doc.todo_section_head,
+                                                  new_blotter_doc.scheduled_section_head])
+    journaldir.write_dir_file(blotter_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
+    todo_tasks = new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.todo_section_head]
+    # todo_data = str(todo_tasks)
+    # journaldir.write_dir_file(todo_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
+
     debug_msg = "Sprint Items: \n"
     index = 1
     for sprint_item in todo_tasks.get_body_data():
@@ -347,11 +386,10 @@ def main():
     user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
 
     # msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.body_items)}"
-    msg = f"total Backlog: {num_sprint_canidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.get_body_data())}"
+    msg = f"total Backlog: {num_sprint_candidates} configured sprint_size: {sprint_size} sprint  items: {len(todo_tasks.get_body_data())}"
     debuglog.debug(msg)
     print(msg)
 
 
 if __name__ == "__main__":
     main()
-
