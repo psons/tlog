@@ -1,19 +1,21 @@
 README.md
+# Task Log background
+tlog is a task manager that started as a simple "todo file" manager, and evolved 
+with my understanding of how one might roll together goal planning and a "personal scrum"
+or "personal kanban" to account for many competing demands that may take you off course
+from your planned endeavors.
 
+It is code that I have been using for many years to learn python, and thus has many old 
+very badly designed sections of code.
+
+See docs/programmer doc.md for information about coding and contributing to this project.
+
+# current work
 On a feature or fix branch, paste the current story text 
 from the backlog into here.
-# current work
-
-Tasks in this effort are flowing in from:
-    Mongo and File Integration sameness story.md
-
-Notes and learning are being recorded in:
-    tldev/../Planning/*
 
 ## current work tasks
 
-# Project notes
-See docs/programmer doc.md for information about coding and contributing to this project.
 
 ## This section is the change summary for non trivial commit increments.
 ### 2022-07-09 commit
