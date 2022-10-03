@@ -128,6 +128,12 @@ class Section:
         """
         if type(arg_item) is Item:
             need_append = True
+
+            # Sections are created with an empty first Item, which should be used if it is empty
+            if self.body_items[0].is_empty():
+                self.body_items[0] = arg_item
+                return
+
             for body_item in self.body_items:
                 if body_item.top == arg_item.top:
                     body_item.subs = list(arg_item.subs)

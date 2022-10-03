@@ -32,7 +32,7 @@ import re
 from collections import namedtuple
 from typing import List, Dict, Pattern
 
-from docsec import Section, DocStructure, Item
+from docsec import Section, DocStructure, Item, ItemAttribute
 
 blank_ln_pat = re.compile("^\s*$")
 
@@ -87,7 +87,7 @@ def fill_status_dict(sd):
                             ('abandoned', 'a', "^[aA] *-"),
                             ('completed', 'x', "^[xX] *-"),
                             ('scheduled', 's', "^[sS] *-"),
-                            ('in_progress', '/', r'^[/\\] *-'),  # used here in head_str and not_do_str
+                            ('in_progress', '/', r'^[\/\\] *-'),  # used here in head_str and not_do_str
                             ('unfinished', 'u', "^[uU] *-"),
                             ('do', 'd', "^[dD] *-") # Good usage in Document to configure the scrum Docstruct
                                                     # used here as part of head_str
@@ -220,18 +220,25 @@ class TLDocument:
 
         self._doc_name = name or ""
         self.task_capacity = initial_task_capacity
-        self.initialize_journal()
+        # self.initialize_journal()
+        self.journal: list[Section] = []  # init the list of sections
+
+        self.current_section = None
+        self.last_data_section_add = None
+
+        self.add_section_from_line(None)  # make sure there is a sec at journal[0]
+
         self.add_lines(input_lines)
 
-    def initialize_journal(self):
-        """
-        Initializes the journal list of sections to make sure there is a section at journal[0]
-        and a current section
-        """
-        self.journal = []
-        # self.in_progress = Section(top_parser_pat, None)  # external logic sets to today
-        # self.backlog = Section(TLDocument.top_parser_pat)
-        self.add_section_from_line(None)
+    # def initialize_journal(self):
+    #     """
+    #     Initializes the journal list of sections to make sure there is a section at journal[0]
+    #     and a current section
+    #     """
+    #     self.journal = []  # init the list of sections
+    #     # self.in_progress = Section(top_parser_pat, None)  # external logic sets to today
+    #     # self.backlog = Section(TLDocument.top_parser_pat)
+    #     self.add_section_from_line(None)  # make sure there is a sec at journal[0]
 
     # --- story_name property
     story_name_attr_str = 'storyName'
@@ -313,34 +320,57 @@ class TLDocument:
         (This is a change from a deprecated approach, which separated out 'd -' items to a backlog.
         The backlog will be built when needed as a simple sequenced list of items.)
         """
+
         if data is None:
             return
+        # todo: self.add_attribute_data(data) # adds the data as an attribute if it is an attribute line.
+        #  return true if it was added.
+        #   if journal has only 1 section and it is empty or is an attribute section (is_doc_attrib_receptive())
+        #       if data is an attribute,
+        #           add it to journal[0] using set_doc_attrib
+        #       else
+        #           if there is an attribute section at journal[0] make a new self.current section
+        #           then handle the line as below.
+        #   else nothing.  handle the line as below.  (even if it is an atribute, it is not a Documet attribute.
+        #       It belongs bwlow a section.
+        if self.is_doc_attrib_receptive():
+            might_be_attrib = ItemAttribute.fromline(data)
+            if might_be_attrib is not None:
+                self.set_doc_attrib(might_be_attrib.name, might_be_attrib.value)
+                return  #the data was added as a documet attribute.  no more work to do.
+                # todo set flag indicating the data was added
+            else:
+                if self.journal[0].is_attrib_section():
+                    # closeout is_doc_attrib_receptive() state by adding a second section
+                    # for this data, which is not an attribute
+                    self.add_section_from_line(None)
+        # todo test flag if data was added.
         if Section.head_pat.match(data):
             if self.current_section.is_empty():
                 # Putting a header on initial section
                 self.current_section.add_section_line(data)
-                self.last_add = self.current_section
+                self.last_data_section_add = self.current_section
             else:
                 # New section.
                 self.add_section_from_line(data)
 
         elif top_parser_pat.match(data):
+            # todo: should not call this if the last_data_section_add was an attribute section.
             self.current_section.add_section_line(data)
-            self.last_add = self.current_section
+            self.last_data_section_add = self.current_section
         else:
-            self.last_add.add_section_line(data)
+            self.last_data_section_add.add_section_line(data)
 
 
 
     def add_section_from_line(self, data: object) -> object:
         """
-
         :param data: string to create a section
         :return:
         """
         self.current_section = Section(top_parser_pat, data)
         self.journal.append(self.current_section)
-        self.last_add = self.current_section
+        self.last_data_section_add = self.current_section
         return self.current_section
 
     @classmethod
@@ -367,6 +397,9 @@ class TLDocument:
 
     def set_doc_attrib(self, akey, aval):
         "Set Document attributes by putting them in an otherwise empty first Section in the journal"
+        # todo For 'today story' in test data there is a bug: the first section is not is_attrib_
+        #  section() because it has tasks too.
+        #   it is malformed because it has attributes and tasks too.
         if self.journal[0].is_attrib_section():
             # Document set_doc_attrib calling Section Set Attrib
             self.journal[0].set_sec_attrib(akey, aval)
@@ -459,7 +492,6 @@ class TLDocument:
         # s += self.backlog_str()
         return s
 
-
     def add_section_list_items_to_scrum(self, section_list: List[Section]):
         """Given list of Section objects, add all their Items to the scrum"""
         for section in section_list:
@@ -531,6 +563,19 @@ class TLDocument:
             new_section.add_item(item, head_insert=True) # todo, make head_insert behavior part of the Section
                                                          #   creation pass in head_insert=true
 
+    def is_doc_attrib_receptive(self) -> bool:
+        """
+        Detect if self is in a state where any inpout that is an attribute should be interpreted as
+        an attribute of the Document (not an attribute belonging within a section of the document).
+        Return True if journal has only 1 section and it is either empty or is an attribute section
+        This means that any """
+        jlen = len(self.journal)
+        if jlen < 1:
+            raise AssertionError("TL Document Journal should be initialized with a Section")
+        if jlen == 1:
+            if self.journal[0].is_attrib_section():
+                return True
+        return False
 
 def debExit(message=""):
     "This func just gets temporarily inserted for top down re checking of main()"

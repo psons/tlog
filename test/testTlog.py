@@ -9,8 +9,8 @@ from tl_testdata import getUnitTestUserPathObject
 # from Endeavors/aGoal/small story.md
 upo = getUnitTestUserPathObject()
 expected_story_text= f"""\
-storyName:small story
 maxTasks: 3
+storyName:small story
 d - start on the small story
 storySource:{upo.endeavor_path}/aGoal/small story.md
 titleHash:5e874c75f0

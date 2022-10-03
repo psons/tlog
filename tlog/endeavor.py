@@ -22,8 +22,13 @@ class Endeavor:
     eid_key: str = '_id' # name _id is used as key in Mongo.
     story_list_key = 'story_list'
     def __init__(self, name, max_stories=None, eid=None):
+        # todo: change max_stories to max_tasks.  It should be a total number of stories the endeavor can
+        #   contribute to the sprint.   If a user desires more stories to contribute, it can be done by
+        #   reducing the the max_tasks in the top stories.
         self.name = name    # todo: it should not be possible to make an Endeavor with null or empty Name,
                             #   which would result a common unique eid.
+        # the UI is working differently: has a max tasks for the
+        # endeavor
         self.max_stories = max_stories or tldocument.default_max_stories
         self.eid = eid or digest(self.name)
         self.story_list: List[Story] = []  # in priority order

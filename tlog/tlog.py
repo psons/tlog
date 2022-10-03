@@ -82,10 +82,9 @@ def remove_item_from_story_file(item: Item) -> Item:
     always log the item being removed.
     """
     debuglog = logging.getLogger('debuglog')
-    tag = "remove_item_from_story_file:"
     story_source = item.get_item_attrib(StoryGroup.story_source_attr_name)
     if not story_source:
-        debuglog.warning(f"{tag} item to remove does not have a 'storySource:' attribute.")
+        debuglog.warning(f"item to remove does not have a 'storySource:' attribute: {item.top}")
         return None
     filepath = story_source
     story_tldoc: TLDocument = load_doc_from_file(filepath)
@@ -218,6 +217,7 @@ def write_resolved_tasks(daily_o, old_jtd_doc):
     xa_resolved_items = old_jtd_doc.select_all_section_items_by_pattern(
         tldocument.resolved_pat)  # items in jtd that are resolved (xa)
     new_blotter_doc.add_list_items_to_scrum(xa_resolved_items) # puts xa_resolved_items in the resolved Section
+    [remove_item_from_story_file(r_item) for r_item in xa_resolved_items]
 
     resolved_data = str(new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.resolved_section_head])
     print("resolved_data:", resolved_data)
@@ -234,7 +234,7 @@ def update_endeavors(daily_o, last_journal, old_jtd_doc, resolved_items, user_pa
     for story_item in old_jtd_doc.get_document_matching_list(tldocument.scheduled_pat):
         write_item_to_story_file(story_item, user_path_o.new_task_story_file)
     user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal}")
-    [remove_item_from_story_file(r_item) for r_item in resolved_items]
+    # [remove_item_from_story_file(r_item) for r_item in resolved_items]
 
 
 def load_task_data(daily_o, user_path_o):
@@ -265,7 +265,7 @@ def main():
         See Tlog User Documentation.md
 
     # ==== process_work done
-    #     1. build the "old" blotter file.
+    #     1. Load the "old" blotter file.
     #     2. make_scrum_resolved() as:
     #         a. start with the existing resolved file add to new blotter doc scrum object as resolved.
     #         b. extract '/ -' in-progress from old blotter.  Flip them to 'u -'. add them to new blotter scrum
@@ -297,7 +297,7 @@ def main():
     # ############################
     # Gather input state from Disk and command line
     # ============================
-    #     1. build the "old" blotter file.
+    #     1. Load the "old" blotter file.
     last_journal, old_blotter_doc = load_task_data(daily_o, user_path_o)
 
     #     2. Get a new blotter doc started, with '/ -' and also write them as 'u - ' to the resolved file.

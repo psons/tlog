@@ -253,7 +253,10 @@ def get_prior_dir(search_dir):
 
 class StoryDir:
     """
-    loads a list of story files with full path info
+    StoryDir objects have
+     - a self.path, which is a directory
+     - a list of file paths to the story files in that directory.
+    The list of file paths is orders according to prioritized.md, followed by any unprioritized stories.
     """
     def __init__(self, sdir):
         """

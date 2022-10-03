@@ -17,7 +17,7 @@ x - read 's - ' from the blotter
     x - write '# Scheduled for later' at the end of the blotter.
 x - in step tlog main step 11, the scrum object is written to file as a list of tasks
  - enhance this to include a scheduled section. 
-x - Problem: Tasks taged as 's' are not being written back to the Endeavor/story.
+x - Problem: Tasks tagged as 's' are not being written back to the Endeavor/story.
        - get_document_unresolved_list uses unresolved_pat to get '/' and 'd' to write them back to
        - an Endeavor/story.  If I add 's' to unresolved_pat, it will also be potentially pulled into a 
          daily todo list.
@@ -46,3 +46,9 @@ Basic insert to Mongo supported
 Adding scheduled as a task status.
 Removing 'u - ' as a status that gets written into the resolved file: it has limited benefit, 
     and pollutes search results if a task goes unfinished for multiple days.
+
+### 2022-10-03
+Fixed bugs:
+  - max tasks was being ignored if there was another document attribute
+  - / for in_progress tasks not correctly escaped in pattern.
+  - an existing empty section was not always being used for document attributes. 
