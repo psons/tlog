@@ -47,7 +47,7 @@ class StoryGroup:
         endeavor = Endeavor(self.get_endeavor_name())
         for story_doc in self.story_docs:
             story = Story(story_doc.story_name, endeavor, story_doc.max_tasks)
-            for task_item in story_doc.get_document_items_by_pattern(tldocument.unresolved_pat):
+            for task_item in story_doc.get_document_matching_list(tldocument.unresolved_pat):
                 # todo first arg below needs to be the status.  prob implement a taskItem.get_status()
                 # todo is this right for last arg?: str(taskItem.subs)
                 Task(tldocument.find_status_name(task_item.get_leader()), task_item.get_title(), story,
@@ -223,7 +223,10 @@ def write_resolved_tasks(daily_o, old_jtd_doc):
     print("resolved_data:", resolved_data)
     journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
 
+    # Forces unfinished work from curent blotter / j/td file directly into the new scrum.
     new_blotter_doc.add_list_items_to_scrum(in_progress_items)  # puts in_progress_items in the to do Section
+    # This feature can look like a bug because the item might be violating curent priority
+    # to obey priority, user can simply toggle the item from '/ - ' to 'd - '.
 
     return new_blotter_doc
 
@@ -367,6 +370,7 @@ def main():
         journaldir.move_files(user_path_o.old_journal_dir, journal_file_list)
 
     # 11. Persist the scrum td and sched
+    # todo new_scrum is just a reference to new_blotter_doc.scrum.   I doubt that is what I mean to do.
     new_scrum: DocStructure = new_blotter_doc.scrum
     blotter_data: str = new_scrum.get_report_str([new_blotter_doc.todo_section_head,
                                                   new_blotter_doc.scheduled_section_head])

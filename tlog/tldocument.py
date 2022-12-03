@@ -67,7 +67,7 @@ Status = namedtuple('Status', ['name', 'val', 'pat_str', 'pattern'])
 
 def add_status(sd: Dict[str, Status], name, val, pat_str):
     """
-    Creates a side affect of updating te dict sd with a Status created using athe arges configured in
+    Creates a side affect of updating the dict sd with a Status created using the args configured in
     fill_status_dict().   This function also compiles a pattern to store in the Status object
     """
     sd[name] = Status(name, val, pat_str, re.compile(pat_str))
@@ -430,12 +430,12 @@ class TLDocument:
         limited_list: List[Item] = self.get_document_matching_list(unresolved_pat)[0:mt]
         return limited_list
 
-    def get_document_items_by_pattern(self, match_pat: Pattern):
-        matched_items: List[Item] = list()
-        section: Section
-        for section in self.journal:
-            matched_items += section.get_matching_items(match_pat)
-        return matched_items
+    # def get_document_items_by_pattern(self, match_pat: Pattern):
+    #     matched_items: List[Item] = list()
+    #     section: Section
+    #     for section in self.journal:
+    #         matched_items += section.get_matching_items(match_pat)
+    #     return matched_items
 
     def get_document_matching_list(self, pattern: re.Pattern) -> List[Item]:
         """
