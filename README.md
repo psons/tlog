@@ -9,6 +9,8 @@ It is code that I have been using for many years to learn python, and thus has m
 very badly designed sections of code.
 
 See docs/programmer doc.md for information about coding and contributing to this project.
+See https://github.com/psons/tldbin README.md for scripts to assemble a testing and
+development environment.
 
 # current work
 On a feature or fix branch, paste the current story text 
@@ -16,8 +18,7 @@ from the backlog into here.
 
 ## current work tasks
 
-
-## This section is the change summary for non trivial commit increments.
+## This section is the change summary for non-trivial commit increments.
 ### 2022-07-09 commit
 Work is beginning to store the domain model in Mongo DB.
 Moved constant directory names and file patterns to tlconst.apCfg to clean up and document better.
