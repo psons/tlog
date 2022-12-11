@@ -54,50 +54,6 @@ multiple e-mail accounts.  You have career skills to develop, and a personal lif
 relationships with other demands.
 
 
-#### Sidebar on managing task size at the source
-
-If it is possible to break tasks down at the source to things that can be
-
-completed in a day you should do so because it will improve transparency to
-
-that "project".  For example if you have Jira stories assigned to you,
-
-fight for an issue organization scheme that allows you to individually
-
-manage the creation and completion of sub tasks involved `in resolving an issue',
-
-as opposed to having an issue that takes many days to complete.  It will make
-
-reconciliation with your list much easier.
-
-
-##### Sidebar on sidebar. Tasks are for a human to be "doable", "manageable", "not microsected", and may have "subparts".
-
-The task size constant is that it is "doable" meaning that a task can be cognitively understood by the person doing it, and they have the tools and physical and cognative capabilities to do it, and ideally it is "manageable" fits within a segment of a day so its importance and timliness can be reconciled with other tasks.  (i.e. it shouldn't be completed after it is useful, or may be broken down to a part that is an enabler for some other worker to do other tasks) (see Breaking up tasks by making stories story.md)
-
-There is a trade off for individuals and teams such that if task management itself becomes an onerous and time-consuming task, then its value has to be considered against the value of the task completion.
-
-A good task manager then reduces the overhead of managing tasks, facilitates their break up, and encourages tasks.
-
-A task should not be "microsected", meaning that it is captured, written and talked about at a more granular level than necessary to complete it.   Initial authoring of a paragraph for example is a task where the sentence design, word usage, and punctuation typically would be wasteful to subdivide and assign. 
-
-exception: a procedure may be helpful to written as a series of microsected tasks in order to discover
-
-and document the sequence. 
-
-The idea that a task is "doable", "manageable", and "not microsected" implies that there is a minimum subdivision
-
-for tasks, and if more layers of decomposition are needed, they should occur above the task level.  The
-
-practical implication for tlog is that if a tasks is too large, decomposing it should involve story
-
-creation, not establishment of some smaller effort subdivision.
-
-
-
-* a task may have "sub parts" in its delivery, such as a programmer using functions to break apart a piece of programming logic, or a writer using more or fewer sentences or paragraphs to document an idea. 
-* "sub parts" can exist within a bulleted list or other text structure (or maybe images?) within a task.   Sub parts are below tasks can be elevated to independent tasks so that and the results may be reviewed, presented, or worked on by others
-
 
 #### TaskLog
 
