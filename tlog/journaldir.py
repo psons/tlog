@@ -37,10 +37,12 @@ class UserPaths:
     """
     def __init__(self, journal_root=apCfg.convention_journal_root,
                  tmp_root=apCfg.convention_log_location, user_endeavor_dir=apCfg.endeavor_dir):
-        if os.path.isdir(journal_root):
-            self.journal_path = journal_root
-        else:
-            raise tlutil.TaskSourceException(journal_root + " for journals is not a directory")
+        if not os.path.isdir(journal_root):
+            # raise tlutil.TaskSourceException(journal_root + " for journals is not a directory")
+            print(f"The journal location does not exist, so it will be created: {journal_root}")
+            os.makedirs(journal_root, exist_ok=True)
+        self.journal_path = journal_root
+
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
         self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
@@ -291,13 +293,10 @@ class StoryDir:
     def __str__(self):
         return "StoryDir:({}):".format(self.path) + ",".join(self.story_list)
 
+
 if __name__ == "__main__":
     user_path_o: UserPaths = UserPaths()
     print(user_path_o.journal_path)
 
     if len(sys.argv) == 2 and sys.argv[1] == "init":
         os.makedirs(user_path_o.journal_path, exist_ok=True)
-
-
-
-# print(dom + dayth_dict[dom])
