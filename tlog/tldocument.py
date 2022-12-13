@@ -208,14 +208,14 @@ class TLDocument:
 
         """
         domth: str = day if day else ""
-        self.todo_section_head = f'# To Do {domth}'
+        self.blotter_section_head = f'# To Do {domth}'
         self.resolved_section_head = f'# Resolved {domth}'
         self.scheduled_section_head = f'# Scheduled {domth}'
         self.scrum = DocStructure(Section.head_pat, top_parser_pat) # see doc for make_scrum()
         self.scrum.add_leader_entry(self.resolved_section_head, [statuses.abandoned.pattern,
                                                                  statuses.completed.pattern])
-        self.scrum.add_leader_entry(self.todo_section_head, [statuses.in_progress.pattern,
-                                                             statuses.do.pattern])
+        self.scrum.add_leader_entry(self.blotter_section_head, [statuses.in_progress.pattern,
+                                                                statuses.do.pattern])
         self.scrum.add_leader_entry(self.scheduled_section_head, [statuses.scheduled.pattern])
 
         self._doc_name = name or ""

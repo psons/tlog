@@ -134,7 +134,6 @@ class Daily:
         self.j_month_dir = os.path.join(self.jroot, yyyy, mm)  # where j/td files go this month.
         self.jrdir = os.path.join(self.j_month_dir, "resolved")  # subdir for resolved files.
         self.cday_blotter_fname = 'blotter' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
-        self.cday_todo_fname = 'blotter' + '-' + yyyy + '-' + mm + '-' + dd + '.md' # todo can I consolidate on the var in prev line?
         self.cday_resolved_fname = 'resolved' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
 
     def __str__(self):

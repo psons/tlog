@@ -12,6 +12,7 @@ import re
 from typing import List, NamedTuple
 
 # import mongocol
+import tlconst
 from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
@@ -249,7 +250,7 @@ def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
     print("resolved_data:", resolved_data)
     journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
 
-    # Forces unfinished work from curent blotter / j/td file directly into the new scrum.
+    # Forces unfinished work from current blotter file directly into the new scrum.
     new_blotter_doc.add_list_items_to_scrum(in_progress_items)  # puts in_progress_items in the to do Section
     # This feature can look like a bug because the item might be violating curent priority
     # to obey priority, user can simply toggle the item from '/ - ' to 'd - '.
@@ -257,24 +258,24 @@ def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
     return new_blotter_doc
 
 
-def update_endeavors(daily_o, last_journal_message_string, old_jtd_doc, resolved_items, user_path_o):
-    for story_item in old_jtd_doc.get_document_matching_list(tldocument.unresolved_pat):
+def update_endeavors(daily_o, last_journal_message_string, old_blotter_doc, resolved_items, user_path_o):
+    for story_item in old_blotter_doc.get_document_matching_list(tldocument.unresolved_pat):
         write_item_to_story_file(story_item, user_path_o.new_task_story_file)
-    for story_item in old_jtd_doc.get_document_matching_list(tldocument.scheduled_pat):
+    for story_item in old_blotter_doc.get_document_matching_list(tldocument.scheduled_pat):
         write_item_to_story_file(story_item, user_path_o.new_task_story_file)
     user_path_o.git_add_all(daily_o, f"data written to stories and resolved file from {last_journal_message_string}")
     # [remove_item_from_story_file(r_item) for r_item in resolved_items]
 
 
 def load_task_data(daily_o, user_path_o)-> SearchResult:
-    old_jtd_doc = TLDocument(day=daily_o.domth)
-    look_back_months = 24
+    old_blotter_doc = TLDocument(day=daily_o.domth)
+
     os.makedirs(daily_o.j_month_dir, exist_ok=True)  # make the dir for the current jounal file
     os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old journal
     os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name),
                 exist_ok=True)  # dir default an_endeavor
     # look back in history to find past journal dir
-    find_prev_result = find_prev_journal_dir(daily_o.j_month_dir, look_back_months)
+    find_prev_result = find_prev_journal_dir(daily_o.j_month_dir, tlconst.apCfg.look_back_months)
     status, prev_journal_dir, message = find_prev_result
     if status == SearchStatus.SUCCESS:
         story_dir_o = StoryDir(prev_journal_dir)
@@ -285,8 +286,8 @@ def load_task_data(daily_o, user_path_o)-> SearchResult:
         last_blotter = "no_blotter_yet"
         if len(j_file_list) > 0:
             last_blotter = j_file_list[-1]
-            old_jtd_doc.add_lines(fileinput.input(last_blotter))
-        return SearchResult(SearchStatus.SUCCESS, old_jtd_doc, f"The last blotter was: {last_blotter}" )
+            old_blotter_doc.add_lines(fileinput.input(last_blotter))
+        return SearchResult(SearchStatus.SUCCESS, old_blotter_doc, f"The last blotter was: {last_blotter}" )
     else:
         return find_prev_result
 
@@ -411,23 +412,23 @@ def main():
     # 11. Persist the scrum td and sched
     # todo new_scrum is just a reference to new_blotter_doc.scrum.   I doubt that is what I mean to do.
     new_scrum: DocStructure = new_blotter_doc.scrum
-    blotter_data: str = new_scrum.get_report_str([new_blotter_doc.todo_section_head,
+    blotter_data: str = new_scrum.get_report_str([new_blotter_doc.blotter_section_head,
                                                   new_blotter_doc.scheduled_section_head])
-    journaldir.write_dir_file(blotter_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
-    todo_tasks = new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.todo_section_head]
+    journaldir.write_dir_file(blotter_data + '\n', daily_o.j_month_dir, daily_o.cday_blotter_fname)
+    blotter_tasks = new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.blotter_section_head]
 
     debug_msg = "Sprint Items: \n"
     index = 1
-    for sprint_item in todo_tasks.get_body_data():
+    for sprint_item in blotter_tasks.get_body_data():
         debug_msg += f"{index}. {sprint_item}\n"
         index += 1
     debuglog.debug(debug_msg)
 
     # 12. Git commit the updates, which will have both parts of the new scrum and the updated Endeavor stories with
-    user_path_o.git_add_all(daily_o, f"todo sprint written to {daily_o.cday_todo_fname}")
+    user_path_o.git_add_all(daily_o, f"task blotter sprint written to {daily_o.cday_blotter_fname}")
 
     msg1 = f"total Backlog: {num_sprint_candidates} configured sprint_size: {sprint_size} sprint items: "
-    msg1 += f"{len(todo_tasks.get_body_data())}"
+    msg1 += f"{len(blotter_tasks.get_body_data())}"
     msg2 = f"The task blotter file is: {daily_o.cday_blotter_fname}"
     debuglog.debug(msg1)
     debuglog.debug(msg2)

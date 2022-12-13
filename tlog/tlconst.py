@@ -18,6 +18,9 @@ class apCfg:
     convention_journal_root = os.getenv('JOURNAL_PATH', default_journal_path)
 
     endeavor_dir = convention_journal_root + endeavor_path_stub
+
+    look_back_months = 24   # months of history to search for old task files.
+
     blotter_pat = re.compile(
         '[Bb]lotter-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
     story_suffix_str = ".md"
