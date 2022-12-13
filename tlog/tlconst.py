@@ -18,8 +18,8 @@ class apCfg:
     convention_journal_root = os.getenv('JOURNAL_PATH', default_journal_path)
 
     endeavor_dir = convention_journal_root + endeavor_path_stub
-    journal_pat = re.compile(
-        '[Jj]ournal-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
+    blotter_pat = re.compile(
+        '[Bb]lotter-[0-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9].md')
     story_suffix_str = ".md"
     story_pat = re.compile(f".*story{story_suffix_str}")
     story_suffix_pat = re.compile(story_suffix_str)

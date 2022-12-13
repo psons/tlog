@@ -133,12 +133,12 @@ class Daily:
         self.domth = dow + ' ' + dom + dayth_dict[dom]
         self.j_month_dir = os.path.join(self.jroot, yyyy, mm)  # where j/td files go this month.
         self.jrdir = os.path.join(self.j_month_dir, "resolved")  # subdir for resolved files.
-        self.cday_journal_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
-        self.cday_todo_fname = 'journal' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+        self.cday_blotter_fname = 'blotter' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
+        self.cday_todo_fname = 'blotter' + '-' + yyyy + '-' + mm + '-' + dd + '.md' # todo can I consolidate on the var in prev line?
         self.cday_resolved_fname = 'resolved' + '-' + yyyy + '-' + mm + '-' + dd + '.md'
 
     def __str__(self):
-        return f"{self.j_month_dir} {self.cday_journal_fname} {self.domth}"
+        return f"{self.j_month_dir} {self.cday_blotter_fname} {self.domth}"
 
 
 def load_endeavor_stories(user_path_obj):

@@ -9,11 +9,9 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections import namedtuple
 from typing import List, NamedTuple
 
 # import mongocol
-import tlog
 from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
 from tldocument import TLDocument  # import re
@@ -156,11 +154,11 @@ def find_prev_journal_dir(latest_dir, history_months) -> SearchResult:
         sfl = journaldir.get_file_names_by_pattern(
             search_dir, apCfg.story_pat)
         jfl = journaldir.get_file_names_by_pattern(
-            search_dir, apCfg.journal_pat)
+            search_dir, apCfg.blotter_pat)
         file_count = len(sfl) + len(jfl)
         if file_count > 0:
             result = SearchResult(SearchStatus.SUCCESS, search_dir,
-                                  f"{len(sfl)} stories and {len(jfl)} journals in {search_dir}")
+                                  f"{len(sfl)} stories and {len(jfl)} blotters in {search_dir}")
             return result
         next_search_dir = journaldir.get_prior_dir(search_dir)  # can return None
         if not next_search_dir:
@@ -281,14 +279,14 @@ def load_task_data(daily_o, user_path_o)-> SearchResult:
     if status == SearchStatus.SUCCESS:
         story_dir_o = StoryDir(prev_journal_dir)
         j_file_list = journaldir.get_file_names_by_pattern(
-            story_dir_o.path, apCfg.journal_pat)  # journal {date].md files
+            story_dir_o.path, apCfg.blotter_pat)  # blotter {date].md files
 
-        # load the latest journal into the journal for today
-        last_journal = "no_journal_yet"
+        # load the latest blotter into the blotter for today
+        last_blotter = "no_blotter_yet"
         if len(j_file_list) > 0:
-            last_journal = j_file_list[-1]
-            old_jtd_doc.add_lines(fileinput.input(last_journal))
-        return SearchResult(SearchStatus.SUCCESS, old_jtd_doc, f"The last journal was: {last_journal}" )
+            last_blotter = j_file_list[-1]
+            old_jtd_doc.add_lines(fileinput.input(last_blotter))
+        return SearchResult(SearchStatus.SUCCESS, old_jtd_doc, f"The last blotter was: {last_blotter}" )
     else:
         return find_prev_result
 
@@ -334,7 +332,6 @@ def main():
     # Gather input state from Disk and command line
     # ============================
     #     1. Load the "old" blotter file.
-    # status, old_blotter_doc, journal_search_message,  = load_task_data(daily_o, user_path_o)
     task_load_result: SearchResult = load_task_data(daily_o, user_path_o)
 
     #     2. Get a new blotter doc started, with '/ -' and also write them as 'u - ' to the resolved file.
@@ -407,9 +404,9 @@ def main():
                                                                 # to put these in based on the leader pattern
 
     # 10. Move existing blotter files out of the journaldir
-    journal_file_list = journaldir.get_file_names_by_pattern(daily_o.j_month_dir, apCfg.journal_pat)
-    if len(journal_file_list) > 0:
-        journaldir.move_files(user_path_o.old_journal_dir, journal_file_list)
+    blotter_file_list = journaldir.get_file_names_by_pattern(daily_o.j_month_dir, apCfg.blotter_pat)
+    if len(blotter_file_list) > 0:
+        journaldir.move_files(user_path_o.old_journal_dir, blotter_file_list)
 
     # 11. Persist the scrum td and sched
     # todo new_scrum is just a reference to new_blotter_doc.scrum.   I doubt that is what I mean to do.
@@ -418,8 +415,6 @@ def main():
                                                   new_blotter_doc.scheduled_section_head])
     journaldir.write_dir_file(blotter_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
     todo_tasks = new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.todo_section_head]
-    # todo_data = str(todo_tasks)
-    # journaldir.write_dir_file(todo_data + '\n', daily_o.j_month_dir, daily_o.cday_todo_fname)
 
     debug_msg = "Sprint Items: \n"
     index = 1
@@ -433,7 +428,7 @@ def main():
 
     msg1 = f"total Backlog: {num_sprint_candidates} configured sprint_size: {sprint_size} sprint items: "
     msg1 += f"{len(todo_tasks.get_body_data())}"
-    msg2 = f"The task blotter file is: {daily_o.cday_journal_fname}"
+    msg2 = f"The task blotter file is: {daily_o.cday_blotter_fname}"
     debuglog.debug(msg1)
     debuglog.debug(msg2)
     print(msg1)

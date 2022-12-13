@@ -45,11 +45,12 @@ class Test(TestCase):
 
 class TestUserPaths(TestCase):
 
-    def testUserJournalPathRaisesE(self):
-        with self.assertRaises(tlutil.TaskSourceException) as tse:
-            journaldir.UserPaths("/some/bad/path", "/another/bad/path")
-        part_of_e_val = tse.exception.value[-31:]
-        self.assertEqual("for journals is not a directory", part_of_e_val)
+    # Logic change.  Now create dir if it doesn't exist.
+    # def testUserJournalPathRaisesE(self):
+    #     with self.assertRaises(tlutil.TaskSourceException) as tse:
+    #         journaldir.UserPaths("/some/bad/path", "/another/bad/path")
+    #     part_of_e_val = tse.exception.value[-31:]
+    #     self.assertEqual("for journals is not a directory", part_of_e_val)
 
     # ok not raising exception.  Endeavor dir is not required.
     # def testUserEndeavorPathRaisesE(self):
@@ -157,10 +158,10 @@ class TestFileIO(TestCase):
             os.makedirs(destDir)
 
             # --- test the funcs that should move the files
-            fullyQualifiedSourceMatchFileList = journaldir.get_file_names_by_pattern(sourceDir, apCfg.journal_pat)
+            fullyQualifiedSourceMatchFileList = journaldir.get_file_names_by_pattern(sourceDir, apCfg.blotter_pat)
             journaldir.move_files(destDir, fullyQualifiedSourceMatchFileList)
             # print(f"dirShouldExistWithFiles: {dirShouldExistWithFiles}")
-            fullyQualifiedDestMatchFileList = journaldir.get_file_names_by_pattern(destDir, apCfg.journal_pat)
+            fullyQualifiedDestMatchFileList = journaldir.get_file_names_by_pattern(destDir, apCfg.blotter_pat)
             sourceFileList = [ os.path.basename(sf) for sf in fullyQualifiedSourceMatchFileList]
             destFileList = [ os.path.basename(df) for df in fullyQualifiedDestMatchFileList]
             self.assertCountEqual(sourceFileList, destFileList)
