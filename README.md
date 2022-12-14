@@ -10,7 +10,7 @@ very badly designed sections of code.
 
 See user documentation at [Tlog User Doc.md](docs/Tlog%20User%20Doc.md)
 See [programmer doc.md](docs/programmer%20doc.md) for information about coding and contributing to this project.
-See [tldbin README.md](../tldbin%20README.md) https://github.com/psons/tldbin README.md for scripts to assemble a testing and
+See (https://github.com/psons/tldbin README.md) for scripts to assemble a testing and
 development environment.
 
 # current work
