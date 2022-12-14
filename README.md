@@ -8,8 +8,9 @@ from your planned endeavors.
 It is code that I have been using for many years to learn python, and thus has many old 
 very badly designed sections of code.
 
-See docs/programmer doc.md for information about coding and contributing to this project.
-See https://github.com/psons/tldbin README.md for scripts to assemble a testing and
+See user documentation at [Tlog User Doc.md](docs/Tlog%20User%20Doc.md)
+See [programmer doc.md](docs/programmer%20doc.md) for information about coding and contributing to this project.
+See [tldbin README.md](../tldbin%20README.md) https://github.com/psons/tldbin README.md for scripts to assemble a testing and
 development environment.
 
 # current work
