@@ -463,13 +463,11 @@ class Item:
 
     def save_title_hash(self):
         """
-        Saves the hash of the title as an attribute so title can be edited in the journal
-        without loosing the ability to match it with an incoming story task
+        Saves the hash of the title as an attribute so title can be edited in the blotter
+        without losing the ability to match it with an incoming story task
         """
         self.set_attrib(Item.title_hash_attr_str, self.get_title_hash())
 
-    # todo make saved title hash available as a read only property to
-    #  be consistent with notes in  Module and Object strategy.md
     def get_saved_title_hash(self) -> ItemAttribute:
         """gets the saved attribute title hash, which can differ from the get_title_hash() """
         return self.get_item_attrib(Item.title_hash_attr_str)

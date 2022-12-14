@@ -215,13 +215,13 @@ def initialize_file_paths():
 #    a method that builds the new blotter with a scrum that has all the previously resolved 'x - '
 def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
     """
-    Get a new blotter doc started, with '/ -' and also write them as 'u - ' to the resolved file.
+    Get a new blotter doc started, with '/ -'.
     Include 'x -' and 'a -' in the new blotter for next steps in main()
     """
     #         c. 
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
 
-    # reads the current resolved into a doc if there are any. 
+    # reads the current resolved into a doc if there are any.   Needed later to merge with newly resolved items
     resolved_doc: TLDocument = load_doc_from_file(journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
     
     # loads them into a blotter doc scrum object as resolved.
@@ -233,16 +233,11 @@ def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
     in_progress_items = old_jtd_doc.select_all_section_items_by_pattern(
         tldocument.statuses.in_progress.pattern)  # items in old blotter that are in progress
     
-    # makes a copy of the list and modifies the leader from '/ - ' to 'u - ' for the resolved doc
-    # unfinished_item_copies = [item.deep_copy(tldocument.top_parser_pat) for item in in_progress_items]
-    # for item in unfinished_item_copies:
-    #     # toggle in progress to unfinished
-    #     item.modify_item_top(tldocument.statuses.in_progress.pattern, tldocument.unfinished_s)
-    
-    # extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
-    # new_blotter_doc.add_list_items_to_scrum(unfinished_item_copies)
+    # Removed feature several commits ago: makes a copy of the list and modifies the leader from '/ - ' to 'u - ' for the resolved doc
+
+    # extract  and 'x -' completed and 'a -' abandoned tasks from old blotter.  Add them to new blotter scrum object as resolved
     xa_resolved_items = old_jtd_doc.select_all_section_items_by_pattern(
-        tldocument.resolved_pat)  # items in jtd that are resolved (xa)
+        tldocument.resolved_pat)  # items in blotter that are resolved (xa)
     new_blotter_doc.add_list_items_to_scrum(xa_resolved_items) # puts xa_resolved_items in the resolved Section
     [remove_item_from_story_file(r_item) for r_item in xa_resolved_items]
 
@@ -251,6 +246,9 @@ def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
     journaldir.write_dir_file(resolved_data + '\n', daily_o.jrdir, daily_o.cday_resolved_fname)
 
     # Forces unfinished work from current blotter file directly into the new scrum.
+    # todo: if items were added directly to the blotter as '/ - ' then they do not have title hash attributes on them, so
+    #   renaming one would cause a duplicate in the default/new task story.md
+    [tldocument.Item.save_title_hash(item) for item in in_progress_items]
     new_blotter_doc.add_list_items_to_scrum(in_progress_items)  # puts in_progress_items in the to do Section
     # This feature can look like a bug because the item might be violating curent priority
     # to obey priority, user can simply toggle the item from '/ - ' to 'd - '.
@@ -270,8 +268,8 @@ def update_endeavors(daily_o, last_journal_message_string, old_blotter_doc, reso
 def load_task_data(daily_o, user_path_o)-> SearchResult:
     old_blotter_doc = TLDocument(day=daily_o.domth)
 
-    os.makedirs(daily_o.j_month_dir, exist_ok=True)  # make the dir for the current jounal file
-    os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old journal
+    os.makedirs(daily_o.j_month_dir, exist_ok=True)  # make the dir for the current blotter file
+    os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old blotter
     os.makedirs(os.path.join(user_path_o.endeavor_path, apCfg.default_endeavor_name),
                 exist_ok=True)  # dir default an_endeavor
     # look back in history to find past journal dir
@@ -335,12 +333,10 @@ def main():
     #     1. Load the "old" blotter file.
     task_load_result: SearchResult = load_task_data(daily_o, user_path_o)
 
-    #     2. Get a new blotter doc started, with '/ -' and also write them as 'u - ' to the resolved file.
+    #     2. Get a new blotter doc started, with '/ -'.
     #         still need the 'x -' and 'a -' to clear them out of the source Endeavors stories.
     #         a. start with the existing resolved file add to new blotter doc scrum object as resolved.
-    #         b. extract '/ -' in-progress from old blotter.  Flip them to 'u -'. add them to new blotter scrum
-    #         object as resolved.
-    #         c. extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
+    #         b. extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
     new_blotter_doc: TLDocument
     if task_load_result.status == SearchStatus.SUCCESS:
