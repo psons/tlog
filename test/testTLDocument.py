@@ -1,9 +1,9 @@
 #!/usr/local/bin/python3
 import re
 import unittest
-from tldocument import TLDocument
+from tldocument import BlotterDocument
 import tldocument
-from docsec import Item, Section, DocStructure
+from docsec import Item, Section, SectionSortDoc
 from tl_testdata import ad1, vd1, vd2, doc1_text
 
 
@@ -88,7 +88,7 @@ u - item with sub in progress
  - sub of the in progress.\
 """
 
-	inProgressOut = TLDocument.defaut_in_prog_head + "\n" + """\
+	inProgressOut = BlotterDocument.defaut_in_prog_head + "\n" + """\
 / - item in progress
 / - item with sub in progress
  - sub of the in progress.\
@@ -114,7 +114,7 @@ d - finish the small story!\
 	def testDocumentWhole(self):
 		"Lines from docIn should match str() of Document made from them."
 		text_lines = TestDocument.docIn.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
+		dtest  = BlotterDocument(TestDocument.docTitle, text_lines)
 		self.assertEqual(str(dtest), TestDocument.docOut)
 
 
@@ -129,42 +129,42 @@ d - put way misc paper tax files
 / - do the roll day story in tlog/backlog/Roll Day story.txt\
 """
 		text_lines = inDoc2.split("\n")
-		dtest  = TLDocument(TestDocument.docTitle, text_lines)
+		dtest  = BlotterDocument(TestDocument.docTitle, text_lines)
 		#print("testDocumentWhole2 str(dtest):" + str(dtest))
 		#self.assertEqual(str(dtest), outDoc2)
 		self.assertEqual(str(dtest), inDoc2)
 
 	#@unittest.skip("Document attribute screwing this up. ")
 	def testDocumentWhole3(self):
-		self.assertEqual(str(TLDocument.fromtext(doc1_text)), doc1_text)
+		self.assertEqual(str(BlotterDocument.fromtext(doc1_text)), doc1_text)
 
 
 	def testDocumentFromTextNone(self):
-		"""TLDocument.fromtext handles None"""
-		self.assertEqual(str(TLDocument.fromtext(None)), str(TLDocument()))
+		"""BlotterDocument.fromtext handles None"""
+		self.assertEqual(str(BlotterDocument.fromtext(None)), str(BlotterDocument()))
 
 	def testDocumentAddLinesNone(self):
-		"""TLDocument.add_lines handles None"""
-		adoc: TLDocument = TLDocument()
+		"""BlotterDocument.add_lines handles None"""
+		adoc: BlotterDocument = BlotterDocument()
 		adoc.add_lines(None)
-		self.assertEqual(str(adoc), str(TLDocument()))
+		self.assertEqual(str(adoc), str(BlotterDocument()))
 
 	def testDocumentAddLineNone(self):
-		"""TLDocument.add_line handles None"""
-		adoc: TLDocument = TLDocument()
+		"""BlotterDocument.add_line handles None"""
+		adoc: BlotterDocument = BlotterDocument()
 		adoc.add_document_line(None)
-		self.assertEqual(str(adoc), str(TLDocument()))
+		self.assertEqual(str(adoc), str(BlotterDocument()))
 
 
 	def testDocumentGetAttrib(self):
 		"Does get_doc_attrib return a value for a Document attribute?"
-		val = TLDocument.fromtext(doc1_text).get_doc_attrib(ad1)
+		val = BlotterDocument.fromtext(doc1_text).get_doc_attrib(ad1)
 		self.assertEqual(vd1, val)
 
 
 	def testDocumentSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
-		d1 = TLDocument.fromtext(TestDocument.docIn)
+		d1 = BlotterDocument.fromtext(TestDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		attr = d1.get_doc_attrib(ad1)
 		self.assertEqual(vd1, attr)
@@ -172,7 +172,7 @@ d - put way misc paper tax files
 	# todo modify this test to check for duplicate attribute in the un named section.
 	def testDocumentSecondSetAttrib(self):
 		"Does set_doc_attrib match get_doc_attrib for a name and value for a Document attribute?"
-		d1 = TLDocument.fromtext(TestDocument.docIn)
+		d1 = BlotterDocument.fromtext(TestDocument.docIn)
 		d1.set_doc_attrib(ad1, vd1)
 		d1.set_doc_attrib(ad1, vd2) # set it again
 		attr = d1.get_doc_attrib(ad1)
@@ -181,13 +181,13 @@ d - put way misc paper tax files
 
 	def testDocumentNameProperty(self):
 		"Does assignment to adocument.doc_name work?"
-		d1 = TLDocument.fromtext(TestDocument.docIn)
+		d1 = BlotterDocument.fromtext(TestDocument.docIn)
 		a_doc_name = "Moby Doc.txt"
 		d1.doc_name = a_doc_name
 		self.assertEqual(d1.doc_name, a_doc_name)
 
 	def testDocumentMaxTasks(self):
-		small_story_doc = TLDocument.fromtext(TestDocument.small_story)
+		small_story_doc = BlotterDocument.fromtext(TestDocument.small_story)
 		mt = small_story_doc.max_tasks
 		task_list = small_story_doc.get_limited_tasks_from_unresolved_list()
 		self.assertEqual(int(mt), len(task_list))
@@ -195,8 +195,8 @@ d - put way misc paper tax files
 class special_sections:
 	"holds some test data for DocumentStructure"
 	def __init__(self):
-		# self.ds = DocStructure( '^#', TLDocument.top_parser_pat)
-		self.ds = DocStructure( Section.head_pat, tldocument.top_parser_pat)
+		# self.ds = SectionSortDoc( '^#', BlotterDocument.top_parser_pat)
+		self.ds = SectionSortDoc(Section.head_pat, tldocument.top_parser_pat)
 		self.a_pat = re.compile('^[aA] *-')
 		self.x_pat = re.compile('^[xX] *-')
 		self.ds.add_leader_entry('# Past Tasks', [self.a_pat, self.x_pat])

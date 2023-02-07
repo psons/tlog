@@ -1,5 +1,5 @@
 import unittest
-from tldocument import TLDocument
+from tldocument import BlotterDocument
 import journaldir
 from tlog import StoryGroup
 

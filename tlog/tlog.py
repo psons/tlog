@@ -1,7 +1,7 @@
 #!/usr/bin/env python -d
 # !/usr/local/bin/python3
 """
-Composition: Top level application built of collections of TLDocument
+Composition: Top level application built of collections of BlotterDocument
 Objects.  Stories read from Endeavor files, for example.
 """
 from __future__ import annotations
@@ -15,13 +15,13 @@ from typing import List, NamedTuple
 import tlconst
 from endeavor import Endeavor, Story, Task
 from tlconst import apCfg
-from tldocument import TLDocument  # import re
+from tldocument import BlotterDocument  # import re
 import tldocument
 from docsec import TLogInternalException, Item
 import fileinput
 from journaldir import StoryDir
 import journaldir
-from docsec import DocStructure
+from docsec import SectionSortDoc
 # import sys
 import logging
 
@@ -29,7 +29,7 @@ import logging
 class StoryGroup:
     """
     Adds story semantics around a group of Documents read from files in a directory
-	Combines the journaldir.StoryDir and the tldocument.TLDocument to get
+	Combines the journaldir.StoryDir and the tldocument.BlotterDocument to get
 	a collection of tasks.
 	Sets attributes in the tasks in the Documents to allow changes in the tasks to be written back to the
 	    storySource: an_endeavor/story
@@ -40,8 +40,8 @@ class StoryGroup:
 
     def __init__(self, story_dir: StoryDir):
         self.story_dir = story_dir
-        self.story_docs: List[TLDocument] = [load_and_resave_story_file_with_attribs(s_file)
-                                             for s_file in self.story_dir.story_list]
+        self.story_docs: List[BlotterDocument] = [load_and_resave_story_file_with_attribs(s_file)
+                                                  for s_file in self.story_dir.story_list]
 
     def get_endeavor_name(self):
         return os.path.basename(self.story_dir.path)
@@ -61,15 +61,15 @@ class StoryGroup:
         return "\n".join([str(d) for d in self.story_docs])
 
 
-def load_and_resave_story_file_with_attribs(file_name) -> TLDocument:
+def load_and_resave_story_file_with_attribs(file_name) -> BlotterDocument:
     """
-    Loads a file system file as a TLDocument and saves it back to disk with the following enrichment:.
-        Adds 'storyName:' to the TLDocument representing a Story.
+    Loads a file system file as a BlotterDocument and saves it back to disk with the following enrichment:.
+        Adds 'storyName:' to the BlotterDocument representing a Story.
             This enable the story to be migrated to an object store.
-        adds 'storySource:' 'titleHash:' to each task item in the TLDocument
+        adds 'storySource:' 'titleHash:' to each task item in the BlotterDocument
             These attributes enable items to be re titled and still update the original story file.
     """
-    story_doc: TLDocument = load_doc_from_file(file_name)
+    story_doc: BlotterDocument = load_doc_from_file(file_name)
     story_doc.attribute_all_unresolved_items(StoryGroup.story_source_attr_name, file_name)
     story_doc.for_journal_sections_add_all_missing_item_title_hash()
     story_name = os.path.basename(file_name)
@@ -90,7 +90,7 @@ def remove_item_from_story_file(item: Item) -> Item:
         debuglog.warning(f"item to remove does not have a 'storySource:' attribute: {item.top}")
         return None
     filepath = story_source
-    story_tldoc: TLDocument = load_doc_from_file(filepath)
+    story_tldoc: BlotterDocument = load_doc_from_file(filepath)
     story_tldoc.remove_document_item(item)
     journaldir.write_filepath(str(story_tldoc), filepath)
 
@@ -117,7 +117,7 @@ def write_item_to_story_file(item: Item, default_file=None, new_item_section_hea
                 f"and no default has been provided")
 
     # get the story contents from disk and insert / update the item.
-    story_tldoc: TLDocument = load_doc_from_file(filepath)
+    story_tldoc: BlotterDocument = load_doc_from_file(filepath)
     story_tldoc.insert_update_document_item(item, new_item_section_head)
     journaldir.write_filepath(str(story_tldoc), filepath)
     return story_tldoc
@@ -137,9 +137,9 @@ class SearchStatus(Enum):
 #  message: information to report to the user
 class SearchResult(NamedTuple):
     # Supports a chain of responsibility that searches for a directory with prior data
-    # then if found a different function loads it into a TLDocument .
+    # then if found a different function loads it into a BlotterDocument .
     status: SearchStatus
-    data: str | TLDocument
+    data: str | BlotterDocument
     message: str
 
 
@@ -169,9 +169,9 @@ def find_prev_journal_dir(latest_dir, history_months) -> SearchResult:
     return result
 
 
-def load_doc_from_file(file_name) -> TLDocument:
+def load_doc_from_file(file_name) -> BlotterDocument:
     file_text = journaldir.read_file_str(file_name)
-    tl_doc = TLDocument.fromtext(file_text)
+    tl_doc = BlotterDocument.fromtext(file_text)
     return tl_doc
 
 
@@ -222,10 +222,10 @@ def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
 
     # reads the current resolved into a doc if there are any.   Needed later to merge with newly resolved items
-    resolved_doc: TLDocument = load_doc_from_file(journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
+    resolved_doc: BlotterDocument = load_doc_from_file(journaldir.path_join(daily_o.jrdir, daily_o.cday_resolved_fname))
     
     # loads them into a blotter doc scrum object as resolved.
-    new_blotter_doc: TLDocument = TLDocument()
+    new_blotter_doc: BlotterDocument = BlotterDocument()
     new_blotter_doc.add_section_list_items_to_scrum(
         resolved_doc.journal)  # items in resolved file from earlier today run of tlog
  
@@ -266,7 +266,7 @@ def update_endeavors(daily_o, last_journal_message_string, old_blotter_doc, reso
 
 
 def load_task_data(daily_o, user_path_o)-> SearchResult:
-    old_blotter_doc = TLDocument(day=daily_o.domth)
+    old_blotter_doc = BlotterDocument(day=daily_o.domth)
 
     os.makedirs(daily_o.j_month_dir, exist_ok=True)  # make the dir for the current blotter file
     os.makedirs(user_path_o.old_journal_dir, exist_ok=True)  # dir for saving off old blotter
@@ -338,10 +338,10 @@ def main():
     #         a. start with the existing resolved file add to new blotter doc scrum object as resolved.
     #         b. extract 'x -' completed tasks from old blotter.  Add them to new blotter scrum object as resolved
     #     3. Persist the scrum resolved_data.  (important because a later step will remove 'x -' from stories.)
-    new_blotter_doc: TLDocument
+    new_blotter_doc: BlotterDocument
     if task_load_result.status == SearchStatus.SUCCESS:
-        assert isinstance(task_load_result.data, tldocument.TLDocument), \
-            "Prior task contents should have been loaded into a tldocument.TLDocument"
+        assert isinstance(task_load_result.data, tldocument.BlotterDocument), \
+            "Prior task contents should have been loaded into a tldocument.BlotterDocument"
         old_blotter_doc = task_load_result.data
         new_blotter_doc = write_resolved_tasks(daily_o, old_blotter_doc)
         resolved_items = new_blotter_doc.scrum.head_instance_dict[new_blotter_doc.resolved_section_head].body_items
@@ -353,14 +353,14 @@ def main():
         update_endeavors(daily_o, task_load_result.message, old_blotter_doc, resolved_items, user_path_o)
     else:
         print(task_load_result.message)
-        new_blotter_doc = TLDocument()
+        new_blotter_doc = BlotterDocument()
     #     7. Read the Endeavor stories according to load_endeavor_stories(user_path_o)
     #     (now including the old blotter tasks)
     story_dir_objects: List[StoryDir] = journaldir.load_endeavor_stories(user_path_o)
 
     all_endeavor_story_groups: List[StoryGroup] = [StoryGroup(sdo) for sdo in story_dir_objects]
 
-    story_docs_from_all_endeavors: List[TLDocument] = []
+    story_docs_from_all_endeavors: List[BlotterDocument] = []
     endeavor_models: List[Endeavor] = []
 
     for esg in all_endeavor_story_groups:
@@ -391,7 +391,7 @@ def main():
         scheduled_tasks += endeavor_story_doc.get_document_matching_list(tldocument.scheduled_pat)
 
     # 9. Pop the global sprint size number of stories off the backlog list. Add em to new blotter scrum object as to do.
-    sprint_size = TLDocument.default_scrum_to_do_task_capacity
+    sprint_size = BlotterDocument.default_scrum_to_do_task_capacity
     num_sprint_candidates = len(sprint_candidate_tasks);
     sprint_task_items: List[Item] = list()
     sprint_task_items += sprint_candidate_tasks[0:sprint_size]
@@ -407,7 +407,7 @@ def main():
 
     # 11. Persist the scrum td and sched
     # todo new_scrum is just a reference to new_blotter_doc.scrum.   I doubt that is what I mean to do.
-    new_scrum: DocStructure = new_blotter_doc.scrum
+    new_scrum: SectionSortDoc = new_blotter_doc.scrum
     blotter_data: str = new_scrum.get_report_str([new_blotter_doc.blotter_section_head,
                                                   new_blotter_doc.scheduled_section_head])
     journaldir.write_dir_file(blotter_data + '\n', daily_o.j_month_dir, daily_o.cday_blotter_fname)

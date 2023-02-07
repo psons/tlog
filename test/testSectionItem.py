@@ -15,7 +15,7 @@ from tl_testdata import dtask_line, dtask_item_text, \
     as1, vs1, as2, vs2, ai1, vi1, item_attrib_line1, ai2, vi2, item_attrib_line2, item_2attr_str, \
     dtask_item_text_w_saved_hash, dtask_item_text_w_saved_hash_modified_title, sec_two_items, sec_attrib_wrong, \
     sec_w_attrib, sec_head, is_attrib_section_cases
-from tldocument import TLDocument
+from tldocument import BlotterDocument
 import tldocument
 
 
@@ -497,7 +497,7 @@ class TestStoryIO(unittest.TestCase):
         storyItem.set_attrib("storySource", fileIOPath)
         # print(f"storyItem:\n{storyItem}")
         tlog.write_item_to_story_file(storyItem, new_item_section_head=new_item_section_heading)
-        reloadStory: TLDocument = tlog.load_doc_from_file(fileIOPath)
+        reloadStory: BlotterDocument = tlog.load_doc_from_file(fileIOPath)
         self.assertEqual(new_item_section_heading + str(storyItem), str(reloadStory))
 
 

@@ -1,7 +1,7 @@
 """
 Composition: Classes that have a general purpose usage, free of application
 semantics.
-Application semantics are set by the calling code when DocStructure, Section,
+Application semantics are set by the calling code when SectionSortDoc, Section,
 and Item objects are instantiated.
 """
 
@@ -99,7 +99,7 @@ class Section:
     def add_section_line(self, data):
         """
         Used for building up sections and items line by line from text strings.
-        See doc under TLDocument.add_line()
+        See doc under BlotterDocument.add_line()
         """
         if Section.head_pat.match(data):
             # print("trying to add a section header data:", data)
@@ -359,7 +359,7 @@ class ItemAttribute:
 
 class Item:
     """
-    See documentation for the TLDocument class
+    See documentation for the BlotterDocument class
     """
 
     title_hash_attr_str = "titleHash"
@@ -572,13 +572,15 @@ class Item:
         return self
 
 
-class DocStructure:
+class SectionSortDoc:
     """
-    This class is designed to be a generic Document class with the capability to add Item objects under Section objects
-    according to associated patterns.  The semantic associations are created by the calling class when building
-    DocStructure Objects.
+    This class is a parsing and sorting class.   Its categories are Sections, and data are added to those
+     categories as Item objects under Section according to a dictionary initialized in the constructor.
 
-    The class TLDocument has the tlog semantics and uses this class.
+    This class has no Dom,ain semantics, which are assumed to be known to the calling class when building
+    SectionSortDoc Objects.
+
+    The class BlotterDocument has the tlog semantics and uses this class.
 
     Goal: provide a structure where multiple leader types such as '^d - ' are associated with a
     single section instance
@@ -591,7 +593,7 @@ class DocStructure:
     need: access to the values of the map.  each #head_str has semantic meaning to the caller, tlog
 
     use:
-    special_sections = DocStructure('^#')
+    special_sections = SectionSortDoc('^#')
     special_sections.add_leader_entry('# Past Tasks', ['^[aA] *-', '^[xX] *-'])
     special_sections.add_leader_entry('# Current Tasks', ['^[dD] *-'])
     place_to_put = special_sections.insert_item("")
@@ -646,7 +648,7 @@ class DocStructure:
     def get_report_str(self, report_section_names: List[str]):
         """
         Given a list of section names, return the concatenated
-        string representation if found in this DocStructure
+        string representation if found in this SectionSortDoc
         """
         report_section_obj_list: List[Section] =  []
         for report_section in report_section_names:
@@ -654,7 +656,7 @@ class DocStructure:
                 report_section_obj_list.append(self.head_instance_dict[report_section])
             else:
                 raise TLogInternalException(
-                    f"A section name was requested that is not part of DocStructure {repr(self)}")
+                    f"A section name was requested that is not part of SectionSortDoc {repr(self)}")
         return "\n\n".join([str(section) for section in report_section_obj_list])  # stringify the list of matches.
     def insert_item(self, item: Item):
         """

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 """
-Composition: TLDocument class contains the tlog application semantics purpose
+Composition: BlotterDocument class contains the tlog application semantics purpose
 for Section objects and the text parsing patterns for Sections and Items along
 with the semantic significance of those patterns
 
@@ -32,17 +32,17 @@ import re
 from collections import namedtuple
 from typing import List, Dict, Pattern
 
-from docsec import Section, DocStructure, Item, ItemAttribute
+from docsec import Section, SectionSortDoc, Item, ItemAttribute
 
 blank_ln_pat = re.compile("^\s*$")
 
 """
-TLDocument
+BlotterDocument
     journal - list of Section objects created from text lines that the caller reads and writes to or from a file 
                 - currently (2020-12) 'd -' items are not included in the journal,
     backlog - special section intended to represent 'sprint candidate' work that may go into the scrum 'todo'.
                 - currently (2020-12) 'd -' items are added to the backlog section, not the journal sections
-    scrum   - a DocStructure object with 
+    scrum   - a SectionSortDoc object with 
                 - a section for Resolved tasks. (heading '# Resolved {day of month}' ) 
                 - a Section with a limited number of tasks for current work session (heading '# To Do {day of month}')
 """
@@ -91,7 +91,7 @@ def fill_status_dict(sd):
                             ('unfinished', 'u', "^[uU] *-"),
                             ('do', 'd', "^[dD] *-") # Good usage in Document to configure the scrum Docstruct
                                                     # used here as part of head_str
-                                                    # Good usages in TLDocument to make scrum and add_line()
+                                                    # Good usages in BlotterDocument to make scrum and add_line()
                         ]:
         add_status(sd, *status_record)
 
@@ -107,7 +107,7 @@ StatusStruct = namedtuple('StatusStruct', task_status_names)
 statuses = StatusStruct(*task_status_objects)
 
 resolved_str = "|".join([statuses.completed.pat_str, statuses.abandoned.pat_str])
-resolved_pat = re.compile(resolved_str)  # Used externally in in TLDocument get_xa ..
+resolved_pat = re.compile(resolved_str)  # Used externally in in BlotterDocument get_xa ..
 
 unfinished_s = "u -"  # used in Item in modify_item_top() that i am refactoring
                         # todo re-code with dash to enable status_dict to be used.
@@ -145,8 +145,8 @@ def find_status_name(leader_str):
 
 # --------
 
-
-class TLDocument:
+# Renamed BlotterDocument from TLDocument
+class BlotterDocument:
     """
     Document objects are made from lists of text lines to be made into Sections
     and Items.
@@ -158,7 +158,7 @@ class TLDocument:
         d, D - represent 'do' tasks, and get added to the document.backlog
         s, S - represent 'scheduled' tasks for later.  Ignored for prioritzation today.
         x, x - represent complete tasks and get added to the scrum document to write as resolved.
-        a, A - represent abanndon tasks, no longer needed and get added to the scrum document to write as resolved.
+        a, A - represent abandoned tasks, no longer needed and get added to the scrum document to write as resolved.
         /, \ - represent in progress tasks,  with a copy changed to
                 u - (unfinished) and added to the scrum document and written as resolved section.
     If a task line is followed by lines that are a bullet list, or free text,
@@ -180,13 +180,13 @@ class TLDocument:
     The Section and Item classes can be injected with attributes, but
     they should be optional in most or all cases.
 
-    The class TLDocument holds the semantic meaning for the
+    The class BlotterDocument holds the semantic meaning for the
     documents needed by tlog.
 
     The 'journal' has evolved to be created of Sections and Items *as read from disk*.
     The name 'journal' is being replaced with 'blotter', as the active file where work and status changes are made.
 
-    The class DocStructure implements the scrum object to associate Item leader types
+    The class SectionSortDoc implements the scrum object to associate Item leader types
     with semantically meaningful special sections like '# Resolved' and '# To Do', and '# Scheduled for later'
     """
 
@@ -211,7 +211,7 @@ class TLDocument:
         self.blotter_section_head = f'# To Do {domth}'
         self.resolved_section_head = f'# Resolved {domth}'
         self.scheduled_section_head = f'# Scheduled {domth}'
-        self.scrum = DocStructure(Section.head_pat, top_parser_pat) # see doc for make_scrum()
+        self.scrum = SectionSortDoc(Section.head_pat, top_parser_pat) # see doc for make_scrum()
         self.scrum.add_leader_entry(self.resolved_section_head, [statuses.abandoned.pattern,
                                                                  statuses.completed.pattern])
         self.scrum.add_leader_entry(self.blotter_section_head, [statuses.in_progress.pattern,
@@ -237,7 +237,7 @@ class TLDocument:
     #     """
     #     self.journal = []  # init the list of sections
     #     # self.in_progress = Section(top_parser_pat, None)  # external logic sets to today
-    #     # self.backlog = Section(TLDocument.top_parser_pat)
+    #     # self.backlog = Section(BlotterDocument.top_parser_pat)
     #     self.add_section_from_line(None)  # make sure there is a sec at journal[0]
 
     # --- story_name property
@@ -245,11 +245,11 @@ class TLDocument:
 
     def _get_story_name(self):
         "getter for story_name"
-        return self.get_doc_attrib(TLDocument.story_name_attr_str)
+        return self.get_doc_attrib(BlotterDocument.story_name_attr_str)
 
     def _set_story_name(self, name):
         "setter for story_name"
-        self.set_doc_attrib(TLDocument.story_name_attr_str, name)
+        self.set_doc_attrib(BlotterDocument.story_name_attr_str, name)
 
     story_name = property(_get_story_name, _set_story_name)
 
@@ -258,11 +258,11 @@ class TLDocument:
 
     def _get_doc_name(self):
         "getter for doc_name"
-        return self.get_doc_attrib(TLDocument.doc_name_attr_str)
+        return self.get_doc_attrib(BlotterDocument.doc_name_attr_str)
 
     def _set_doc_name(self, name):
         "setter for doc_name"
-        self.set_doc_attrib(TLDocument.doc_name_attr_str, name)
+        self.set_doc_attrib(BlotterDocument.doc_name_attr_str, name)
 
     doc_name = property(_get_doc_name, _set_doc_name)
 
@@ -271,11 +271,11 @@ class TLDocument:
 
     def _get_max_tasks(self):
         "getter for max_tasks"
-        return self.get_doc_attrib(TLDocument.max_tasks_attr_str)
+        return self.get_doc_attrib(BlotterDocument.max_tasks_attr_str)
 
     def _set_max_tasks(self, max):
         "setter for doc_name"
-        self.set_doc_attrib(TLDocument.max_tasks_attr_str, max)
+        self.set_doc_attrib(BlotterDocument.max_tasks_attr_str, max)
 
     max_tasks = property(_get_max_tasks, _set_max_tasks)
 
@@ -316,7 +316,7 @@ class TLDocument:
         """
         Add a single data line into the document according to
         pattern_strs in the Item and Section classes.
-        The TLDocument journal will be structured with Sections and Items matching the input text
+        The BlotterDocument journal will be structured with Sections and Items matching the input text
         (This is a change from a deprecated approach, which separated out 'd -' items to a backlog.
         The backlog will be built when needed as a simple sequenced list of items.)
         """
@@ -376,7 +376,7 @@ class TLDocument:
     @classmethod
     def fromtext(cls, text):
         """create a Document from multiline text parameter"""
-        new_document = TLDocument()
+        new_document = BlotterDocument()
         if not text:
             return new_document
         lines = text.split("\n")
@@ -440,7 +440,7 @@ class TLDocument:
     def get_document_matching_list(self, pattern: re.Pattern) -> List[Item]:
         """
         Caller will be responsible for slicing to max_tasks if needed.
-        :return all tasks from all section matching TLDocument.unresolved_pat
+        :return all tasks from all section matching BlotterDocument.unresolved_pat
         """
         matching_items: List[Item] = list()
         section: Section
@@ -518,7 +518,7 @@ class TLDocument:
         Search all Sections in the Journal list and the backlog Section for an Item according
         to the Section.find_item() criteria.
             if a match is found, remove it
-        assume only 1 removal is required because items should not be duplicated in a TLDocument
+        assume only 1 removal is required because items should not be duplicated in a BlotterDocument
         return: self
         """
         section: Section
