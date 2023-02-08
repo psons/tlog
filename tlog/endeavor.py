@@ -10,10 +10,66 @@ import tlutil
 from tlutil import digest
 import tldocument
 
+class EffortDomain:
+    """
+    A EffortDomain, or TaskDomain is collection of Endeavors with Stories or tasks, with some methods for working on the
+    collection
+    """
+
+    def __init__(self, name: str, sprint_max_tasks: int):
+        self.name = name
+        self.sprint_max_tasks = sprint_max_tasks
+        self.endeavors: [Endeavor] = []
+
+    def str_medium(self):
+        as_str: str = f"{self.name} sprintMaxTasks: {self.sprint_max_tasks}\n"
+        for endeavor in self.endeavors:
+            as_str += endeavor.str_medium()
+        return as_str
+    def get_sprints(self, number_of_sprints: int = 1):
+        """
+        return an Effort Domain containing the list of Endeavors with
+        top Tasks in top Stories in the Top Endeavors that can be accommodated subject to
+        the constraints:
+            - max_tasks in any story
+            - max_stories in an Endeavor
+        """
+        # todo constrain the Endeavors and stories by sprintMaxTasks
+        # todo run number_of_sprints adding tasks and stories
+        sprint_domain: EffortDomain = EffortDomain(f"Sprint subset of {self.name}",
+                                                   self.sprint_max_tasks)
+        # sprint_endeavors: [Endeavor] = []
+        for endeavor in self.endeavors:
+            stories: [Story] = endeavor.get_sprint_stories()
+            # todo need to track number of tasks ion each of the stories
+            top_story_endeavor: Endeavor = Endeavor(endeavor.name, endeavor.max_stories, endeavor.eid)
+            for story in stories:
+                top_story_endeavor.add_story(story)
+            sprint_domain.endeavors.append(top_story_endeavor)
+            # sprint_endeavors.append(top_story_endeavor)
+        return sprint_domain
+
+    @staticmethod
+    def determine_sprint_contribution(capacity: int, candidates: int):
+        """
+        caller passes a capacity for tasks in a sprint and te number of candidates a story might have.
+        returns tuple with (the new capacity in the sprint, and the number of tasks accepted into the sprint)
+        """
+        accepted_in_sprint: int
+        new_capacity: int
+        if candidates <= capacity:
+            accepted_in_sprint = candidates
+        else:  # (candidates > _capacity)
+            accepted_in_sprint = capacity
+            # new_capacity = 0
+
+        new_capacity = capacity - candidates;
+        return new_capacity, accepted_in_sprint
+
 
 class Endeavor:
     """
-    An an_endeavor is a goal like thing to achieve.  It is much like a agile epic, in that it will end up being
+    An an_endeavor is a goal like thing to achieve.  It is much like an agile epic, in that it will end up being
     fulfilled through multiple stories that likely, at the outset are not fully understood or enumerated.
     See tlog user documentation.
     """
@@ -21,6 +77,7 @@ class Endeavor:
     max_stories_key: str = 'maxStories'
     eid_key: str = '_id' # name _id is used as key in Mongo.
     story_list_key = 'story_list'
+
     def __init__(self, name, max_stories=None, eid=None):
         self.name = name    # todo: it should not be possible to make an Endeavor with null or empty Name,
                             #   which would result a common unique eid.
@@ -29,6 +86,15 @@ class Endeavor:
         self.max_stories = max_stories or tldocument.default_max_stories
         self.eid = eid or digest(self.name)
         self.story_list: List[Story] = []  # in priority order
+
+    def str_short(self):
+        return f"{self.name}"
+
+    def str_medium(self):
+        as_str: str = f"{self.name}\n"
+        for story in self.story_list:
+            as_str += f"\t{story.str_short()}\n"
+        return as_str
 
     def __str__(self):
         return f"{self.__class__.__name__} : {self.name}, {self.eid}"
@@ -40,6 +106,11 @@ class Endeavor:
         """This should typically only be called from Story.__init__()"""
         self.story_list.append(a_story)
 
+    def get_sprint_stories(self):
+        """
+        return stories that are less than max_stories
+        """
+        return self.story_list[0:int(self.max_stories)]
 
     def as_encodable(self):
         """"Return self as python structures that the json module or other serializers can encode"""
@@ -97,11 +168,24 @@ class Story:
     def add_task(self, a_task: Task):
         self.task_list.append(a_task)
 
+    def str_short(self):
+        return f"{self.name}"
+
     def __str__(self):
         return f"{self.__class__.__name__} : {self.name}, {self.sid}"
 
     def __repr__(self):
         return f"{self.__class__.__name__}:{self.sid}"
+
+    def get_sprint_subset(self, ):
+        """
+        A partial copy constructor where the task list is constrained to max_tasks for a sprint
+        """
+        subset: Story = Story(self.name, self.parent_endeavor, self.max_tasks, self.sid)
+        for task in self.task_list[0:int(self.max_tasks)]:
+            subset.add_task(task)
+        return subset
+
 
     def as_encodable(self):
         """"Return self as python structures that the json module or other serializers can encode"""
@@ -179,6 +263,9 @@ class Task:
         self.tid = tid or f"{self.parent_story.sid}.{tlutil.digest(self.title)}"
         self.detail: str = detail
         self.parent_story.add_task(self)  # so that parent story knows this task is part of it.
+
+    def short_str(self):
+        return f"{self.status} - {self.title}"
 
     def __str__(self):
         return f"{self.__class__.__name__} : {self.status} - {self.title}, {self.tid}"

@@ -1,7 +1,9 @@
 import unittest
+
+from fsendeavor import FileSystemEndeavor
 from tldocument import BlotterDocument
 import journaldir
-from tlog import StoryGroup
+# from tlog import StoryGroup
 
 
 from test_journaldir import test_storydir_str
@@ -28,14 +30,17 @@ sd = journaldir.StoryDir(test_storydir_str)
 class TestTlog(unittest.TestCase):
 
 	# todo should this test something about the state of the object?
-	def testStoryGroupConstructor(self):
+	def testSFileSystemEndeavorConstructor(self):
 		"""doesn't test anything but runs constructor"""
-		story_group = StoryGroup(sd)
+		max_stories: int = 6
+		story_group = FileSystemEndeavor(max_stories, journaldir.StoryDir(test_storydir_str))
 		# print(story_group)
 		self.assertEqual("pass", "pass")
 
-	def testKnownStoryInGroup(self):
-		story_group = StoryGroup(sd)
+	def testKnownStoryInFileSystemEndeavor(self):
+		max_stories: int = 6
+		story_group = FileSystemEndeavor(max_stories, journaldir.StoryDir(test_storydir_str))
+		# StoryDir(test_storydir_str)
 		first_story = story_group.story_docs[0]
 		# print("first_story", first_story)
 		self.assertEqual(expected_story_text, str(first_story))

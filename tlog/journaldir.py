@@ -45,12 +45,13 @@ class UserPaths:
 
         self.endeavor_path = user_endeavor_dir
         # its ok if dir and file don't exist. j read_file_str() will just return ""
-        self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.md")
+        self.endeavor_file = os.path.join(self.endeavor_path, "endeavors.txt")
         default_endeavor_dir = os.path.join(self.endeavor_path, apCfg.default_endeavor_name)
         self.new_task_story_file = os.path.join(default_endeavor_dir, "new task story.md")
         self.git_repo_obj = None
         self.tmp_root = tmp_root
         self.old_journal_dir = os.path.join(self.tmp_root, "old")
+        self.sprint_log_file = os.path.join(self.tmp_root, "latestSprint.txt")
         self.debug_log_file = os.path.join(self.tmp_root, "tl.debug.log")
 
 
@@ -140,14 +141,15 @@ class Daily:
         return f"{self.j_month_dir} {self.cday_blotter_fname} {self.domth}"
 
 
-def load_endeavor_stories(user_path_obj):
-    """return a list of StoryDir objects for each entry in the endeavors file."""
-    # More advanced versions of an_endeavor file format later.
-    endeavor_text = apCfg.default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
-    debuglog = logging.getLogger('debuglog')
-    debuglog.debug(f"endeavor_text: \n{endeavor_text}" )
-    return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
-            for e_str in endeavor_text.split()]
+# replaced by class FileSystemDomain .file_system_endeavors[n].story_dir
+# def load_endeavor_stories(user_path_obj):
+#     """return a list of StoryDir objects for each entry in the endeavors file."""
+#     # More advanced versions of an_endeavor file format later.
+#     endeavor_text = apCfg.default_endeavor_name + "\n" + read_file_str(user_path_obj.endeavor_file)
+#     debuglog = logging.getLogger('debuglog')
+#     debuglog.debug(f"endeavor_text: \n{endeavor_text}" )
+#     return [StoryDir(os.path.join(user_path_obj.endeavor_path, e_str))
+#             for e_str in endeavor_text.split()]
 
 def path_join(p, f):
     """wrapper helps prevent module os from being needed in calling modules."""
@@ -261,7 +263,7 @@ class StoryDir:
     """
     def __init__(self, sdir):
         """
-        Given a directory path, loads list of stories
+        Given a directory path, loads list of stories, which may be prioritized according to a prioritized_file_list
         :param sdir: directory path
         """
         debuglog = logging.getLogger('debuglog')

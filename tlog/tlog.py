@@ -13,7 +13,8 @@ from typing import List, NamedTuple
 
 # import mongocol
 import tlconst
-from endeavor import Endeavor, Story, Task
+from endeavor import Endeavor, Story, Task, EffortDomain
+from fsendeavor import FileSystemDomain, load_doc_from_file, FileSystemEndeavor
 from tlconst import apCfg
 from tldocument import BlotterDocument  # import re
 import tldocument
@@ -26,57 +27,39 @@ from docsec import SectionSortDoc
 import logging
 
 
-class StoryGroup:
-    """
-    Adds story semantics around a group of Documents read from files in a directory
-	Combines the journaldir.StoryDir and the tldocument.BlotterDocument to get
-	a collection of tasks.
-	Sets attributes in the tasks in the Documents to allow changes in the tasks to be written back to the
-	    storySource: an_endeavor/story
-	journal to be written back to the original stories
-	"""
-
-    story_source_attr_name = "storySource"
-
-    def __init__(self, story_dir: StoryDir):
-        self.story_dir = story_dir
-        self.story_docs: List[BlotterDocument] = [load_and_resave_story_file_with_attribs(s_file)
-                                                  for s_file in self.story_dir.story_list]
-
-    def get_endeavor_name(self):
-        return os.path.basename(self.story_dir.path)
-
-    def as_endeavor(self) -> Endeavor:
-        endeavor = Endeavor(self.get_endeavor_name())
-        for story_doc in self.story_docs:
-            story = Story(story_doc.story_name, endeavor, story_doc.max_tasks)
-            for task_item in story_doc.get_document_matching_list(tldocument.unresolved_pat):
-                # todo first arg below needs to be the status.  prob implement a taskItem.get_status()
-                # todo is this right for last arg?: str(taskItem.subs)
-                Task(tldocument.find_status_name(task_item.get_leader()), task_item.get_title(), story,
-                     task_item.detail_str())
-        return endeavor
-
-    def __str__(self):
-        return "\n".join([str(d) for d in self.story_docs])
-
-
-def load_and_resave_story_file_with_attribs(file_name) -> BlotterDocument:
-    """
-    Loads a file system file as a BlotterDocument and saves it back to disk with the following enrichment:.
-        Adds 'storyName:' to the BlotterDocument representing a Story.
-            This enable the story to be migrated to an object store.
-        adds 'storySource:' 'titleHash:' to each task item in the BlotterDocument
-            These attributes enable items to be re titled and still update the original story file.
-    """
-    story_doc: BlotterDocument = load_doc_from_file(file_name)
-    story_doc.attribute_all_unresolved_items(StoryGroup.story_source_attr_name, file_name)
-    story_doc.for_journal_sections_add_all_missing_item_title_hash()
-    story_name = os.path.basename(file_name)
-    story_name = re.sub(apCfg.story_suffix_pat, '', story_name)
-    story_doc.story_name = story_name
-    journaldir.write_filepath(str(story_doc), file_name)
-    return story_doc
+# class StoryGroup:
+#     """
+#     Adds story semantics around a group of Documents read from files in a directory
+# 	Combines the journaldir.StoryDir and the tldocument.BlotterDocument to get
+# 	a collection of tasks.
+# 	Sets attributes in the tasks in the Documents to allow changes in the tasks to be written back to the
+# 	    storySource: an_endeavor/story
+# 	journal to be written back to the original stories
+# 	"""
+#
+#     story_source_attr_name = "storySource"
+#
+#     def __init__(self, story_dir: StoryDir):
+#         self.story_dir = story_dir
+#         self.story_docs: List[BlotterDocument] = [load_and_resave_story_file_with_attribs(s_file)
+#                                                   for s_file in self.story_dir.story_list]
+#
+#     def get_endeavor_name(self):
+#         return os.path.basename(self.story_dir.path)
+#
+#     def as_endeavor(self) -> Endeavor:
+#         endeavor = Endeavor(self.get_endeavor_name())
+#         for story_doc in self.story_docs:
+#             story = Story(story_doc.story_name, endeavor, story_doc.max_tasks)
+#             for task_item in story_doc.get_document_matching_list(tldocument.unresolved_pat):
+#                 # todo first arg below needs to be the status.  prob implement a taskItem.get_status()
+#                 # todo is this right for last arg?: str(taskItem.subs)
+#                 Task(tldocument.find_status_name(task_item.get_leader()), task_item.get_title(), story,
+#                      task_item.detail_str())
+#         return endeavor
+#
+#     def __str__(self):
+#         return "\n".join([str(d) for d in self.story_docs])
 
 
 def remove_item_from_story_file(item: Item) -> Item:
@@ -85,7 +68,7 @@ def remove_item_from_story_file(item: Item) -> Item:
     always log the item being removed.
     """
     debuglog = logging.getLogger('debuglog')
-    story_source = item.get_item_attrib(StoryGroup.story_source_attr_name)
+    story_source = item.get_item_attrib(FileSystemEndeavor.story_source_attr_name)
     if not story_source:
         debuglog.warning(f"item to remove does not have a 'storySource:' attribute: {item.top}")
         return None
@@ -104,16 +87,16 @@ def write_item_to_story_file(item: Item, default_file=None, new_item_section_hea
     :return: Story Document object that was written to disk
     """
     tag = "write_item_to_story_file():"
-    story_source = item.get_item_attrib(StoryGroup.story_source_attr_name)
+    story_source = item.get_item_attrib(FileSystemEndeavor.story_source_attr_name)
     filepath = default_file
     if story_source:
         filepath = story_source
     else:
         if default_file:
-            item.set_attrib(StoryGroup.story_source_attr_name, default_file)
+            item.set_attrib(FileSystemEndeavor.story_source_attr_name, default_file)
         else:
             raise TLogInternalException(
-                f"{tag} Do not have file to write to for ({item.top}). missing {StoryGroup.story_source_attr_name}"
+                f"{tag} Do not have file to write to for ({item.top}). missing {FileSystemEndeavor.story_source_attr_name}"
                 f"and no default has been provided")
 
     # get the story contents from disk and insert / update the item.
@@ -169,10 +152,6 @@ def find_prev_journal_dir(latest_dir, history_months) -> SearchResult:
     return result
 
 
-def load_doc_from_file(file_name) -> BlotterDocument:
-    file_text = journaldir.read_file_str(file_name)
-    tl_doc = BlotterDocument.fromtext(file_text)
-    return tl_doc
 
 
 def str_o_list(in_list: List, delimiter=",", prefix_delim=False):
@@ -213,7 +192,7 @@ def initialize_file_paths():
 
 # todo - replace this method with 2 methods:
 #    a method that builds the new blotter with a scrum that has all the previously resolved 'x - '
-def write_resolved_tasks(daily_o: Daily, old_jtd_doc: object) -> object:
+def write_resolved_tasks(daily_o: journaldir.Daily, old_jtd_doc: object) -> object:
     """
     Get a new blotter doc started, with '/ -'.
     Include 'x -' and 'a -' in the new blotter for next steps in main()
@@ -356,16 +335,21 @@ def main():
         new_blotter_doc = BlotterDocument()
     #     7. Read the Endeavor stories according to load_endeavor_stories(user_path_o)
     #     (now including the old blotter tasks)
-    story_dir_objects: List[StoryDir] = journaldir.load_endeavor_stories(user_path_o)
 
-    all_endeavor_story_groups: List[StoryGroup] = [StoryGroup(sdo) for sdo in story_dir_objects]
+    # the FileSystemDomain is a data access object for getting the
+    # domain data out of the file system.
+    fs_domain = FileSystemDomain(user_path_o)
 
     story_docs_from_all_endeavors: List[BlotterDocument] = []
     endeavor_models: List[Endeavor] = []
 
-    for esg in all_endeavor_story_groups:
-        story_docs_from_all_endeavors += esg.story_docs
-        endeavor_models.append(esg.as_endeavor())
+    for fse in fs_domain.file_system_endeavors:
+        story_docs_from_all_endeavors += fse.story_docs  # legacy functionality to replace with logic in the domain model EffortDomain
+
+    # non have the domain an a model class!
+    effort_domain: EffortDomain = fs_domain.as_domain()
+    sprint_domain: EffortDomain = effort_domain.get_sprints(1)
+    journaldir.write_filepath(sprint_domain.str_medium(), user_path_o.sprint_log_file)
 
     # 7.a load / upsert the Endeavors to Mongo.
     # for endeavor in endeavor_models:
