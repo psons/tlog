@@ -49,9 +49,14 @@ class FileSystemDomain:
         endeavor_text: str = apCfg.default_endeavor_name + " 2" + "\n" + read_file_str(self.endeavor_file)
         endeavor_text = endeavor_text.rstrip()
         for data_line in endeavor_text.split('\n'):
+            data_line = data_line.rstrip()
             matched = re.match(r'(\w+)\W+(\d+)', data_line) # w is word characters.  W is not word characters
-            endeavor_name = matched.group(1)
-            max_stories = matched.group(2)
+            if matched is None:
+                endeavor_name = data_line
+                max_stories = 1
+            else:
+                endeavor_name = matched.group(1)
+                max_stories = matched.group(2)
             self.file_system_endeavors.append(
                         FileSystemEndeavor(max_stories, StoryDir(os.path.join(self.endeavor_path, endeavor_name)))
             )

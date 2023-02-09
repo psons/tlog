@@ -35,4 +35,20 @@ Removing 'u - ' as a status that gets written into the resolved file: it has lim
 Fixed bugs:
   - max tasks was being ignored if there was another document attribute
   - / for in_progress tasks not correctly escaped in pattern.
-  - an existing empty section was not always being used for document attributes. 
+  - an existing empty section was not always being used for document attributes.
+
+### 2023-02-08
+Journal file is now called Blotter.
+Now writes latestSprint.txt into temp dir with an Endeavor and Story level summary of the sprint.
+
+# Modeling tasks over time time in the task blotter
+(aspirational notes)
+ 1. Future: The EffortDomain class is the model for Endeavor management
+    - has file system representation in fsendeavor.py
+ 
+ 2. Present: The Sprint class is the model for the curently selected task execution.
+    - the terms todo ir task blotter refer to the apps that work on the Sprint.
+ 
+ 3. Past: The Journal is the model for the Resolved tasks, and any notes and references 
+ that may be captured alogn the way.
+    - rename journaldir.py to be fsjournal.py 
